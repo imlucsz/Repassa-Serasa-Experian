@@ -1,0 +1,47 @@
+@import "/assets/css/global/elements.css";
+@import "/assets/css/global/text-style.css";
+
+:root {
+    --bg-color: hsl(220, 60%, 5%);
+    --nav-bg: hsl(5, 10%, 20%);
+    --txt-color: hsl(220, 20%, 80%);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    height: 100vh;
+    background-color: var(--bg-color);
+}
+
+.wrapper {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.main-nav {
+    background-color: var(--nav-bg);
+    padding: 0.5em;
+    border-radius: 15px;
+}
+
+.main-nav menu {
+    display: flex;
+    justify-content: space-around;
+    gap: 1.5em;
+}
+
+.main-nav li {
+    list-style: none;
+    font-weight: bolder;
+}
