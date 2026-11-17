@@ -1,0 +1,26 @@
+{
+  "name": "repassa-promo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Filme promocional RePassa — 22 segundos",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "audio:inspect": "node scripts/inspect-audio.cjs",
+    "render:audio": "node scripts/master-audio.cjs",
+    "compositions": "remotion compositions src/index.ts",
+    "render:test": "remotion render src/index.ts RePassaPromo out/repassa-intro-test.mp4 --frames=0-89 --codec=h264 --concurrency=2",
+    "render:final": "remotion render src/index.ts RePassaPromo out/repassa-promo-final.mp4 --codec=h264 --crf=16 --pixel-format=yuv420p --concurrency=2"
+  },
+  "dependencies": {
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.544"
+  },
+  "devDependencies": {
+    "@remotion/cli": "4.0.544",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "typescript": "5.9.3"
+  }
+}
