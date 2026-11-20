@@ -11,7 +11,15 @@ export default defineConfig({
   use: { channel: process.env.PLAYWRIGHT_CHANNEL, locale: 'pt-BR' },
   projects: modes.map(({ name, port }) => ({
     name,
-    testMatch: name + '.spec.mjs',
+    testMatch:
+      name === 'api'
+        ? [
+            'api.spec.mjs',
+            'institution.spec.mjs',
+            'student.spec.mjs',
+            'donations.spec.mjs',
+          ]
+        : 'demo.spec.mjs',
     use: { baseURL: 'http://127.0.0.1:' + port },
   })),
   webServer: modes.map(({ port, mode }) => ({

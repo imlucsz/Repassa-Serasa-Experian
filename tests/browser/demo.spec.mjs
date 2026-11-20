@@ -104,3 +104,30 @@ test('reduced motion opens the grid and retains the explicit shelf controls', as
     page.getByRole('link', { name: /Ver material: Atlas celeste/ }),
   ).toBeVisible();
 });
+
+test('operações privadas explicam os limites da demonstração sem chamar a API', async ({
+  page,
+}) => {
+  const requests = [];
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname.startsWith('/api/v1/'))
+      requests.push(request.method());
+  });
+  for (const path of [
+    '/doar',
+    '/minhas-doacoes',
+    '/perfil',
+    '/instituicao',
+    '/instituicao/recebimentos',
+    '/instituicao/estoque',
+  ]) {
+    await page.goto(path);
+    await expect(
+      page.getByRole('heading', { name: 'Área de conta' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'Explorar o acervo' }),
+    ).toBeVisible();
+  }
+  expect(requests).toEqual([]);
+});
