@@ -29,6 +29,8 @@ npm run test:ci     # both — what CI runs
 
 `test:e2e` uses `TEST_DATABASE_URL` when set (CI postgres:16), otherwise boots an embedded disposable Postgres 16 (`test/helpers/pg-daemon.mjs`) and applies migrations before running.
 
+Tests run in Jest ESM mode (`node --experimental-vm-modules`) because `@nestjs/*` ships ESM-only. E2E specs exercise the API over real HTTP (`fetch` against an ephemeral listener) rather than `fastify.inject()`: inject routes through `light-my-request`, a test-only path that cannot `require()` the ESM-only `cookie` package on Node 22. `--forceExit` is used to release the spawned Postgres daemon child promptly.
+
 ## Scripts
 
 | Script | Purpose |

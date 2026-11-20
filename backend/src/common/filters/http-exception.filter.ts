@@ -70,7 +70,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (error.status >= 500) {
       this.logger.error(
-        `requestId=${requestId} status=${error.status} ${safeErrorDetails(exception)}`,
+        `requestId=${requestId} status=${error.status} code=${error.code} ${safeErrorDetails(exception)}`,
       );
     } else {
       this.logger.warn(`requestId=${requestId} status=${error.status} code=${error.code}`);
@@ -185,9 +185,22 @@ export class HttpExceptionFilter implements ExceptionFilter {
   }
 }
 
+/**
+ * 5xx log details must never include raw exception messages: they can embed
+ * connection strings, credentials, query values or stack data. Log only the
+ * error class and an approved machine-readable classification (framework or
+ * Prisma error codes, e.g. FST_ERR_*, P2002), which cannot carry secrets.
+ */
+const SAFE_CODE_PATTERN = /^[A-Za-z_$][A-Za-z0-9_.$-]{0,60}$/;
+
 function safeErrorDetails(exception: unknown): string {
-  if (exception instanceof Error) {
-    return `${exception.name}: ${exception.message}`;
-  }
-  return typeof exception;
+  const name =
+    exception instanceof Error && SAFE_CODE_PATTERN.test(exception.name)
+      ? exception.name
+      : exception instanceof Error
+        ? 'Error'
+        : `typeof_${typeof exception}`;
+  const code = (exception as { code?: unknown })?.code;
+  const codeTag = typeof code === 'string' && SAFE_CODE_PATTERN.test(code) ? ` code=${code}` : '';
+  return `error=${name}${codeTag}`;
 }

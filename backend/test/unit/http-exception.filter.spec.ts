@@ -1,5 +1,10 @@
 import { jest } from '@jest/globals';
-import { ArgumentsHost, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  BadRequestException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { HttpExceptionFilter } from '../../src/common/filters/http-exception.filter';
 
@@ -94,5 +99,56 @@ describe('HttpExceptionFilter', () => {
     expect(body.message).toBe('Internal server error');
     expect(JSON.stringify(body)).not.toContain('password');
     expect(body.requestId).toBe('req-test-1');
+  });
+
+  describe('5xx log redaction', () => {
+    const SECRETS = [
+      's3cret-password',
+      'postgresql://u:s3cret-password@db.internal:5432/x',
+      'Bearer eyJhbGciOiJIUzI1NiJ9.payload.sig',
+      'refresh_token=abc123opaque',
+    ];
+
+    for (const secret of SECRETS) {
+      it(`never logs secret material: ${secret.slice(0, 20)}…`, () => {
+        const errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
+        try {
+          const { host } = fakeHost();
+          filter.catch(new Error(`upstream failed: ${secret}`), host);
+          expect(errorSpy).toHaveBeenCalled();
+          const logged = errorSpy.mock.calls.map((c) => String(c[0])).join(' ');
+          expect(logged).not.toContain(secret);
+          expect(logged).toContain('requestId=req-test-1');
+          expect(logged).toContain('status=500');
+        } finally {
+          errorSpy.mockRestore();
+        }
+      });
+    }
+
+    it('logs an approved classification (error name / framework code), not the message', () => {
+      const errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
+      try {
+        const { host } = fakeHost();
+        const err = new Error('query failed SELECT * FROM users WHERE ssn=123-45');
+        err.name = 'QueryFailedError';
+        filter.catch(err, host);
+        const logged = String(errorSpy.mock.calls[0][0]);
+        expect(logged).toContain('error=QueryFailedError');
+        expect(logged).not.toContain('ssn');
+        expect(logged).not.toContain('SELECT');
+
+        errorSpy.mockClear();
+        const prismaErr = new Prisma.PrismaClientKnownRequestError('P1017 detail', {
+          code: 'P1017',
+          clientVersion: '6.19.3',
+        });
+        filter.catch(prismaErr, host);
+        const logged2 = String(errorSpy.mock.calls[0][0]);
+        expect(logged2).toContain('PrismaClientKnownRequestError');
+      } finally {
+        errorSpy.mockRestore();
+      }
+    });
   });
 });

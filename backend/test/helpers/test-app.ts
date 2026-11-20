@@ -25,3 +25,23 @@ export async function createTestApp(
   await app.init();
   return app;
 }
+
+export interface RunningTestApp {
+  app: NestFastifyApplication;
+  baseUrl: string;
+}
+
+/**
+ * Starts the test app on an ephemeral port. E2E specs use real HTTP requests
+ * (fetch) rather than fastify inject(): inject routes through light-my-request,
+ * which is a test-only path absent from production traffic.
+ */
+export async function startTestApp(
+  metadata: ModuleMetadata = {},
+): Promise<RunningTestApp> {
+  const app = await createTestApp(metadata);
+  await app.listen(0, '127.0.0.1');
+  const address = app.getHttpServer().address();
+  const port = typeof address === 'object' && address !== null ? address.port : 0;
+  return { app, baseUrl: `http://127.0.0.1:${port}` };
+}
