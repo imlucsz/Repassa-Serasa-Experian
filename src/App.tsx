@@ -13,6 +13,18 @@ const router = createBrowserRouter([
     hydrateFallbackElement: <StatePanel kind="loading" />,
     children: [
       { index: true, Component: Home },
+      {
+        path: 'entrar',
+        lazy: async () => ({
+          Component: (await import('./pages/Auth')).LoginPage,
+        }),
+      },
+      {
+        path: 'cadastro',
+        lazy: async () => ({
+          Component: (await import('./pages/Auth')).RegisterPage,
+        }),
+      },
       { path: 'catalogo', lazy: () => import('./pages/Catalog') },
       { path: 'materiais/:id', lazy: () => import('./pages/Detail') },
       { path: '*', element: <StatePanel kind="missing" /> },

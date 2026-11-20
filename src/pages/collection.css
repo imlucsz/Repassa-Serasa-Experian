@@ -1,0 +1,224 @@
+.category-index {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 18px 0 5px;
+}
+
+.category-index button {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 0 15px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--forest);
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition:
+    background var(--feedback),
+    color var(--feedback),
+    border-color var(--feedback);
+}
+
+.category-index button[aria-pressed='true'] {
+  background: var(--forest);
+  border-color: var(--forest);
+  color: var(--ivory);
+}
+
+.category-index button:hover:not([aria-pressed='true']) {
+  border-color: var(--emerald);
+  background: #e8e8dc;
+}
+
+.detail-editorial {
+  align-items: start;
+  gap: clamp(36px, 8vw, 128px);
+  margin-top: clamp(32px, 5vw, 72px);
+}
+
+.detail-editorial .detail-board {
+  background:
+    radial-gradient(ellipse at 50% 100%, #d4d5c3 0 25%, transparent 26%),
+    repeating-linear-gradient(0deg, transparent 0 34px, #1c292510 35px 36px),
+    #ece7d9;
+  padding: clamp(30px, 4.2vw, 60px);
+  height: min(59vw, 560px);
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  overflow: hidden;
+}
+
+.detail-editorial .detail-cover {
+  width: auto;
+  height: min(100%, 450px);
+  max-width: 100%;
+  aspect-ratio: 2 / 3;
+  box-shadow: 14px 20px 34px #1c292540;
+  transform: rotate(-2deg);
+  view-transition-name: material-cover;
+}
+
+.detail-editorial .detail-content {
+  padding: 8px 0 24px;
+}
+
+.detail-editorial h1 {
+  max-width: 12ch;
+  font-size: clamp(3rem, 6vw, 6rem);
+  line-height: 0.98;
+}
+
+.detail-editorial .detail-description {
+  max-width: 48ch;
+  font-family: var(--serif);
+  font-size: clamp(1.25rem, 1.7vw, 1.6rem);
+  line-height: 1.45;
+  color: var(--forest);
+}
+
+.detail-editorial dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px 52px;
+  margin-top: 34px;
+  border-block: 1px solid var(--line);
+  padding: 18px 0;
+}
+
+.detail-editorial dl > div {
+  display: grid;
+  gap: 5px;
+}
+
+.detail-editorial dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.detail-editorial dd {
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.detail-editorial .pickup {
+  margin-top: 30px;
+  padding: 0;
+  border: 0;
+}
+
+.detail-editorial .pickup h2 {
+  font: 600 0.8rem/1.4 var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.detail-editorial .pickup h3 {
+  margin-top: 14px;
+  font-size: 1.8rem;
+}
+
+.reservation-action {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.reservation-action .button {
+  min-height: 54px;
+  padding-inline: 22px;
+}
+
+.reservation-action p {
+  max-width: 48ch;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.pickup-code {
+  display: grid;
+  gap: 7px;
+  min-width: min(100%, 300px);
+  padding: 17px 20px;
+  border-inline-start: 4px solid var(--coral);
+  background: #e9e7da;
+}
+
+.pickup-code span,
+.pickup-code small {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.pickup-code strong {
+  font: 600 clamp(1.2rem, 4vw, 1.65rem) / 1.2 var(--mono);
+  letter-spacing: 0.08em;
+}
+
+.material-grid li > a {
+  display: block;
+}
+
+.material-grid h2 {
+  font-size: clamp(1.2rem, 1.7vw, 1.65rem);
+  letter-spacing: -0.035em;
+}
+
+.material-grid li > a:hover .grid-cover {
+  transform: translateY(-5px) rotate(1deg);
+}
+
+.grid-cover {
+  transition: transform 280ms var(--ease);
+  view-transition-name: none;
+}
+
+@media (max-width: 700px) {
+  .category-index {
+    margin-inline: calc(var(--gutter) * -1);
+    padding-inline: var(--gutter);
+  }
+
+  .detail-editorial {
+    gap: 30px;
+    margin-top: 26px;
+  }
+
+  .detail-editorial .detail-board {
+    height: auto;
+    aspect-ratio: 0.86;
+    padding: 30px clamp(40px, 14vw, 66px);
+  }
+
+  .detail-editorial .detail-cover {
+    height: min(100%, 370px);
+  }
+
+  .detail-editorial .detail-content {
+    padding-top: 0;
+  }
+
+  .detail-editorial h1 {
+    font-size: clamp(2.75rem, 12vw, 4.2rem);
+  }
+
+  .detail-editorial dl {
+    gap: 18px 28px;
+    margin-top: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .category-index button,
+  .grid-cover {
+    transition: none;
+  }
+}

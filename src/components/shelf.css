@@ -100,7 +100,37 @@
   display: block;
   position: absolute;
 }
-[data-jacket='0'] .jacket-art {
+.jacket-art svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.material-jacket[data-category='BOOK'] .jacket-art svg {
+  stroke-width: 1.8;
+}
+.material-jacket[data-artwork='sky'] .jacket-art svg circle {
+  fill: var(--print);
+  fill-opacity: 0.16;
+}
+.material-jacket[data-artwork='map'] .jacket-art svg {
+  stroke-dasharray: 0.8 1.6;
+}
+.material-jacket[data-category='NOTEBOOK'] .jacket-art svg {
+  stroke-dasharray: 0.5 0;
+}
+.material-jacket[data-category='SUPPLIES'] .jacket-art svg circle:last-of-type {
+  fill: var(--coral);
+  stroke: var(--coral);
+}
+[data-jacket='0'] .spine-print {
   background: repeating-radial-gradient(
     ellipse at 50% 105%,
     transparent 0 4.2%,
@@ -108,7 +138,7 @@
     transparent 5.7% 8%
   );
 }
-[data-jacket='1'] .jacket-art {
+[data-jacket='1'] .spine-print {
   background: repeating-linear-gradient(
     135deg,
     currentColor 0 2%,
@@ -124,7 +154,7 @@
     100% 100%
   );
 }
-[data-jacket='2'] .jacket-art {
+[data-jacket='2'] .spine-print {
   background: repeating-radial-gradient(
     circle at 30% 72%,
     transparent 0 3.5%,
@@ -133,7 +163,7 @@
   );
   border-radius: 50% 50% 0 0;
 }
-[data-jacket='3'] .jacket-art i {
+[data-jacket='3'] .spine-print i {
   width: 49%;
   height: 48%;
   border-radius: 0 82%;
@@ -142,20 +172,20 @@
     var(--stock);
   border: 1px solid;
 }
-[data-jacket='3'] .jacket-art i:nth-child(even) {
+[data-jacket='3'] .spine-print i:nth-child(even) {
   right: 0;
   transform: scaleX(-1);
 }
-[data-jacket='3'] .jacket-art i:nth-child(n + 3) {
+[data-jacket='3'] .spine-print i:nth-child(n + 3) {
   bottom: 0;
 }
-[data-jacket='4'] .jacket-art {
+[data-jacket='4'] .spine-print {
   background:
     repeating-linear-gradient(90deg, currentColor 0 1%, transparent 1.4% 8%),
     repeating-linear-gradient(0deg, currentColor 0 1%, transparent 1.4% 8%);
   border-radius: 50%;
 }
-[data-jacket='5'] .jacket-art {
+[data-jacket='5'] .spine-print {
   background: repeating-radial-gradient(
     ellipse at 105% 35%,
     transparent 0 5%,
@@ -279,6 +309,16 @@
   padding: 20px 0 16px;
   border-bottom: 1px solid #bdc1b4;
 }
+.book-shelf:focus-visible {
+  outline: 3px solid var(--emerald);
+  outline-offset: 5px;
+}
+.shelf-instructions {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
 .shelf-caption-text {
   min-width: 0;
 }
@@ -373,23 +413,6 @@
     0deg,
     #364039 0 2px,
     transparent 2px 6%
-  );
-}
-.material-jacket[data-category='SUPPLIES'] .jacket-art {
-  background: repeating-linear-gradient(
-    135deg,
-    currentColor 0 1%,
-    transparent 1.4% 6%
-  );
-  clip-path: polygon(
-    0 0,
-    100% 100%,
-    0 100%,
-    0 0,
-    14% 29%,
-    14% 84%,
-    68% 84%,
-    14% 29%
   );
 }
 .book-spine .spine-print {

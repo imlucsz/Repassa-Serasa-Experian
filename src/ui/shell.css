@@ -1,0 +1,136 @@
+.site-header,
+.site-footer {
+  border-color: var(--line);
+  border-style: solid;
+  border-width: 0;
+}
+.site-header {
+  border-bottom-width: 1px;
+}
+.site-footer {
+  border-top-width: 1px;
+}
+.site-bar,
+.site-colophon,
+.site-nav,
+.site-colophon nav {
+  display: flex;
+  align-items: center;
+}
+.site-bar {
+  min-height: 76px;
+  gap: clamp(18px, 3vw, 50px);
+}
+.site-wordmark {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+.site-wordmark img {
+  height: auto;
+  mix-blend-mode: multiply;
+}
+.site-nav {
+  margin-left: auto;
+  gap: clamp(18px, 2.6vw, 40px);
+}
+.site-nav a,
+.site-colophon nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.92rem;
+  font-weight: 550;
+}
+.site-nav a:hover,
+.site-nav [aria-current],
+.site-colophon nav a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.35em;
+  text-decoration-color: var(--emerald);
+}
+.site-account {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 19px;
+  background: transparent;
+  color: var(--forest);
+  border: 1px solid var(--forest);
+  border-radius: 100px;
+  font: 600 0.92rem var(--sans);
+}
+.site-account:hover,
+.site-account[aria-current] {
+  color: var(--ivory);
+  background: var(--forest);
+}
+.session-error {
+  padding-block: 12px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.site-colophon {
+  min-height: 98px;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  padding-block: 20px;
+}
+.site-colophon p,
+.site-edition {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+.site-colophon nav {
+  margin-left: auto;
+  gap: 22px;
+}
+.site-edition {
+  border-left: 1px solid var(--line);
+  padding-left: 20px;
+}
+@media (max-width: 760px) {
+  .site-bar {
+    min-height: 66px;
+  }
+  .site-wordmark img {
+    max-width: 114px;
+  }
+  .site-colophon nav {
+    margin-left: 0;
+  }
+  .site-edition {
+    border: 0;
+    padding: 0;
+  }
+  .site-colophon {
+    justify-content: space-between;
+  }
+}
+@media (max-width: 500px) {
+  .site-nav .site-how {
+    display: none;
+  }
+  .site-bar {
+    gap: 16px;
+  }
+  .site-account {
+    padding-inline: 14px;
+    gap: 6px;
+  }
+  .site-colophon {
+    display: grid;
+    grid-template-columns: auto 1fr;
+  }
+  .site-colophon nav {
+    grid-column: 1/-1;
+  }
+  .site-edition {
+    grid-column: 1/-1;
+  }
+}

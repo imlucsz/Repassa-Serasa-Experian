@@ -14,6 +14,7 @@ import {
   Link,
   useLoaderData,
   useLocation,
+  useNavigation,
   useSearchParams,
   type ShouldRevalidateFunctionArgs,
   type LoaderFunctionArgs,
@@ -30,6 +31,7 @@ import { MaterialCover } from '../components/MaterialCover';
 import { Shelf3D } from '../components/Shelf3D';
 import { Field } from '../ui/Field';
 import { StatePanel } from '../ui/StatePanel';
+import './collection.css';
 export { RouteError as ErrorBoundary } from '../ui/RouteError';
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -82,15 +84,26 @@ export function Component() {
   const { materials, institutions } = useLoaderData<typeof loader>();
   const [params, setParams] = useSearchParams();
   const location = useLocation();
+  const destination = useNavigation().location;
+  const nextFilters = () => new URLSearchParams(
+    destination?.pathname === location.pathname ? destination.search : params,
+  );
   const view = params.get('vista');
   const grid = view === 'grade' || (view !== 'estante' && defaultGrid());
   function setGrid(enabled: boolean) {
-    const next = new URLSearchParams(params);
+    const next = nextFilters();
     next.set('vista', enabled ? 'grade' : 'estante');
     setParams(next, { replace: true, preventScrollReset: true });
   }
   function resetFilters() {
     setParams(view ? { vista: view } : {}, { preventScrollReset: true });
+  }
+  function setCategory(category: string) {
+    const next = nextFilters();
+    next.delete('page');
+    if (category) next.set('category', category);
+    else next.delete('category');
+    setParams(next, { preventScrollReset: true });
   }
   useEffect(() => {
     document.title = 'Acervo de materiais · RePassa';
@@ -109,11 +122,12 @@ export function Component() {
   function filter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     filterSubmitted.current = true;
-    const next = new URLSearchParams();
-    if (view) next.set('vista', view);
+    const next = nextFilters();
+    next.delete('page');
     new FormData(event.currentTarget).forEach((value, key) => {
       const text = String(value).trim();
       if (text) next.set(key, text);
+      else next.delete(key);
     });
     setParams(next, { preventScrollReset: true });
   }
@@ -138,14 +152,24 @@ export function Component() {
           instituições.
         </p>
       </header>
+      <nav className="category-index" aria-label="Categorias do acervo">
+        {[['', 'Tudo'], ...Object.entries(categoryLabels)].map(
+          ([value, label]) => (
+            <button
+              key={value || 'all'}
+              type="button"
+              aria-pressed={(params.get('category') ?? '') === value}
+              onClick={() => setCategory(value)}
+            >
+              {label}
+            </button>
+          ),
+        )}
+      </nav>
       <form
         className="filters"
         onSubmit={filter}
-        key={[
-          params.get('q'),
-          params.get('category'),
-          params.get('institutionId'),
-        ].join('|')}
+        key={JSON.stringify([params.get('q'), params.get('institutionId')])}
         aria-label="Filtrar materiais"
       >
         <Field id="catalog-search" label="Buscar no acervo">
@@ -160,20 +184,6 @@ export function Component() {
               placeholder="Título ou palavra-chave"
             />
           </span>
-        </Field>
-        <Field id="catalog-category" label="Categoria">
-          <select
-            id="catalog-category"
-            name="category"
-            defaultValue={params.get('category') ?? ''}
-          >
-            <option value="">Todas as categorias</option>
-            {Object.entries(categoryLabels).map(([id, label]) => (
-              <option key={id} value={id}>
-                {label}
-              </option>
-            ))}
-          </select>
         </Field>
         <Field id="catalog-institution" label="Instituição">
           <select

@@ -216,7 +216,10 @@ function CollectionShelf({ materials }: { materials: Material[] }) {
     <section
       className="book-shelf"
       aria-label="Estante de materiais"
+      tabIndex={size > 1 ? 0 : undefined}
+      aria-describedby="shelf-instructions"
       onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
         if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
           return;
         if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
@@ -307,6 +310,9 @@ function CollectionShelf({ materials }: { materials: Material[] }) {
           </button>
         </div>
       </div>
+      <p className="shelf-instructions" id="shelf-instructions">
+        Arraste para explorar ou use as setas do teclado. A grade oferece a mesma coleção em uma lista acessível.
+      </p>
     </section>
   );
 }

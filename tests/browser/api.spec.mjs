@@ -1,0 +1,193 @@
+import { expect, test } from '@playwright/test';
+
+const id = '39ea38aa-78f3-4870-b586-000000000001';
+const detail = '/materiais/' + id;
+const user = {
+  id: '84f38c09-2ceb-4fa4-8c38-d513bf8bad11',
+  displayName: 'Estudante de teste',
+  email: 'estudante@example.invalid',
+  role: 'STUDENT',
+};
+const material = {
+  id,
+  title: 'Botânica ilustrada',
+  description: 'Guia ilustrado de botânica.',
+  category: 'BOOK',
+  condition: 'GOOD',
+  imageUrl: null,
+  status: 'AVAILABLE',
+  institution: {
+    id: '84f38c09-2ceb-4fa4-8c38-d513bf8bad10',
+    name: 'Instituto Folha Nova',
+    publicAddress: 'Alameda das Folhas, 24',
+    pickupInstructions: 'Procure a biblioteca.',
+  },
+  createdAt: '2026-11-10T12:00:00Z',
+};
+
+test('reservation returns to the same material after login and handles conflict', async ({
+  page,
+}) => {
+  const unexpected = [];
+  let reservations = 0;
+  await page.route('**/api/v1/**', async (route) => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname.slice('/api/v1'.length);
+    if (path === '/auth/refresh')
+      return route.fulfill({ status: 401, json: {} });
+    if (path === '/materials/' + id) return route.fulfill({ json: material });
+    if (path === '/auth/login') {
+      expect(request.method()).toBe('POST');
+      expect(request.headers()['x-repassa-request']).toBe('1');
+      expect(request.postDataJSON().email).toBe(user.email);
+      return route.fulfill({
+        json: { user, accessToken: 'test_browser_session', expiresIn: 900 },
+      });
+    }
+    if (path === '/materials/' + id + '/reservations') {
+      expect(request.headers().authorization).toBe(
+        'Bearer test_browser_session',
+      );
+      reservations++;
+      return route.fulfill({ status: 409, json: { code: 'CONFLICT' } });
+    }
+    unexpected.push(path);
+    return route.fulfill({ status: 404, json: {} });
+  });
+  await page.goto(detail);
+  await page.getByRole('button', { name: /Entrar para reservar/i }).click();
+  await expect(page).toHaveURL(/entrar\?returnTo=/);
+  await page.getByLabel('E-mail', { exact: true }).fill(user.email);
+  await page
+    .locator('input[autocomplete="current-password"]')
+    .fill('test_browser_password');
+  await page.getByRole('button', { name: /mostrar senha/i }).click();
+  await expect(
+    page.locator('input[autocomplete="current-password"]'),
+  ).toHaveAttribute('type', 'text');
+  await page.locator('button[type="submit"]').click();
+  await expect(page).toHaveURL(new RegExp(detail + '$'));
+  await page.getByRole('button', { name: /Reservar este material/i }).click();
+  await expect(
+    page
+      .getByRole('status')
+      .filter({ hasText: /reservado|disponível|disponibilidade/i }),
+  ).toBeVisible();
+  expect(reservations).toBe(1);
+  expect(unexpected).toEqual([]);
+});
+
+test('public registration validates before sending and reports an unavailable API', async ({
+  page,
+}) => {
+  let registrations = 0;
+  await page.route('**/api/v1/auth/**', async (route) => {
+    if (route.request().url().endsWith('/register')) {
+      registrations++;
+      expect(Object.keys(route.request().postDataJSON()).sort()).toEqual([
+        'displayName',
+        'email',
+        'password',
+      ]);
+      return route.fulfill({ status: 503, json: { code: 'UNAVAILABLE' } });
+    }
+    return route.fulfill({ status: 401, json: {} });
+  });
+  await page.goto('/cadastro');
+  await page.locator('button[type="submit"]').click();
+  expect(registrations).toBe(0);
+  await page.locator('input[autocomplete="name"]').fill(user.displayName);
+  await page.locator('input[type="email"]').fill(user.email);
+  for (const field of await page
+    .locator('input[autocomplete="new-password"]')
+    .all()) {
+    await field.fill('test_browser_password');
+  }
+  await page.getByRole('checkbox').check();
+  await page.locator('button[type="submit"]').click();
+  await expect(page.getByRole('alert')).toContainText(/indisponível/i);
+  expect(registrations).toBe(1);
+  await expect(page).toHaveURL(/\/cadastro$/);
+});
+
+test('lost reservation response is recovered with a read and cleared on logout', async ({
+  page,
+}) => {
+  let posts = 0;
+  let reads = 0;
+  await page.route('**/api/v1/**', async (route) => {
+    const path = new URL(route.request().url()).pathname.slice(
+      '/api/v1'.length,
+    );
+    if (path === '/auth/refresh') {
+      return route.fulfill({
+        json: { user, accessToken: 'test_browser_session', expiresIn: 900 },
+      });
+    }
+    if (path === '/auth/logout') return route.fulfill({ status: 204 });
+    if (path === '/materials/' + id) return route.fulfill({ json: material });
+    if (path === '/materials/' + id + '/reservations') {
+      posts++;
+      return route.abort('connectionreset');
+    }
+    if (path === '/me/reservations') {
+      reads++;
+      const now = Date.now();
+      const reservation = {
+        id: user.id,
+        status: 'ACTIVE',
+        material,
+        createdAt: new Date(now).toISOString(),
+        expiresAt: new Date(now + 3600_000).toISOString(),
+        completedAt: null,
+        pickupCode: 'TEST-2345-ABCD',
+      };
+      return route.fulfill({
+        json: { page: 1, pageSize: 50, total: 1, items: [reservation] },
+      });
+    }
+    return route.fulfill({ status: 404, json: {} });
+  });
+  await page.goto(detail);
+  await page.getByRole('button', { name: 'Reservar este material' }).click();
+  await expect(
+    page.getByText('Reservado por você', { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText('Código para retirada')).toBeVisible();
+  await page.getByRole('button', { name: 'Sair', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Entrar para reservar' }),
+  ).toBeVisible();
+  await expect(page.getByText('Código para retirada')).toHaveCount(0);
+  expect({ posts, reads }).toEqual({ posts: 1, reads: 1 });
+});
+
+test('unavailable catalog shows loading, retry and the server permission state', async ({
+  page,
+}) => {
+  let respond;
+  const gate = new Promise((resolve) => {
+    respond = resolve;
+  });
+  let requests = 0;
+  await page.route('**/api/v1/**', async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.endsWith('/materials')) {
+      requests++;
+      await gate;
+      return route.fulfill({ status: requests === 1 ? 503 : 401, json: {} });
+    }
+    if (path.endsWith('/institutions'))
+      return route.fulfill({
+        json: { items: [], total: 0, page: 1, pageSize: 50 },
+      });
+    return route.fulfill({ status: 401, json: {} });
+  });
+  await page.goto('/catalogo');
+  await expect(page.getByText('Consultando o acervo…')).toBeVisible();
+  respond();
+  await page.getByRole('button', { name: 'Tentar novamente' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Sessão necessária' }),
+  ).toBeVisible();
+});
