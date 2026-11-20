@@ -35,6 +35,15 @@ describe('Generated OpenAPI surface (e2e)', () => {
       'patch /api/v1/me': 'updateMe',
       'get /api/v1/institutions': 'listInstitutions',
       'get /api/v1/me/institutions': 'listMyInstitutions',
+      'get /api/v1/materials': 'listMaterials',
+      'get /api/v1/materials/{id}': 'getMaterial',
+      'post /api/v1/uploads': 'uploadMaterialPhoto',
+      'post /api/v1/donations': 'createDonation',
+      'get /api/v1/me/donations': 'listMyDonations',
+      'post /api/v1/donations/{id}/cancel': 'cancelDonation',
+      'get /api/v1/institutions/{institutionId}/materials': 'institutionMaterials',
+      'post /api/v1/institutions/{institutionId}/materials/{id}/receive': 'receiveDonation',
+      'post /api/v1/institutions/{institutionId}/materials/{id}/reject': 'rejectDonation',
     };
     for (const [key, operationId] of Object.entries(expected)) {
       const [method, path] = key.split(' ');

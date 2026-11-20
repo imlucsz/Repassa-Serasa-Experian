@@ -6,8 +6,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { OpenAPIObject } from '@nestjs/swagger';
 import cookie from '@fastify/cookie';
 import helmet from '@fastify/helmet';
+import multipart from '@fastify/multipart';
 import { ValidationError } from 'class-validator';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { UPLOAD_MAX_BYTES } from './uploads/upload-policy';
 import type { EnvConfig } from './config/env.validation';
 
 export const API_PREFIX = 'api/v1';
@@ -34,6 +36,10 @@ export async function configureApp(
   // Security headers; CSP off because this is a JSON API and Swagger UI serves its own assets.
   await app.register(helmet, { contentSecurityPolicy: false });
   await app.register(cookie);
+  // Multipart only for POST /uploads: one file, hard 5 MiB cap (contract).
+  await app.register(multipart, {
+    limits: { fileSize: UPLOAD_MAX_BYTES, files: 1, fields: 4, fieldNameSize: 64 },
+  });
 
   app.setGlobalPrefix(API_PREFIX);
 
