@@ -14,6 +14,7 @@ import {
   Link,
   useLoaderData,
   useLocation,
+  useNavigation,
   useSearchParams,
   type ShouldRevalidateFunctionArgs,
   type LoaderFunctionArgs,
@@ -83,10 +84,14 @@ export function Component() {
   const { materials, institutions } = useLoaderData<typeof loader>();
   const [params, setParams] = useSearchParams();
   const location = useLocation();
+  const destination = useNavigation().location;
+  const nextFilters = () => new URLSearchParams(
+    destination?.pathname === location.pathname ? destination.search : params,
+  );
   const view = params.get('vista');
   const grid = view === 'grade' || (view !== 'estante' && defaultGrid());
   function setGrid(enabled: boolean) {
-    const next = new URLSearchParams(params);
+    const next = nextFilters();
     next.set('vista', enabled ? 'grade' : 'estante');
     setParams(next, { replace: true, preventScrollReset: true });
   }
@@ -94,7 +99,7 @@ export function Component() {
     setParams(view ? { vista: view } : {}, { preventScrollReset: true });
   }
   function setCategory(category: string) {
-    const next = new URLSearchParams(params);
+    const next = nextFilters();
     next.delete('page');
     if (category) next.set('category', category);
     else next.delete('category');
@@ -117,13 +122,12 @@ export function Component() {
   function filter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     filterSubmitted.current = true;
-    const next = new URLSearchParams();
-    if (view) next.set('vista', view);
-    const category = params.get('category');
-    if (category) next.set('category', category);
+    const next = nextFilters();
+    next.delete('page');
     new FormData(event.currentTarget).forEach((value, key) => {
       const text = String(value).trim();
       if (text) next.set(key, text);
+      else next.delete(key);
     });
     setParams(next, { preventScrollReset: true });
   }
@@ -165,11 +169,7 @@ export function Component() {
       <form
         className="filters"
         onSubmit={filter}
-        key={[
-          params.get('q'),
-          params.get('category'),
-          params.get('institutionId'),
-        ].join('|')}
+        key={JSON.stringify([params.get('q'), params.get('institutionId')])}
         aria-label="Filtrar materiais"
       >
         <Field id="catalog-search" label="Buscar no acervo">
