@@ -1,5 +1,3 @@
-import { CropBox, SheetDef } from '../types/film';
-
 /**
  * Standard cubic smoothstep: x * x * (3 - 2 * x) clamped to [0, 1]
  */
@@ -30,9 +28,10 @@ export function F(r: number, ws: number, gap: number, d: number): number {
 }
 
 /**
- * Compute relative index r = (v - s) modulo count (36), normalized to [-count/2, count/2)
+ * Compute relative index r = (v - s) modulo the collection size, normalized to (-count/2, count/2]
  */
-export function getRelativeIndex(v: number, s: number, count = 36): number {
+export function getRelativeIndex(v: number, s: number, count: number): number {
+  if (count <= 1) return 0;
   let r = (v - s) % count;
   if (r > count / 2) r -= count;
   if (r <= -count / 2) r += count;
@@ -57,23 +56,25 @@ export function getOpenness(r: number): number {
 }
 
 /**
- * Active film index in [0, 11] given scroll s
+ * Active material index at the current scroll position
  */
-export function getActiveFilmIndex(s: number, total = 12): number {
+export function getActiveIndex(s: number, total: number): number {
+  if (total <= 1) return 0;
   const rounded = Math.round(s);
   return ((rounded % total) + total) % total;
 }
 
 /**
- * Find the closest target on the endless loop for a desired film index
+ * Find the closest target on the endless loop for a desired material index
  */
-export function getShortestLoopTarget(currentT: number, targetFilmIndex: number, total = 12): number {
-  const currentBase = Math.round(currentT);
-  const currentFilm = ((currentBase % total) + total) % total;
-  let diff = (targetFilmIndex - currentFilm) % total;
-  if (diff > 6) diff -= 12;
-  if (diff < -6) diff += 12;
-  return currentBase + diff;
+export function getShortestLoopTarget(
+  currentT: number,
+  targetIndex: number,
+  total: number,
+): number {
+  if (total === 0) return 0;
+  const base = Math.round(currentT);
+  return base + getRelativeIndex(targetIndex, base, total);
 }
 
 /**
@@ -103,7 +104,7 @@ export function calcTapeTransform(
   viewportW: number,
   tiltX: number,
   tiltY: number,
-  lift: number
+  lift: number,
 ): TapeTransformResult {
   const x = F(r, ws, gap, d);
   const isOffscreen = Math.abs(x) > viewportW / 2 + 1.5 * d;
@@ -149,21 +150,5 @@ export function calcTapeTransform(
     coverShade,
     visible: true,
     transformString,
-  };
-}
-
-/**
- * CSS background crop calculation
- */
-export function getCropBackgroundStyle(crop: CropBox, sheet: SheetDef) {
-  const sizeX = (sheet.w / crop.w) * 100;
-  const sizeY = (sheet.h / crop.h) * 100;
-  const posX = (crop.x / (sheet.w - crop.w)) * 100;
-  const posY = (crop.y / (sheet.h - crop.h)) * 100;
-  return {
-    backgroundImage: `url("${sheet.url}")`,
-    backgroundSize: `${sizeX}% ${sizeY}%`,
-    backgroundPosition: `${posX}% ${posY}%`,
-    backgroundRepeat: 'no-repeat',
   };
 }
