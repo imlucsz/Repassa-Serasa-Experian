@@ -107,3 +107,22 @@ test('institutions loader follows page metadata', async (t) => {
   assert.deepEqual(await listInstitutions(), institutions);
   assert.equal(fetch.mock.callCount(), institutions.length);
 });
+
+test('catalog accepts DEV-03 upload URLs and rejects other relative paths', async (t) => {
+  const [book] = (await mockCatalog.listMaterials()).items;
+  const imageUrl = '/api/v1/uploads/' + book.id + '.jpg';
+  const fetch = t.mock.method(globalThis, 'fetch', async () =>
+    Response.json({ ...book, imageUrl }),
+  );
+  assert.equal((await getMaterial(book.id)).imageUrl, imageUrl);
+  for (const path of [
+    '//outside.invalid/object',
+    '/api/v1/auth/refresh',
+    imageUrl + '/../hidden',
+  ]) {
+    fetch.mock.mockImplementation(async () =>
+      Response.json({ ...book, imageUrl: path }),
+    );
+    await assert.rejects(getMaterial(book.id), { status: 502 });
+  }
+});
