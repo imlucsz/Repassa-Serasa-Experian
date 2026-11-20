@@ -6,11 +6,10 @@ import {
   F,
   getRelativeIndex,
   getTapeDimensions,
-  getOpenness,
-  getActiveFilmIndex,
+  getActiveIndex,
   getShortestLoopTarget,
   calcTapeTransform,
-} from './shelfMath';
+} from './shelfMath.ts';
 
 test('smoothstep boundary and midpoint values', () => {
   assert.equal(smoothstep(0), 0);
@@ -33,40 +32,40 @@ test('B(r) continuous smooth step', () => {
 });
 
 test('horizontal placement formula F(r)', () => {
-  const { H, ws, d, gap } = getTapeDimensions(400);
+  const { ws, d, gap } = getTapeDimensions(400);
   assert.equal(F(0, ws, gap, d), 0);
   // At r = 1: 1*(ws+gap) + (d - ws + 1.6*gap)*0.5
-  const expectedR1 = (ws + gap) + (d - ws + 1.6 * gap) * 0.5;
+  const expectedR1 = ws + gap + (d - ws + 1.6 * gap) * 0.5;
   assert.ok(Math.abs(F(1, ws, gap, d) - expectedR1) < 1e-6);
   // Negative symmetry
   assert.ok(Math.abs(F(-1, ws, gap, d) + expectedR1) < 1e-6);
 });
 
 test('relativeIndex correctly wraps 36 items into [-18, 18)', () => {
-  assert.equal(getRelativeIndex(17, 17), 0);
-  assert.equal(getRelativeIndex(18, 17), 1);
-  assert.equal(getRelativeIndex(16, 17), -1);
+  assert.equal(getRelativeIndex(17, 17, 36), 0);
+  assert.equal(getRelativeIndex(18, 17, 36), 1);
+  assert.equal(getRelativeIndex(16, 17, 36), -1);
   // Loop wrap
-  assert.equal(getRelativeIndex(0, 35), 1);
-  assert.equal(getRelativeIndex(35, 0), -1);
+  assert.equal(getRelativeIndex(0, 35, 36), 1);
+  assert.equal(getRelativeIndex(35, 0, 36), -1);
 });
 
-test('getActiveFilmIndex maps scroll positions to 0-11 films', () => {
-  assert.equal(getActiveFilmIndex(5), 5);
-  assert.equal(getActiveFilmIndex(17), 5); // 17 = 12 + 5 (Noon in Ashes)
-  assert.equal(getActiveFilmIndex(29), 5); // 29 = 24 + 5
-  assert.equal(getActiveFilmIndex(-7), 5);
-  assert.equal(getActiveFilmIndex(0), 0);
-  assert.equal(getActiveFilmIndex(11.9), 0);
-  assert.equal(getActiveFilmIndex(11.2), 11);
+test('getActiveIndex maps scroll positions to 0-11 films', () => {
+  assert.equal(getActiveIndex(5, 12), 5);
+  assert.equal(getActiveIndex(17, 12), 5); // 17 = 12 + 5 (Noon in Ashes)
+  assert.equal(getActiveIndex(29, 12), 5); // 29 = 24 + 5
+  assert.equal(getActiveIndex(-7, 12), 5);
+  assert.equal(getActiveIndex(0, 12), 0);
+  assert.equal(getActiveIndex(11.9, 12), 0);
+  assert.equal(getActiveIndex(11.2, 12), 11);
 });
 
 test('getShortestLoopTarget finds closest decade or film target', () => {
   // Noon in Ashes is index 5, starting at s = 17
   // Target 1950s (index 0, Valley): shortest from 17 is 12 (diff -5), rather than 24 (diff +7)
-  assert.equal(getShortestLoopTarget(17, 0), 12);
+  assert.equal(getShortestLoopTarget(17, 0, 12), 12);
   // Target 1980s (index 9, Long Tide): from 17 to 9 diff is +4 -> 21
-  assert.equal(getShortestLoopTarget(17, 9), 21);
+  assert.equal(getShortestLoopTarget(17, 9, 12), 21);
 });
 
 test('calcTapeTransform computes active tape and offscreen culling', () => {
@@ -82,4 +81,21 @@ test('calcTapeTransform computes active tape and offscreen culling', () => {
   // Far tape offscreen culling
   const offscreen = calcTapeTransform(15, H, ws, d, gap, 1000, 0, 0, 0);
   assert.equal(offscreen.visible, false);
+});
+
+test('selection takes a shortest path for each collection size', () => {
+  for (const count of [1, 2, 5, 12, 17, 50]) {
+    for (let target = 0; target < count; target++) {
+      const origin = -count * 2;
+      const destination = getShortestLoopTarget(origin, target, count);
+      assert.ok(Math.abs(destination - origin) <= count / 2);
+      assert.equal(getActiveIndex(destination, count), target);
+    }
+  }
+});
+
+test('empty collections have a stable resting position', () => {
+  assert.equal(getShortestLoopTarget(4, 0, 0), 0);
+  assert.equal(getRelativeIndex(4, 0, 0), 0);
+  assert.equal(getActiveIndex(4, 0), 0);
 });
