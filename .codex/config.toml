@@ -1,0 +1,3 @@
+# Keep the existing ECC skills available without starting its duplicate browser MCP.
+[plugins."ecc@ecc".mcp_servers."chrome-devtools"]
+enabled = false
