@@ -8,7 +8,11 @@ Use Node.js 22.12 ou superior. Na raiz do repositório, execute `npm ci` e `npm 
 
 O modo padrão consulta a API na mesma origem em `/api/v1`. Encaminhe esse caminho ao backend no ambiente de integração e configure o servidor para servir `index.html` nas rotas do aplicativo. Os projetos de backend e vídeo têm dependências e configurações próprias.
 
-Para explorar a estante durante o desenvolvimento, crie `.env.local` com `VITE_DATA_MODE=mock` e reinicie o Vite. O acervo identifica a demonstração e utiliza instituições e materiais fictícios. A compilação de produção usa a API.
+Para usar instituições e materiais fictícios, defina `VITE_DATA_MODE=mock` antes de iniciar o Vite ou executar `npm run build`. A interface exibe um aviso de demonstração. Sem esse valor, o frontend consulta a API, inclusive em caso de erro.
+
+### Demonstração na Vercel Hobby
+
+Importe o repositório com diretório raiz `.` e Node.js `22.x`. O `vercel.json` configura Vite, instalação com `npm ci`, compilação com `npm run build`, saída `dist` e reescrita de `/(.*)` para `/index.html`. Configure `VITE_DATA_MODE=mock` no ambiente Production da demonstração e também em Preview se quiser validar PRs com dados fictícios. Alterações nessa variável exigem uma nova compilação.
 
 | Rota pública | Uso |
 | --- | --- |
