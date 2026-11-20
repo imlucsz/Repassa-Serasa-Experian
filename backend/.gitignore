@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+pgdata/
+test/.e2e-state.json
+test/.pg-daemon.pid
