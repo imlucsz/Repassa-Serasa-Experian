@@ -180,7 +180,9 @@ async function refresh(): Promise<string | null> {
         if (version !== sessionVersion) return null;
         return saveSession(session).accessToken;
       })
-      .catch(() => {
+      .catch((error: unknown) => {
+        if (!(error instanceof AuthError) || ![401, 403].includes(error.status))
+          throw error;
         if (version === sessionVersion) clearSession();
         return null;
       })
@@ -282,7 +284,15 @@ export function safeReturnTo(value: string | null, fallback = '/catalogo') {
     const pathname = url.pathname.replace(/\/+$/, '') || '/';
     const implementedPath =
       pathname === '/' ||
-      pathname === '/catalogo' ||
+      [
+        '/catalogo',
+        '/perfil',
+        '/doar',
+        '/minhas-doacoes',
+        '/instituicao',
+        '/instituicao/recebimentos',
+        '/instituicao/estoque',
+      ].includes(pathname) ||
       /^\/materiais\/[a-z\d_-]+$/i.test(pathname);
     return url.origin === 'https://repassa.invalid' && implementedPath
       ? `${pathname}${url.search}${url.hash}`
@@ -290,4 +300,34 @@ export function safeReturnTo(value: string | null, fallback = '/catalogo') {
   } catch {
     return fallback;
   }
+}
+
+export async function requestProfile(
+  signal: AbortSignal,
+  displayName?: string,
+): Promise<AuthUser> {
+  const owner = currentUser?.id;
+  const version = sessionVersion;
+  const response = await authenticatedFetch('/api/v1/me', {
+    method: displayName === undefined ? 'GET' : 'PATCH',
+    headers: requestHeaders(displayName !== undefined),
+    body:
+      displayName === undefined ? undefined : JSON.stringify({ displayName }),
+    signal,
+  });
+  const profile = await parseResponse<AuthUser>(response);
+  if (
+    !owner ||
+    profile?.id !== owner ||
+    typeof profile.displayName !== 'string' ||
+    typeof profile.email !== 'string' ||
+    !['STUDENT', 'STAFF', 'ADMIN'].includes(profile.role)
+  )
+    throw new AuthError('Resposta de perfil inválida.', 502);
+  signal.throwIfAborted();
+  if (version !== sessionVersion || owner !== currentUser?.id)
+    throw new AuthError('Sessão alterada.', 401);
+  currentUser = profile;
+  publish();
+  return profile;
 }

@@ -100,7 +100,8 @@ export function LoginPage() {
   const returnTo = safeReturnTo(
     params.get('returnTo') ??
       params.get('next') ??
-      (params.get('intent') === 'doar' ? '/#doar' : null),
+      (params.get('intent') === 'doar' ? '/doar' : null),
+    user?.role === 'STAFF' ? '/instituicao' : '/catalogo',
   );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -133,7 +134,7 @@ export function LoginPage() {
 
   return (
     <AuthFrame>
-      <span className="auth-kicker">ACESSO DE ESTUDANTE</span>
+      <span className="auth-kicker">ACESSO À CONTA</span>
       <h1>
         Entrar no
         <br />
@@ -250,8 +251,7 @@ export function RegisterPage() {
   const returnTo = safeReturnTo(
     params.get('returnTo') ??
       params.get('next') ??
-      (params.get('intent') === 'doar' ? '/#doar' : null),
-    '/catalogo',
+      (params.get('intent') === 'doar' ? '/doar' : null),
   );
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');

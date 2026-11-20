@@ -135,16 +135,15 @@ export function Home() {
           <h2>Seu material pode continuar ensinando.</h2>
           <p>
             A doação acontece em uma instituição parceira, que recebe o material
-            antes de ele entrar no acervo. O envio de doações pelo site ainda
-            não está disponível nesta etapa.
+            antes de ele entrar no acervo.
           </p>
           <div className="home-actions">
-            {!user && (
+            {(!user || user.role === 'STUDENT') && (
               <Link
-                to="/cadastro?intent=doar"
+                to={user ? '/doar' : '/cadastro?intent=doar'}
                 className="home-button home-button-light"
               >
-                Criar conta estudantil{' '}
+                {user ? 'Doar material' : 'Criar conta estudantil'}{' '}
                 <ArrowRight size={17} aria-hidden="true" />
               </Link>
             )}
