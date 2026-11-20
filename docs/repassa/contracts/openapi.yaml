@@ -1,0 +1,1452 @@
+openapi: 3.0.3
+info:
+  title: RePassa API
+  version: 0.1.0
+  description: Proposed MVP contract. See docs/repassa/API.md and BUSINESS_RULES.md.
+servers:
+- url: /api/v1
+paths:
+  /health:
+    get:
+      operationId: health
+      summary: health
+      description: Database readiness, no sensitive details.
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+  /auth/register:
+    post:
+      operationId: register
+      summary: register
+      description: Student only. Enforce allowed browser origin; set refresh cookie.
+      security: []
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          headers:
+            Set-Cookie:
+              description: HttpOnly refresh cookie; rotated or cleared.
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterInput'
+      parameters:
+      - name: X-Repassa-Request
+        in: header
+        required: true
+        description: Constant non-secret browser request marker; enforce configured Origin separately.
+        schema:
+          type: string
+          enum:
+          - '1'
+  /auth/login:
+    post:
+      operationId: login
+      summary: login
+      description: All active roles. Generic failures; origin check.
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          headers:
+            Set-Cookie:
+              description: HttpOnly refresh cookie; rotated or cleared.
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginInput'
+      parameters:
+      - name: X-Repassa-Request
+        in: header
+        required: true
+        description: Constant non-secret browser request marker; enforce configured Origin separately.
+        schema:
+          type: string
+          enum:
+          - '1'
+  /auth/refresh:
+    post:
+      operationId: refresh
+      summary: refresh
+      description: Rotate refresh cookie atomically; enforce allowed browser origin.
+      security:
+      - refreshCookie: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          headers:
+            Set-Cookie:
+              description: HttpOnly refresh cookie; rotated or cleared.
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: X-Repassa-Request
+        in: header
+        required: true
+        description: Constant non-secret browser request marker; enforce configured Origin separately.
+        schema:
+          type: string
+          enum:
+          - '1'
+  /auth/logout:
+    post:
+      operationId: logout
+      summary: logout
+      description: Origin check, revoke refresh family if present, clear cookie. Safe if already logged out.
+      security:
+      - refreshCookie: []
+      - {}
+      responses:
+        '204':
+          description: No content
+          headers:
+            Set-Cookie:
+              description: HttpOnly refresh cookie; rotated or cleared.
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: X-Repassa-Request
+        in: header
+        required: true
+        description: Constant non-secret browser request marker; enforce configured Origin separately.
+        schema:
+          type: string
+          enum:
+          - '1'
+  /me:
+    get:
+      operationId: getMe
+      summary: getMe
+      description: 'Access: authenticated.'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+    patch:
+      operationId: updateMe
+      summary: updateMe
+      description: 'Access: authenticated.'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileInput'
+  /institutions:
+    get:
+      operationId: listInstitutions
+      summary: listInstitutions
+      description: Active institutions only.
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstitutionPage'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+  /me/institutions:
+    get:
+      operationId: listMyInstitutions
+      summary: listMyInstitutions
+      description: 'Access: STAFF.'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstitutionPage'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+  /materials:
+    get:
+      operationId: listMaterials
+      summary: listMaterials
+      description: AVAILABLE only, reconcile expiry before availability-dependent reads.
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialPage'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 120
+      - name: category
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/Category'
+      - name: institutionId
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+  /materials/{id}:
+    get:
+      operationId: getMaterial
+      summary: getMaterial
+      description: AVAILABLE only; inaccessible/unavailable 404.
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Material'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /uploads:
+    post:
+      operationId: uploadMaterialPhoto
+      summary: uploadMaterialPhoto
+      description: Owner-bound validated JPEG/PNG/WebP <=5 MiB, private until public availability.
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResult'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required:
+              - file
+  /donations:
+    post:
+      operationId: createDonation
+      summary: createDonation
+      description: Creates one PENDING_RECEIPT material; uploadId optional, own unused upload only.
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedMaterial'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DonationInput'
+  /me/donations:
+    get:
+      operationId: listMyDonations
+      summary: listMyDonations
+      description: 'Access: STUDENT.'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedMaterialPage'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+      - name: status
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/MaterialStatus'
+  /donations/{id}/cancel:
+    post:
+      operationId: cancelDonation
+      summary: cancelDonation
+      description: Owner only, pending receipt only.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedMaterial'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /materials/{id}/reservations:
+    post:
+      operationId: reserveMaterial
+      summary: reserveMaterial
+      description: Atomic single live reservation; other than donor.
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /me/reservations:
+    get:
+      operationId: listMyReservations
+      summary: listMyReservations
+      description: 'Access: STUDENT.'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationPage'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+      - name: status
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/ReservationStatus'
+  /reservations/{id}/cancel:
+    post:
+      operationId: cancelReservation
+      summary: cancelReservation
+      description: Owner only, active not expired; code null after cancellation.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /institutions/{institutionId}/dashboard:
+    get:
+      operationId: institutionDashboard
+      summary: institutionDashboard
+      description: Membership-scoped counts, reconciled expiry.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: institutionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /institutions/{institutionId}/materials:
+    get:
+      operationId: institutionMaterials
+      summary: institutionMaterials
+      description: Membership scoped, no cross-tenant data.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedMaterialPage'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: institutionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+      - name: status
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/MaterialStatus'
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 120
+  /institutions/{institutionId}/materials/{id}/receive:
+    post:
+      operationId: receiveDonation
+      summary: receiveDonation
+      description: Membership and pending receipt; confirm physical arrival.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedMaterial'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: institutionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /institutions/{institutionId}/materials/{id}/reject:
+    post:
+      operationId: rejectDonation
+      summary: rejectDonation
+      description: Membership and pending receipt; rejected terminal.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedMaterial'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: institutionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectInput'
+  /institutions/{institutionId}/pickups/confirm:
+    post:
+      operationId: confirmPickup
+      summary: confirmPickup
+      description: Scoped staff, atomic one-time code, valid before expiry; generic invalid code response.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PickupResult'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: institutionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PickupInput'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: repassa_refresh
+  schemas:
+    Role:
+      type: string
+      enum:
+      - STUDENT
+      - STAFF
+      - ADMIN
+    Category:
+      type: string
+      enum:
+      - BOOK
+      - NOTEBOOK
+      - SUPPLIES
+      - OTHER
+    Condition:
+      type: string
+      enum:
+      - LIKE_NEW
+      - GOOD
+      - FAIR
+    MaterialStatus:
+      type: string
+      enum:
+      - PENDING_RECEIPT
+      - AVAILABLE
+      - RESERVED
+      - DELIVERED
+      - CANCELED
+      - REJECTED
+    ReservationStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - CANCELED
+      - EXPIRED
+      - COMPLETED
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        requestId:
+          type: string
+        fieldErrors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+      required:
+      - code
+      - message
+      - requestId
+    User:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          $ref: '#/components/schemas/Role'
+      required:
+      - id
+      - displayName
+      - email
+      - role
+    RegisterInput:
+      type: object
+      additionalProperties: false
+      properties:
+        displayName:
+          type: string
+          minLength: 2
+          maxLength: 80
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          minLength: 12
+          maxLength: 128
+          format: password
+      required:
+      - displayName
+      - email
+      - password
+    LoginInput:
+      type: object
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          minLength: 1
+          maxLength: 128
+          format: password
+      required:
+      - email
+      - password
+    ProfileInput:
+      type: object
+      additionalProperties: false
+      properties:
+        displayName:
+          type: string
+          minLength: 2
+          maxLength: 80
+      required:
+      - displayName
+    AuthResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        accessToken:
+          type: string
+        expiresIn:
+          type: integer
+          minimum: 1
+        user:
+          $ref: '#/components/schemas/User'
+      required:
+      - accessToken
+      - expiresIn
+      - user
+    Institution:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        publicAddress:
+          type: string
+        pickupInstructions:
+          type: string
+      required:
+      - id
+      - name
+      - publicAddress
+      - pickupInstructions
+    Material:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          $ref: '#/components/schemas/Category'
+        condition:
+          $ref: '#/components/schemas/Condition'
+        imageUrl:
+          type: string
+          format: uri
+          nullable: true
+        institution:
+          $ref: '#/components/schemas/Institution'
+        status:
+          $ref: '#/components/schemas/MaterialStatus'
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - title
+      - description
+      - category
+      - condition
+      - imageUrl
+      - institution
+      - status
+      - createdAt
+      description: Safe material representation. Public catalog endpoints return only AVAILABLE; private reservation history
+        may include other states. No donor identity.
+    ManagedMaterial:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          $ref: '#/components/schemas/Category'
+        condition:
+          $ref: '#/components/schemas/Condition'
+        imageUrl:
+          type: string
+          format: uri
+          nullable: true
+        institution:
+          $ref: '#/components/schemas/Institution'
+        status:
+          $ref: '#/components/schemas/MaterialStatus'
+        createdAt:
+          type: string
+          format: date-time
+        receivedAt:
+          type: string
+          format: date-time
+          nullable: true
+        rejectReason:
+          type: string
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - title
+      - description
+      - category
+      - condition
+      - imageUrl
+      - institution
+      - status
+      - createdAt
+      - receivedAt
+      - rejectReason
+      - updatedAt
+      description: Owner/staff representation; no donor personal details.
+    DonationInput:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 120
+        description:
+          type: string
+          minLength: 10
+          maxLength: 1000
+        category:
+          $ref: '#/components/schemas/Category'
+        condition:
+          $ref: '#/components/schemas/Condition'
+        institutionId:
+          type: string
+          format: uuid
+        uploadId:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - title
+      - description
+      - category
+      - condition
+      - institutionId
+    UploadResult:
+      type: object
+      additionalProperties: false
+      properties:
+        uploadId:
+          type: string
+          format: uuid
+      required:
+      - uploadId
+    RejectInput:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 240
+      required:
+      - reason
+    Reservation:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        material:
+          $ref: '#/components/schemas/Material'
+        status:
+          $ref: '#/components/schemas/ReservationStatus'
+        expiresAt:
+          type: string
+          format: date-time
+        pickupCode:
+          type: string
+          nullable: true
+          description: Only owner ACTIVE unexpired; otherwise null.
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - id
+      - material
+      - status
+      - expiresAt
+      - pickupCode
+      - createdAt
+      - completedAt
+    PickupInput:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          minLength: 12
+          maxLength: 14
+          pattern: ^[0-9A-HJ-KM-NP-TV-Za-hj-km-np-tv-z]{4}-?[0-9A-HJ-KM-NP-TV-Za-hj-km-np-tv-z]{4}-?[0-9A-HJ-KM-NP-TV-Za-hj-km-np-tv-z]{4}$
+      required:
+      - code
+    PickupResult:
+      type: object
+      additionalProperties: false
+      properties:
+        reservationId:
+          type: string
+          format: uuid
+        materialId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - COMPLETED
+        completedAt:
+          type: string
+          format: date-time
+      required:
+      - reservationId
+      - materialId
+      - status
+      - completedAt
+    Dashboard:
+      type: object
+      additionalProperties: false
+      properties:
+        pendingReceipt:
+          type: integer
+          minimum: 0
+        available:
+          type: integer
+          minimum: 0
+        reserved:
+          type: integer
+          minimum: 0
+        delivered:
+          type: integer
+          minimum: 0
+      required:
+      - pendingReceipt
+      - available
+      - reserved
+      - delivered
+    Health:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+      required:
+      - status
+    MaterialPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Material'
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 50
+        total:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - pageSize
+      - total
+    ManagedMaterialPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ManagedMaterial'
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 50
+        total:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - pageSize
+      - total
+    ReservationPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reservation'
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 50
+        total:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - pageSize
+      - total
+    InstitutionPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Institution'
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 50
+        total:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - pageSize
+      - total
+  responses:
+    Error:
+      description: Safe error response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
