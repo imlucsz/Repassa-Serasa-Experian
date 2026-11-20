@@ -53,3 +53,7 @@ Other source resources inspected include `AGENTS.md`, `PROJECT_EXCLUSIONS.md`, `
 | Review and security | ECC `typescript-patterns`, `security-review`, `verification-loop`, user `review-agent` and Superpowers review and verification | On demand. Use defensive scope and actual RePassa contracts and checks. |
 | Context and orchestration | RTK, Graphify, Headroom, Superpowers and ECC `context-budget` / `agent-harness-construction` | Optional host resources. Use the repository role catalog for specialized delegation with explicit path ownership. |
 | Other user skills | `find-skills`, `hyperframes`, `hyperframes-cli`, `hyperframes-registry`, `media-use`, `remotion-to-hyperframes`, `reverse-any-video`, `style-sampling` | Discovery/media workflows are independent of this application and tooling PR. |
+
+## Optional design packs
+
+See [installation and invocation](DESIGN_TOOLS.md) for Ink Studio, Taste, Impeccable, UI UX Pro Max and Emil Kowalski's skills.

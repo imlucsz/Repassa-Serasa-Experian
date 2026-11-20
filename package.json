@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc -p tsconfig.json && tsc -p tsconfig.tools.json",
-    "test:ci": "tsx --test \"src/**/*.test.ts\""
+    "test:ci": "tsx --test \"src/**/*.test.ts\"",
+    "design:setup": "node scripts/setup-design-skills.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^6.1.1",
@@ -21,10 +22,13 @@
     "vite": "^8.3.0"
   },
   "devDependencies": {
+    "@shapeshift-labs/ink-studio": "https://codeload.github.com/siliconjungle/shapeshift-labs-ink-studio/tar.gz/52adc0c05f337c1b0bb0469dad2196f59cdb865d",
     "@types/node": "^22.14.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "impeccable": "4.10.0",
     "tsx": "^4.21.0",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "ui-ux-pro-max-cli": "2.15.0"
   }
 }
