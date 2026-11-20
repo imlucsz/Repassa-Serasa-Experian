@@ -7,6 +7,7 @@ import {
 import { Prisma } from '@prisma/client';
 import type { MaterialStatus } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { ReservationExpiryService } from '../reservations/reservation-expiry.service';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import {
   toManagedMaterialDto,
@@ -37,7 +38,10 @@ interface LockedMaterialRow {
 /** Materials domain service — donation lifecycle + institution stock. */
 @Injectable()
 export class MaterialsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly expiry: ReservationExpiryService,
+  ) {}
 
   /** Public catalog: AVAILABLE at active institutions only. */
   async listCatalog(query: CatalogQueryDto): Promise<{
@@ -46,6 +50,8 @@ export class MaterialsService {
     pageSize: number;
     total: number;
   }> {
+    // Expired reservations restore their materials before availability reads.
+    await this.expiry.reconcileExpired();
     const where: Prisma.MaterialWhereInput = {
       status: 'AVAILABLE',
       institution: { isActive: true },
@@ -75,6 +81,7 @@ export class MaterialsService {
 
   /** Public detail: AVAILABLE only — anything else is a generic 404. */
   async getPublicMaterial(id: string): Promise<MaterialDto> {
+    await this.expiry.reconcileExpired({ materialId: id });
     const material = await this.prisma.material.findFirst({
       where: { id, status: 'AVAILABLE', institution: { isActive: true } },
       include: { institution: true },
@@ -207,6 +214,7 @@ export class MaterialsService {
     institutionId: string,
     query: ManagedMaterialQueryDto,
   ): Promise<ManagedPage> {
+    await this.expiry.reconcileExpired({ institutionId });
     const where: Prisma.MaterialWhereInput = {
       institutionId,
       ...(query.status ? { status: query.status } : {}),
