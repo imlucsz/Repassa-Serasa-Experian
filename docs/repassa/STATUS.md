@@ -4,7 +4,9 @@ Not a claim of completed implementation. Current GitHub inspection: frontend Vit
 | ID | Status | Evidence / blocker |
 |---|---|---|
 | SH-01 | ready for owner review | this kit; base implementation not changed |
-| DEV-01..04 | not started / not verified | no backend on inspected main |
+| DEV-01 | merged (PR #3) | NestJS/Fastify/Prisma/PG16 foundation; CI backend-quality green |
+| DEV-02 | merged (PR #8, `b17e862`) | auth register/login/refresh/logout, GET/PATCH /me, /institutions + /me/institutions; Argon2id, HS256 access JWT, refresh rotation w/ replay revocation, CSRF marker + origin allowlist, per-IP/identity rate limits; 43 unit + 55 e2e on disposable PG16, 4/4 CI checks green |
+| DEV-03..04 | not started | next backend slices (materials/reservations) |
 | UX-01..04 | not started / not verified | existing shelf foundation only |
 | SH-02..03 | pending | dependencies above |
 
