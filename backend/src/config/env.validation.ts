@@ -27,6 +27,8 @@ export interface EnvConfig {
    * (HTTPS only); may be enabled explicitly for local HTTPS testing.
    */
   cookieSecure: boolean;
+  /** Local disk directory for processed upload objects (private; served via controlled route). */
+  uploadDir: string;
   seedDemoPassword?: string;
 }
 
@@ -193,6 +195,7 @@ export function validateEnv(raw: Record<string, unknown>): EnvConfig {
       parseOptionalInt('REFRESH_TOKEN_TTL_DAYS', env('REFRESH_TOKEN_TTL_DAYS'), 1, 90, errors) ??
       DEFAULT_REFRESH_TOKEN_TTL_DAYS,
     cookieSecure,
+    uploadDir: env('UPLOAD_DIR')?.trim() || 'storage/uploads',
     seedDemoPassword: parseOptionalSecret('SEED_DEMO_PASSWORD', env('SEED_DEMO_PASSWORD'), 12, errors),
   };
 
