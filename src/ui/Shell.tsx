@@ -9,6 +9,8 @@ import {
 } from 'react-router-dom';
 import { ArrowDownRight, BookOpen } from 'lucide-react';
 
+import { isDemo } from '../data/catalog';
+
 export function Shell() {
   const main = useRef<HTMLElement>(null);
   const { pathname, hash } = useLocation();
@@ -50,6 +52,9 @@ export function Shell() {
         </div>
       </header>
       <main id="principal" ref={main} tabIndex={-1}>
+        {isDemo && (
+          <p className="demo-notice">Demonstração com dados fictícios</p>
+        )}
         {navigation.state === 'loading' && (
           <div role="status" className="loading-line">
             Carregando…

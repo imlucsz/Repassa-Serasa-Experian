@@ -19,8 +19,7 @@ export type {
   MaterialQuery,
 } from './contract.ts';
 
-export const isDemo =
-  import.meta.env?.DEV === true && import.meta.env.VITE_DATA_MODE === 'mock';
+export const isDemo = import.meta.env?.VITE_DATA_MODE === 'mock';
 
 async function read(path: string, signal?: AbortSignal): Promise<unknown> {
   let response: Response;
