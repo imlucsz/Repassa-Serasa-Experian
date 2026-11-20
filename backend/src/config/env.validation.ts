@@ -165,6 +165,11 @@ export function validateEnv(raw: Record<string, unknown>): EnvConfig {
     errors.push('JWT_ACCESS_SECRET is required in production (>=32 chars)');
   }
 
+  const pickupCodeSecret = parseOptionalSecret('PICKUP_CODE_SECRET', env('PICKUP_CODE_SECRET'), 32, errors);
+  if (!pickupCodeSecret && nodeEnv === 'production') {
+    errors.push('PICKUP_CODE_SECRET is required in production (>=32 chars)');
+  }
+
   const cookieSecureRaw = env('COOKIE_SECURE');
   if (cookieSecureRaw !== undefined && cookieSecureRaw !== '' && !isBooleanString(cookieSecureRaw)) {
     errors.push('COOKIE_SECURE must be "true" or "false"');
@@ -187,7 +192,7 @@ export function validateEnv(raw: Record<string, unknown>): EnvConfig {
     swaggerEnabled,
     logLevel,
     jwtAccessSecret,
-    pickupCodeSecret: parseOptionalSecret('PICKUP_CODE_SECRET', env('PICKUP_CODE_SECRET'), 32, errors),
+    pickupCodeSecret,
     accessTokenTtlSeconds:
       parseOptionalInt('ACCESS_TOKEN_TTL_SECONDS', env('ACCESS_TOKEN_TTL_SECONDS'), 60, 3600, errors) ??
       DEFAULT_ACCESS_TOKEN_TTL_SECONDS,
