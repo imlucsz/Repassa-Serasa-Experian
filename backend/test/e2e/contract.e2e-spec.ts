@@ -1,29 +1,28 @@
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
+import type { OpenAPIObject } from '@nestjs/swagger';
+import { createOpenApiDocument } from '../../src/app.setup';
 import { startTestApp } from '../helpers/test-app';
 
 /**
- * Generated-Swagger surface check: every contract operation implemented in
- * DEV-02 must exist in the served OpenAPI document (API.md integration gate —
+ * Generated-OpenAPI surface check: every contract operation implemented in
+ * DEV-02 must exist in the generated document (API.md integration gate —
  * schema comparison happens on the shared contract review, this guards drift).
+ * Asserts on the document object directly: Swagger UI serving (@fastify/static)
+ * is a bootstrap concern and must not run inside the Jest VM context.
  */
 describe('Generated OpenAPI surface (e2e)', () => {
   let app: NestFastifyApplication;
-  let baseUrl: string;
 
   beforeAll(async () => {
-    const running = await startTestApp();
-    app = running.app;
-    baseUrl = running.baseUrl;
+    app = (await startTestApp()).app;
   });
 
   afterAll(async () => {
     await app.close();
   });
 
-  it('exposes the implemented contract operations with their methods', async () => {
-    const res = await fetch(`${baseUrl}/api/docs-json`, { headers: { connection: 'close' } });
-    expect(res.status).toBe(200);
-    const doc = (await res.json()) as {
+  it('exposes the implemented contract operations with their methods', () => {
+    const doc = createOpenApiDocument(app) as OpenAPIObject & {
       paths: Record<string, Record<string, { operationId?: string }>>;
     };
 
@@ -42,12 +41,18 @@ describe('Generated OpenAPI surface (e2e)', () => {
       expect(doc.paths[path]?.[method]?.operationId ?? key).toBe(operationId);
     }
 
-    // Required CSRF marker documented on auth POSTs; cookie auth documented.
+    // Required CSRF marker documented on auth POSTs; pagination documented.
     const register = doc.paths['/api/v1/auth/register'].post as unknown as {
       parameters?: { name?: string; required?: boolean }[];
     };
     expect(
       register.parameters?.some((p) => p.name === 'X-Repassa-Request' && p.required),
     ).toBe(true);
+
+    const institutions = doc.paths['/api/v1/institutions'].get as unknown as {
+      parameters?: { name?: string }[];
+    };
+    const paramNames = institutions.parameters?.map((p) => p.name) ?? [];
+    expect(paramNames).toEqual(expect.arrayContaining(['page', 'pageSize']));
   });
 });

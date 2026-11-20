@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { AppModule } from '../../src/app.module';
-import { FASTIFY_ADAPTER_OPTIONS, configureApp, setupSwagger } from '../../src/app.setup';
+import { FASTIFY_ADAPTER_OPTIONS, configureApp } from '../../src/app.setup';
 import type { EnvConfig } from '../../src/config/env.validation';
 
 /**
@@ -21,11 +21,7 @@ export async function createTestApp(
     new FastifyAdapter({ ...FASTIFY_ADAPTER_OPTIONS }),
     { logger: false },
   );
-  const config = app.get(ConfigService<EnvConfig, true>);
-  await configureApp(app, config);
-  if (config.get('swaggerEnabled', { infer: true })) {
-    setupSwagger(app);
-  }
+  await configureApp(app, app.get(ConfigService<EnvConfig, true>));
   await app.init();
   return app;
 }

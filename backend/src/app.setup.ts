@@ -3,6 +3,7 @@ import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import type { OpenAPIObject } from '@nestjs/swagger';
 import cookie from '@fastify/cookie';
 import helmet from '@fastify/helmet';
 import { ValidationError } from 'class-validator';
@@ -78,8 +79,8 @@ export async function configureApp(
   app.enableShutdownHooks();
 }
 
-/** Swagger UI + JSON document at /api/docs — shared by bootstrap and tests. */
-export function setupSwagger(app: NestFastifyApplication): void {
+/** Builds the generated OpenAPI document — used by Swagger UI and contract tests. */
+export function createOpenApiDocument(app: NestFastifyApplication): OpenAPIObject {
   const swaggerConfig = new DocumentBuilder()
     .setTitle('RePassa API')
     .setDescription('RePassa API v0.1 — see docs/repassa/contracts/openapi.yaml')
@@ -88,8 +89,14 @@ export function setupSwagger(app: NestFastifyApplication): void {
     .addBearerAuth()
     .addCookieAuth('repassa_refresh')
     .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document, { jsonDocumentUrl: 'api/docs-json' });
+  return SwaggerModule.createDocument(app, swaggerConfig);
+}
+
+/** Swagger UI + JSON document at /api/docs (bootstrap only). */
+export function setupSwagger(app: NestFastifyApplication): void {
+  SwaggerModule.setup('api/docs', app, createOpenApiDocument(app), {
+    jsonDocumentUrl: 'api/docs-json',
+  });
 }
 
 function collectFieldErrors(errors: ValidationError[], prefix = ''): Record<string, string[]> {
