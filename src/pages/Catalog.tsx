@@ -30,6 +30,7 @@ import { MaterialCover } from '../components/MaterialCover';
 import { Shelf3D } from '../components/Shelf3D';
 import { Field } from '../ui/Field';
 import { StatePanel } from '../ui/StatePanel';
+import './collection.css';
 export { RouteError as ErrorBoundary } from '../ui/RouteError';
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -92,6 +93,13 @@ export function Component() {
   function resetFilters() {
     setParams(view ? { vista: view } : {}, { preventScrollReset: true });
   }
+  function setCategory(category: string) {
+    const next = new URLSearchParams(params);
+    next.delete('page');
+    if (category) next.set('category', category);
+    else next.delete('category');
+    setParams(next, { preventScrollReset: true });
+  }
   useEffect(() => {
     document.title = 'Acervo de materiais · RePassa';
   }, []);
@@ -111,6 +119,8 @@ export function Component() {
     filterSubmitted.current = true;
     const next = new URLSearchParams();
     if (view) next.set('vista', view);
+    const category = params.get('category');
+    if (category) next.set('category', category);
     new FormData(event.currentTarget).forEach((value, key) => {
       const text = String(value).trim();
       if (text) next.set(key, text);
@@ -138,6 +148,20 @@ export function Component() {
           instituições.
         </p>
       </header>
+      <nav className="category-index" aria-label="Categorias do acervo">
+        {[['', 'Tudo'], ...Object.entries(categoryLabels)].map(
+          ([value, label]) => (
+            <button
+              key={value || 'all'}
+              type="button"
+              aria-pressed={(params.get('category') ?? '') === value}
+              onClick={() => setCategory(value)}
+            >
+              {label}
+            </button>
+          ),
+        )}
+      </nav>
       <form
         className="filters"
         onSubmit={filter}
@@ -160,20 +184,6 @@ export function Component() {
               placeholder="Título ou palavra-chave"
             />
           </span>
-        </Field>
-        <Field id="catalog-category" label="Categoria">
-          <select
-            id="catalog-category"
-            name="category"
-            defaultValue={params.get('category') ?? ''}
-          >
-            <option value="">Todas as categorias</option>
-            {Object.entries(categoryLabels).map(([id, label]) => (
-              <option key={id} value={id}>
-                {label}
-              </option>
-            ))}
-          </select>
         </Field>
         <Field id="catalog-institution" label="Instituição">
           <select
