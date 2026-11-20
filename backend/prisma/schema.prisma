@@ -1,0 +1,216 @@
+// RePassa data model v0.1 — see docs/repassa/DATA_MODEL.md
+// Migrations under prisma/migrations are the SQL source of truth; never `db push`.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  STAFF
+  ADMIN
+
+  @@map("role")
+}
+
+enum Category {
+  BOOK
+  NOTEBOOK
+  SUPPLIES
+  OTHER
+
+  @@map("category")
+}
+
+enum Condition {
+  LIKE_NEW
+  GOOD
+  FAIR
+
+  @@map("condition")
+}
+
+enum MaterialStatus {
+  PENDING_RECEIPT
+  AVAILABLE
+  RESERVED
+  DELIVERED
+  CANCELED
+  REJECTED
+
+  @@map("material_status")
+}
+
+enum ReservationStatus {
+  ACTIVE
+  CANCELED
+  EXPIRED
+  COMPLETED
+
+  @@map("reservation_status")
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  displayName  String   @map("display_name")
+  passwordHash String   @map("password_hash")
+  role         Role     @default(STUDENT)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  memberships            Membership[]
+  donatedMaterials       Material[]       @relation("material_donor")
+  receivedMaterials      Material[]       @relation("material_receiver")
+  reservations           Reservation[]    @relation("reservation_student")
+  completedReservations  Reservation[]    @relation("reservation_completed_by")
+  refreshSessions        RefreshSession[]
+  uploads                Upload[]
+  auditEvents            AuditEvent[]     @relation("audit_actor")
+
+  @@index([role])
+  @@map("users")
+}
+
+model Institution {
+  id                 String   @id @default(uuid()) @db.Uuid
+  name               String
+  publicAddress      String   @map("public_address")
+  pickupInstructions String   @map("pickup_instructions")
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  memberships Membership[]
+  materials   Material[]
+  auditEvents AuditEvent[]
+
+  @@map("institutions")
+}
+
+model Membership {
+  id            String      @id @default(uuid()) @db.Uuid
+  userId        String      @map("user_id") @db.Uuid
+  institutionId String      @map("institution_id") @db.Uuid
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, institutionId])
+  @@index([institutionId])
+  @@map("memberships")
+}
+
+model Material {
+  id            String         @id @default(uuid()) @db.Uuid
+  donorId       String         @map("donor_id") @db.Uuid
+  institutionId String         @map("institution_id") @db.Uuid
+  title         String
+  description   String
+  category      Category
+  condition     Condition
+  imageKey      String?        @map("image_key")
+  status        MaterialStatus @default(PENDING_RECEIPT)
+  receivedAt    DateTime?      @map("received_at") @db.Timestamptz(6)
+  receivedBy    String?        @map("received_by") @db.Uuid
+  rejectReason  String?        @map("reject_reason")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  donor        User         @relation("material_donor", fields: [donorId], references: [id], onDelete: Restrict)
+  institution  Institution  @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  receiver     User?        @relation("material_receiver", fields: [receivedBy], references: [id], onDelete: SetNull)
+  reservations Reservation[]
+  auditEvents  AuditEvent[]
+
+  @@index([status, category, institutionId, createdAt])
+  @@index([donorId, createdAt])
+  @@index([institutionId, status])
+  @@map("materials")
+}
+
+model Reservation {
+  id          String            @id @default(uuid()) @db.Uuid
+  materialId  String            @map("material_id") @db.Uuid
+  studentId   String            @map("student_id") @db.Uuid
+  status      ReservationStatus @default(ACTIVE)
+  codeDigest  String            @unique @map("code_digest")
+  expiresAt   DateTime          @map("expires_at") @db.Timestamptz(6)
+  completedAt DateTime?         @map("completed_at") @db.Timestamptz(6)
+  completedBy String?           @map("completed_by") @db.Uuid
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  material   Material    @relation(fields: [materialId], references: [id], onDelete: Restrict)
+  student    User        @relation("reservation_student", fields: [studentId], references: [id], onDelete: Restrict)
+  completer  User?       @relation("reservation_completed_by", fields: [completedBy], references: [id], onDelete: SetNull)
+  auditEvents AuditEvent[]
+
+  // One live reservation per material is enforced by a partial unique index
+  // (reservation_one_active_per_material) added in the init migration SQL.
+  @@index([studentId, createdAt])
+  @@index([status, expiresAt])
+  @@map("reservations")
+}
+
+model RefreshSession {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  familyId   String    @map("family_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash")
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(6)
+  replacedBy String?   @map("replaced_by") @db.Uuid
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([expiresAt])
+  @@map("refresh_sessions")
+}
+
+model AuditEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  actorId       String?  @map("actor_id") @db.Uuid
+  institutionId String?  @map("institution_id") @db.Uuid
+  materialId    String?  @map("material_id") @db.Uuid
+  reservationId String?  @map("reservation_id") @db.Uuid
+  action        String
+  metadata      Json?
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  actor       User?        @relation("audit_actor", fields: [actorId], references: [id], onDelete: SetNull)
+  institution Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  material    Material?    @relation(fields: [materialId], references: [id], onDelete: SetNull)
+  reservation Reservation? @relation(fields: [reservationId], references: [id], onDelete: SetNull)
+
+  @@index([institutionId, createdAt])
+  @@index([materialId, createdAt])
+  @@index([reservationId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_events")
+}
+
+model Upload {
+  id          String    @id @default(uuid()) @db.Uuid
+  key         String    @unique
+  ownerId     String    @map("owner_id") @db.Uuid
+  contentType String    @map("content_type")
+  sizeBytes   Int       @map("size_bytes")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  consumedAt  DateTime? @map("consumed_at") @db.Timestamptz(6)
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, createdAt])
+  @@map("uploads")
+}

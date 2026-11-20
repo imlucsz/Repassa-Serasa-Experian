@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "sourceMap": false,
+    "noEmit": true
+  },
+  "include": ["../src/**/*", "../test/**/*", "../prisma/**/*.ts"]
+}
