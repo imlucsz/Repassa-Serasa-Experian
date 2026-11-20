@@ -2,9 +2,8 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { API_PREFIX, FASTIFY_ADAPTER_OPTIONS, configureApp } from './app.setup';
+import { API_PREFIX, FASTIFY_ADAPTER_OPTIONS, configureApp, setupSwagger } from './app.setup';
 import type { EnvConfig } from './config/env.validation';
 
 async function bootstrap(): Promise<void> {
@@ -17,16 +16,7 @@ async function bootstrap(): Promise<void> {
   await configureApp(app, config);
 
   if (config.get('swaggerEnabled', { infer: true })) {
-    const swaggerConfig = new DocumentBuilder()
-      .setTitle('RePassa API')
-      .setDescription('RePassa API v0.1 — see docs/repassa/contracts/openapi.yaml')
-      .setVersion('0.1.0')
-      .addServer(`/${API_PREFIX}`)
-      .addBearerAuth()
-      .addCookieAuth('repassa_refresh')
-      .build();
-    const document = SwaggerModule.createDocument(app, swaggerConfig);
-    SwaggerModule.setup('api/docs', app, document, { jsonDocumentUrl: 'api/docs-json' });
+    setupSwagger(app);
     logger.log('Swagger UI enabled at /api/docs');
   }
 

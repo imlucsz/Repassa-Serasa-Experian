@@ -52,6 +52,7 @@ describe('validateEnv', () => {
       ...BASE,
       NODE_ENV: 'production',
       ALLOWED_ORIGINS: 'https://repassa.example.com',
+      JWT_ACCESS_SECRET: 'x'.repeat(32),
     });
     expect(prod.allowedOrigins).toEqual(['https://repassa.example.com']);
     expect(prod.swaggerEnabled).toBe(false); // default off in production
@@ -98,5 +99,70 @@ describe('validateEnv', () => {
     expect(message).toContain('DATABASE_URL');
     expect(message).toContain('PORT');
     expect(message).toContain('TRUST_PROXY');
+  });
+
+  it('requires JWT_ACCESS_SECRET in production but not in dev/test', () => {
+    expect(
+      issues(() =>
+        validateEnv({
+          ...BASE,
+          NODE_ENV: 'production',
+          ALLOWED_ORIGINS: 'https://repassa.example.com',
+        }),
+      ),
+    ).toContain('JWT_ACCESS_SECRET is required in production');
+    expect(
+      issues(() =>
+        validateEnv({
+          ...BASE,
+          NODE_ENV: 'production',
+          ALLOWED_ORIGINS: 'https://repassa.example.com',
+          JWT_ACCESS_SECRET: 'x'.repeat(32),
+        }),
+      ),
+    ).toBe('');
+    expect(validateEnv({ ...BASE }).jwtAccessSecret).toBeUndefined();
+  });
+
+  it('applies documented TTL defaults and validates provided ranges', () => {
+    const config = validateEnv({ ...BASE });
+    expect(config.accessTokenTtlSeconds).toBe(900);
+    expect(config.refreshTokenTtlDays).toBe(7);
+    expect(
+      issues(() => validateEnv({ ...BASE, ACCESS_TOKEN_TTL_SECONDS: '30' })),
+    ).toContain('ACCESS_TOKEN_TTL_SECONDS');
+    expect(
+      issues(() => validateEnv({ ...BASE, REFRESH_TOKEN_TTL_DAYS: '0' })),
+    ).toContain('REFRESH_TOKEN_TTL_DAYS');
+    expect(
+      validateEnv({ ...BASE, ACCESS_TOKEN_TTL_SECONDS: '300', REFRESH_TOKEN_TTL_DAYS: '14' })
+        .accessTokenTtlSeconds,
+    ).toBe(300);
+  });
+
+  it('defaults COOKIE_SECURE off outside production and forces it on in production', () => {
+    expect(validateEnv({ ...BASE }).cookieSecure).toBe(false);
+    const prod = validateEnv({
+      ...BASE,
+      NODE_ENV: 'production',
+      ALLOWED_ORIGINS: 'https://repassa.example.com',
+      JWT_ACCESS_SECRET: 'x'.repeat(32),
+    });
+    expect(prod.cookieSecure).toBe(true);
+    expect(
+      issues(() =>
+        validateEnv({
+          ...BASE,
+          NODE_ENV: 'production',
+          ALLOWED_ORIGINS: 'https://repassa.example.com',
+          JWT_ACCESS_SECRET: 'x'.repeat(32),
+          COOKIE_SECURE: 'false',
+        }),
+      ),
+    ).toContain('COOKIE_SECURE cannot be false in production');
+    expect(issues(() => validateEnv({ ...BASE, COOKIE_SECURE: 'maybe' }))).toContain(
+      'COOKIE_SECURE',
+    );
+    expect(validateEnv({ ...BASE, COOKIE_SECURE: 'true' }).cookieSecure).toBe(true);
   });
 });
