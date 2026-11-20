@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookie from '@fastify/cookie';
 import helmet from '@fastify/helmet';
 import { ValidationError } from 'class-validator';
@@ -56,13 +57,10 @@ export async function configureApp(
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Repassa-Request'],
     maxAge: 600,
     origin: (origin, cb) => {
-      // Non-browser clients (no Origin) are not subject to CORS; browser origins
-      // must be in the configured allowlist (CSRF origin check for cookie flows).
-      if (!origin || config.get('allowedOrigins', { infer: true }).includes(origin)) {
-        cb(null, true);
-      } else {
-        cb(new Error('Origin not allowed'), false);
-      }
+      // Non-browser clients (no Origin) are not subject to CORS; disallowed
+      // browser origins get no CORS headers (never an error — that would 500).
+      // Cookie-auth mutations are enforced separately by AuthCsrfGuard.
+      cb(null, !origin || config.get('allowedOrigins', { infer: true }).includes(origin));
     },
   });
 
@@ -78,6 +76,20 @@ export async function configureApp(
     });
 
   app.enableShutdownHooks();
+}
+
+/** Swagger UI + JSON document at /api/docs — shared by bootstrap and tests. */
+export function setupSwagger(app: NestFastifyApplication): void {
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('RePassa API')
+    .setDescription('RePassa API v0.1 — see docs/repassa/contracts/openapi.yaml')
+    .setVersion('0.1.0')
+    .addServer(`/${API_PREFIX}`)
+    .addBearerAuth()
+    .addCookieAuth('repassa_refresh')
+    .build();
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/docs', app, document, { jsonDocumentUrl: 'api/docs-json' });
 }
 
 function collectFieldErrors(errors: ValidationError[], prefix = ''): Record<string, string[]> {

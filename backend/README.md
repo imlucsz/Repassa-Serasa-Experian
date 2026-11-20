@@ -31,6 +31,33 @@ npm run test:ci     # both — what CI runs
 
 Tests run in Jest ESM mode (`node --experimental-vm-modules`) because `@nestjs/*` ships ESM-only. E2E specs exercise the API over real HTTP (`fetch` against an ephemeral listener) rather than `fastify.inject()`: inject routes through `light-my-request`, a test-only path that cannot `require()` the ESM-only `cookie` package on Node 22. `--forceExit` is used to release the spawned Postgres daemon child promptly.
 
+## Auth model (DEV-02)
+
+- Access: short-lived HS256 JWT (default 900 s), issuer `repassa-api`, audience `repassa-web`. `JWT_ACCESS_SECRET` (>=32 chars) is **required in production**; dev/test generates an ephemeral per-process key and logs a warning.
+- Refresh: opaque 256-bit token in the `repassa_refresh` cookie — `HttpOnly`, `SameSite=Lax`, `Path=/api/v1/auth`, `Max-Age` = `REFRESH_TOKEN_TTL_DAYS` (default 7). Only a SHA-256 digest is stored. Rotation is atomic (`SELECT ... FOR UPDATE`); re-presenting a rotated/revoked token revokes the whole session family and writes an `auth.refresh_reuse` audit event — clients must single-flight refresh.
+- CSRF: all `/auth/*` POSTs require `X-Repassa-Request: 1`; a present `Origin` must be in `ALLOWED_ORIGINS`; JSON content-type enforced by Fastify. Private responses carry `Cache-Control: no-store`.
+- Rate limits (in-memory fixed window, single replica): login 5/min per IP+email and 30/min per IP; register 5/min per IP+email and 10/min per IP; refresh/logout 60/min per IP. IPv6 collapses to /64.
+- Roles are read from the database on every request — never trusted from the JWT. Public registration always creates `STUDENT`; staff/membership is seed/provisioning-only.
+
+## Deployment (future Render hosting — requirements)
+
+Render build/start: `npm ci && npm run build` then `npm run start` (`node dist/main.js`). Provision PostgreSQL 16 separately.
+
+| Variable | Requirement |
+|---|---|
+| `NODE_ENV` | `production` |
+| `DATABASE_URL` | Render Postgres connection string (`postgresql://...`) |
+| `JWT_ACCESS_SECRET` | **required**, >=32 random chars (Render secret) |
+| `ALLOWED_ORIGINS` | **required**, deployed UI origin, e.g. `https://app.example.com` |
+| `TRUST_PROXY` | `true` — Render terminates TLS and proxies; needed for correct client-IP rate limiting |
+| `COOKIE_SECURE` | forced `true` in production — env var cannot disable it |
+| `PORT` | Render injects `PORT`; the app binds `HOST=0.0.0.0` by default |
+| `SWAGGER_ENABLED` | defaults off in production; only enable deliberately |
+| `ACCESS_TOKEN_TTL_SECONDS` / `REFRESH_TOKEN_TTL_DAYS` | optional overrides (900 s / 7 d defaults) |
+| `PICKUP_CODE_SECRET` | required when DEV-04 pickup codes ship |
+
+Release step: `npm run db:migrate:deploy` (roll-forward only; never `db push`/`migrate reset` against shared databases). Health checks: `GET /api/v1/health` (readiness incl. DB) / `GET /api/v1/health/live`. The public demo expects a same-origin `/api/v1` reverse proxy from the frontend host so the `Path=/api/v1/auth` cookie stays host-only and first-party; verify `Set-Cookie` passthrough and no response caching on the proxy.
+
 ## Scripts
 
 | Script | Purpose |

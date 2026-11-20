@@ -13,13 +13,25 @@ export interface EnvConfig {
   trustProxy: boolean;
   swaggerEnabled: boolean;
   logLevel: string;
-  /** Reserved for DEV-02 auth; validated when present, not yet required. */
+  /**
+   * HS256 secret for access tokens. Required in production; in development and
+   * test an ephemeral per-process secret is generated (sessions do not survive
+   * restarts) so no insecure default is ever committed.
+   */
   jwtAccessSecret?: string;
   pickupCodeSecret?: string;
-  accessTokenTtlSeconds?: number;
-  refreshTokenTtlDays?: number;
+  accessTokenTtlSeconds: number;
+  refreshTokenTtlDays: number;
+  /**
+   * `Secure` attribute on the refresh cookie. Forced true in production
+   * (HTTPS only); may be enabled explicitly for local HTTPS testing.
+   */
+  cookieSecure: boolean;
   seedDemoPassword?: string;
 }
+
+export const DEFAULT_ACCESS_TOKEN_TTL_SECONDS = 900;
+export const DEFAULT_REFRESH_TOKEN_TTL_DAYS = 7;
 
 const NODE_ENVS = ['development', 'test', 'production'] as const;
 const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'];
@@ -146,6 +158,23 @@ export function validateEnv(raw: Record<string, unknown>): EnvConfig {
     errors.push(`LOG_LEVEL must be one of ${LOG_LEVELS.join('|')}`);
   }
 
+  const jwtAccessSecret = parseOptionalSecret('JWT_ACCESS_SECRET', env('JWT_ACCESS_SECRET'), 32, errors);
+  if (!jwtAccessSecret && nodeEnv === 'production') {
+    errors.push('JWT_ACCESS_SECRET is required in production (>=32 chars)');
+  }
+
+  const cookieSecureRaw = env('COOKIE_SECURE');
+  if (cookieSecureRaw !== undefined && cookieSecureRaw !== '' && !isBooleanString(cookieSecureRaw)) {
+    errors.push('COOKIE_SECURE must be "true" or "false"');
+  }
+  const cookieSecure =
+    cookieSecureRaw === undefined || cookieSecureRaw === ''
+      ? nodeEnv === 'production'
+      : cookieSecureRaw === 'true';
+  if (!cookieSecure && nodeEnv === 'production') {
+    errors.push('COOKIE_SECURE cannot be false in production (refresh cookie requires Secure)');
+  }
+
   const config: EnvConfig = {
     nodeEnv,
     host: env('HOST') ?? '0.0.0.0',
@@ -155,10 +184,15 @@ export function validateEnv(raw: Record<string, unknown>): EnvConfig {
     trustProxy: trustProxyRaw === 'true',
     swaggerEnabled,
     logLevel,
-    jwtAccessSecret: parseOptionalSecret('JWT_ACCESS_SECRET', env('JWT_ACCESS_SECRET'), 32, errors),
+    jwtAccessSecret,
     pickupCodeSecret: parseOptionalSecret('PICKUP_CODE_SECRET', env('PICKUP_CODE_SECRET'), 32, errors),
-    accessTokenTtlSeconds: parseOptionalInt('ACCESS_TOKEN_TTL_SECONDS', env('ACCESS_TOKEN_TTL_SECONDS'), 60, 3600, errors),
-    refreshTokenTtlDays: parseOptionalInt('REFRESH_TOKEN_TTL_DAYS', env('REFRESH_TOKEN_TTL_DAYS'), 1, 90, errors),
+    accessTokenTtlSeconds:
+      parseOptionalInt('ACCESS_TOKEN_TTL_SECONDS', env('ACCESS_TOKEN_TTL_SECONDS'), 60, 3600, errors) ??
+      DEFAULT_ACCESS_TOKEN_TTL_SECONDS,
+    refreshTokenTtlDays:
+      parseOptionalInt('REFRESH_TOKEN_TTL_DAYS', env('REFRESH_TOKEN_TTL_DAYS'), 1, 90, errors) ??
+      DEFAULT_REFRESH_TOKEN_TTL_DAYS,
+    cookieSecure,
     seedDemoPassword: parseOptionalSecret('SEED_DEMO_PASSWORD', env('SEED_DEMO_PASSWORD'), 12, errors),
   };
 

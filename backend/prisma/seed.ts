@@ -6,14 +6,7 @@
  */
 import { randomBytes } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
-import * as argon2 from 'argon2';
-
-const ARGON2_OPTIONS: argon2.HashOptions = {
-  type: argon2.argon2id,
-  memoryCost: 19456, // 19 MiB — OWASP starting point (SECURITY.md)
-  timeCost: 2,
-  parallelism: 1,
-};
+import { hashPassword } from '../src/common/crypto/password';
 
 // Stable UUIDs so repeated runs converge instead of duplicating rows.
 const IDS = {
@@ -43,9 +36,8 @@ export async function runSeed(prisma: PrismaClient): Promise<void> {
   }
 
   const demoPassword = process.env.SEED_DEMO_PASSWORD;
-  const passwordHash = await argon2.hash(
+  const passwordHash = await hashPassword(
     demoPassword && demoPassword.length >= 12 ? demoPassword : randomBytes(24).toString('hex'),
-    ARGON2_OPTIONS,
   );
   if (!demoPassword) {
     console.warn(
