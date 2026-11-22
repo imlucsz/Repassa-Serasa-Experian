@@ -70,13 +70,13 @@ export class UploadsController {
   ): Promise<FastifyReply> {
     const user = await this.uploads.tryAuthenticate(request.headers.authorization);
     const access = await this.uploads.serveAuthorization(key, user);
-    const stream = access ? this.storage.openReadStream(key) : undefined;
-    if (!access || !stream) throw new NotFoundException(NOT_FOUND);
+    const body = access ? await this.storage.getObject(key) : undefined;
+    if (!access || !body) throw new NotFoundException(NOT_FOUND);
 
     const contentType = await this.uploads.contentTypeFor(key);
     return reply
       .header('content-type', contentType)
       .header('x-content-type-options', 'nosniff')
-      .send(stream);
+      .send(body);
   }
 }

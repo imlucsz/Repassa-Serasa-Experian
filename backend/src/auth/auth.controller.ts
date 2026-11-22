@@ -102,13 +102,15 @@ export class AuthController {
 
   /**
    * HttpOnly, host-only, Path-scoped refresh cookie (SECURITY.md). Secure is
-   * forced on in production; SameSite=Lax; max age mirrors the session TTL.
+   * forced on in production; SameSite=Strict — the same-origin proxy makes
+   * this a first-party cookie, and no supported flow needs cross-site send.
+   * Max age mirrors the session TTL (docs/repassa/DEPLOYMENT.md).
    */
   private setRefreshCookie(reply: FastifyReply, token: string): void {
     void reply.setCookie(REFRESH_COOKIE_NAME, token, {
       httpOnly: true,
       secure: this.cookieSecure,
-      sameSite: 'lax',
+      sameSite: 'strict',
       path: REFRESH_COOKIE_PATH,
       maxAge: this.cookieMaxAgeSeconds,
     });
@@ -119,7 +121,7 @@ export class AuthController {
     void reply.clearCookie(REFRESH_COOKIE_NAME, {
       httpOnly: true,
       secure: this.cookieSecure,
-      sameSite: 'lax',
+      sameSite: 'strict',
       path: REFRESH_COOKIE_PATH,
     });
   }

@@ -1,0 +1,46 @@
+# RePassa staging blueprint — Render (docs/repassa/DEPLOYMENT.md).
+# Owner applies this manually in the Render dashboard (Infrastructure as Code
+# requires connecting the repo); `sync: false` secrets are entered via the
+# dashboard/env groups, never committed. No paid resource is provisioned by
+# this file itself.
+services:
+  - type: web
+    name: repassa-api-staging
+    runtime: node
+    rootDir: backend
+    plan: starter           # free plan sleeps and drops in-memory state; see DEPLOYMENT.md
+    region: oregon
+    buildCommand: npm ci && npm run build && npm run db:migrate:deploy
+    startCommand: npm run start
+    healthCheckPath: /api/v1/health
+    autoDeploy: false       # staging deploys are deliberate, never automatic
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"       # Render routes to PORT
+      - key: DATABASE_URL
+        sync: false          # managed Postgres 16 connection string (dashboard secret)
+      - key: JWT_ACCESS_SECRET
+        generateValue: true  # Render generates a strong random value
+      - key: PICKUP_CODE_SECRET
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        value: https://repassa-staging.vercel.app
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: TRUST_PROXY
+        value: "true"        # Render terminates TLS at its proxy
+      - key: STORAGE_DRIVER
+        value: supabase
+      - key: SUPABASE_URL
+        sync: false          # https://<project>.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false          # server-only; never exposed to the browser
+      - key: SUPABASE_STORAGE_BUCKET
+        value: repassa-uploads
+      - key: SWAGGER_ENABLED
+        value: "false"
+      - key: LOG_LEVEL
+        value: info
+      # SEED_DEMO_PASSWORD intentionally absent — demo seed only with owner consent.

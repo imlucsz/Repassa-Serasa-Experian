@@ -29,6 +29,15 @@ export interface EnvConfig {
   cookieSecure: boolean;
   /** Local disk directory for processed upload objects (private; served via controlled route). */
   uploadDir: string;
+  /**
+   * Upload object persistence driver. `local` is ephemeral (dev/test only —
+   * refused in production); `supabase` is durable Supabase Storage over the
+   * private-bucket REST API with a server-only service-role key.
+   */
+  storageDriver: 'local' | 'supabase';
+  supabaseUrl?: string;
+  supabaseServiceRoleKey?: string;
+  supabaseStorageBucket: string;
   seedDemoPassword?: string;
 }
 
@@ -182,6 +191,52 @@ export function validateEnv(raw: Record<string, unknown>): EnvConfig {
     errors.push('COOKIE_SECURE cannot be false in production (refresh cookie requires Secure)');
   }
 
+  // Upload object storage. `local` is ephemeral and must not reach production
+  // (docs/repassa/DEPLOYMENT.md); `supabase` needs a private bucket and a
+  // server-only service-role key.
+  const storageDriverRaw = env('STORAGE_DRIVER') ?? 'local';
+  const storageDriver = ['local', 'supabase'].includes(storageDriverRaw)
+    ? (storageDriverRaw as EnvConfig['storageDriver'])
+    : 'local';
+  if (!['local', 'supabase'].includes(storageDriverRaw)) {
+    errors.push('STORAGE_DRIVER must be "local" or "supabase"');
+  }
+  if (storageDriver === 'local' && nodeEnv === 'production') {
+    errors.push(
+      'STORAGE_DRIVER=local is ephemeral and not allowed in production (use "supabase")',
+    );
+  }
+  let supabaseUrl: string | undefined;
+  let supabaseServiceRoleKey: string | undefined;
+  const supabaseStorageBucket = env('SUPABASE_STORAGE_BUCKET')?.trim() || 'repassa-uploads';
+  if (storageDriver === 'supabase') {
+    supabaseUrl = env('SUPABASE_URL')?.trim();
+    if (!supabaseUrl) {
+      errors.push('SUPABASE_URL is required when STORAGE_DRIVER=supabase');
+    } else {
+      try {
+        const url = new URL(supabaseUrl);
+        if (url.protocol !== 'https:' && !(url.protocol === 'http:' && isLocalHostname(url.hostname))) {
+          errors.push('SUPABASE_URL must be an https URL (http allowed on localhost only)');
+        }
+      } catch {
+        errors.push('SUPABASE_URL is not a valid URL');
+      }
+    }
+    supabaseServiceRoleKey = parseOptionalSecret(
+      'SUPABASE_SERVICE_ROLE_KEY',
+      env('SUPABASE_SERVICE_ROLE_KEY'),
+      32,
+      errors,
+    );
+    if (!supabaseServiceRoleKey) {
+      errors.push('SUPABASE_SERVICE_ROLE_KEY is required when STORAGE_DRIVER=supabase (>=32 chars)');
+    }
+    if (!/^[a-z0-9][a-z0-9._-]{1,62}$/.test(supabaseStorageBucket)) {
+      errors.push('SUPABASE_STORAGE_BUCKET must be a valid bucket name');
+    }
+  }
+
   const config: EnvConfig = {
     nodeEnv,
     host: env('HOST') ?? '0.0.0.0',
@@ -201,6 +256,10 @@ export function validateEnv(raw: Record<string, unknown>): EnvConfig {
       DEFAULT_REFRESH_TOKEN_TTL_DAYS,
     cookieSecure,
     uploadDir: env('UPLOAD_DIR')?.trim() || 'storage/uploads',
+    storageDriver,
+    supabaseUrl,
+    supabaseServiceRoleKey,
+    supabaseStorageBucket,
     seedDemoPassword: parseOptionalSecret('SEED_DEMO_PASSWORD', env('SEED_DEMO_PASSWORD'), 12, errors),
   };
 

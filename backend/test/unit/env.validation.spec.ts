@@ -54,6 +54,9 @@ describe('validateEnv', () => {
       ALLOWED_ORIGINS: 'https://repassa.example.com',
       JWT_ACCESS_SECRET: 'x'.repeat(32),
       PICKUP_CODE_SECRET: 'y'.repeat(32),
+      STORAGE_DRIVER: 'supabase',
+      SUPABASE_URL: 'https://proj.supabase.co',
+      SUPABASE_SERVICE_ROLE_KEY: 'k'.repeat(40),
     });
     expect(prod.allowedOrigins).toEqual(['https://repassa.example.com']);
     expect(prod.swaggerEnabled).toBe(false); // default off in production
@@ -120,6 +123,9 @@ describe('validateEnv', () => {
           ALLOWED_ORIGINS: 'https://repassa.example.com',
           JWT_ACCESS_SECRET: 'x'.repeat(32),
       PICKUP_CODE_SECRET: 'y'.repeat(32),
+      STORAGE_DRIVER: 'supabase',
+      SUPABASE_URL: 'https://proj.supabase.co',
+      SUPABASE_SERVICE_ROLE_KEY: 'k'.repeat(40),
         }),
       ),
     ).toBe('');
@@ -138,6 +144,42 @@ describe('validateEnv', () => {
       ),
     ).toContain('PICKUP_CODE_SECRET is required in production');
     expect(validateEnv({ ...BASE }).pickupCodeSecret).toBeUndefined();
+  });
+
+  it('storage driver: local default, refused in production, supabase needs credentials', () => {
+    expect(validateEnv({ ...BASE }).storageDriver).toBe('local');
+    const prod = {
+      ...BASE,
+      NODE_ENV: 'production',
+      ALLOWED_ORIGINS: 'https://repassa.example.com',
+      JWT_ACCESS_SECRET: 'x'.repeat(32),
+      PICKUP_CODE_SECRET: 'y'.repeat(32),
+    };
+    expect(issues(() => validateEnv(prod))).toContain('STORAGE_DRIVER=local is ephemeral');
+    expect(
+      issues(() => validateEnv({ ...prod, STORAGE_DRIVER: 'supabase' })),
+    ).toContain('SUPABASE_URL is required');
+    const ok = validateEnv({
+      ...prod,
+      STORAGE_DRIVER: 'supabase',
+      SUPABASE_URL: 'https://proj.supabase.co',
+      SUPABASE_SERVICE_ROLE_KEY: 'k'.repeat(40),
+    });
+    expect(ok.storageDriver).toBe('supabase');
+    expect(ok.supabaseStorageBucket).toBe('repassa-uploads');
+    expect(
+      issues(() =>
+        validateEnv({
+          ...prod,
+          STORAGE_DRIVER: 'supabase',
+          SUPABASE_URL: 'http://insecure.example.com',
+          SUPABASE_SERVICE_ROLE_KEY: 'k'.repeat(40),
+        }),
+      ),
+    ).toContain('SUPABASE_URL must be an https URL');
+    expect(issues(() => validateEnv({ ...BASE, STORAGE_DRIVER: 's3' }))).toContain(
+      'STORAGE_DRIVER must be',
+    );
   });
 
   it('applies documented TTL defaults and validates provided ranges', () => {
@@ -164,6 +206,9 @@ describe('validateEnv', () => {
       ALLOWED_ORIGINS: 'https://repassa.example.com',
       JWT_ACCESS_SECRET: 'x'.repeat(32),
       PICKUP_CODE_SECRET: 'y'.repeat(32),
+      STORAGE_DRIVER: 'supabase',
+      SUPABASE_URL: 'https://proj.supabase.co',
+      SUPABASE_SERVICE_ROLE_KEY: 'k'.repeat(40),
     });
     expect(prod.cookieSecure).toBe(true);
     expect(
@@ -174,6 +219,9 @@ describe('validateEnv', () => {
           ALLOWED_ORIGINS: 'https://repassa.example.com',
           JWT_ACCESS_SECRET: 'x'.repeat(32),
       PICKUP_CODE_SECRET: 'y'.repeat(32),
+      STORAGE_DRIVER: 'supabase',
+      SUPABASE_URL: 'https://proj.supabase.co',
+      SUPABASE_SERVICE_ROLE_KEY: 'k'.repeat(40),
           COOKIE_SECURE: 'false',
         }),
       ),

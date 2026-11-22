@@ -1,10 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
-import { createReadStream, existsSync } from 'node:fs';
-import { join, resolve } from 'node:path';
-import type { ReadStream } from 'node:fs';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import sharp from 'sharp';
 import {
   IMAGE_FORMATS,
@@ -12,10 +7,7 @@ import {
   UPLOAD_MAX_DIMENSION,
   UPLOAD_MAX_PIXELS,
 } from './upload-policy';
-import type { EnvConfig } from '../config/env.validation';
-
-/** `<uuid>.<ext>` — keys are generated server-side, never client-controlled. */
-const KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp)$/;
+import { ObjectStore, OBJECT_KEY_PATTERN } from './object-store';
 
 export interface StoredImage {
   key: string;
@@ -24,23 +16,21 @@ export interface StoredImage {
 }
 
 /**
- * Local-disk object store for material photos. Pending images stay private —
- * files are never exposed by directory listing and only served through the
- * authorized `GET /uploads/:key` route. A future object-storage backend
- * (Supabase/S3) can replace this service without touching callers.
+ * Upload validation + processing pipeline. Owns magic-byte checks, dimension
+ * limits and re-encoding (EXIF/metadata stripped); persistence is delegated
+ * to the configured ObjectStore driver (local disk in dev/test, durable
+ * object storage in staging/production). The public surface —
+ * `processAndStore` and `getObject` — is identical for every driver so
+ * callers, authorization and the API contract do not change.
  */
 @Injectable()
 export class StorageService {
-  private readonly rootDir: string;
-
-  constructor(config: ConfigService<EnvConfig, true>) {
-    this.rootDir = resolve(config.get('uploadDir', { infer: true }));
-  }
+  constructor(private readonly store: ObjectStore) {}
 
   /**
    * Validates the real image payload (magic bytes via decoder, not the
    * declared mimetype), enforces pixel limits, re-encodes to strip EXIF and
-   * any embedded metadata, and writes under a random object key.
+   * any embedded metadata, and stores under a random private key.
    */
   async processAndStore(buffer: Buffer, declaredType: string | undefined): Promise<StoredImage> {
     if (buffer.length === 0 || buffer.length > UPLOAD_MAX_BYTES) {
@@ -82,24 +72,13 @@ export class StorageService {
           : await pipeline.webp({ quality: 85 }).toBuffer();
 
     const key = `${randomUUID()}.${expected.extension}`;
-    await mkdir(this.rootDir, { recursive: true });
-    await writeFile(this.resolvePath(key), encoded, { flag: 'wx' });
+    await this.store.put(key, encoded, expected.contentType);
     return { key, contentType: expected.contentType, sizeBytes: encoded.length };
   }
 
-  /** Resolves a stored key to a stream — rejects anything not matching the key shape. */
-  openReadStream(key: string): ReadStream | undefined {
-    if (!KEY_PATTERN.test(key)) return undefined;
-    const path = this.resolvePath(key);
-    if (!existsSync(path)) return undefined;
-    try {
-      return createReadStream(path);
-    } catch {
-      return undefined;
-    }
-  }
-
-  private resolvePath(key: string): string {
-    return join(this.rootDir, key);
+  /** Returns stored bytes for an authorized caller — rejects non-key shapes. */
+  getObject(key: string): Promise<Buffer | undefined> {
+    if (!OBJECT_KEY_PATTERN.test(key)) return Promise.resolve(undefined);
+    return this.store.get(key);
   }
 }
