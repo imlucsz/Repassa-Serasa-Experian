@@ -7,15 +7,15 @@
   "rewrites": [
     {
       "source": "/api/v1/:path*",
-      "destination": "https://repassa-api-staging.onrender.com/api/v1/:path*"
+      "destination": "https://repassa-serasa-experian.onrender.com/api/v1/:path*"
     },
     {
       "source": "/api/docs",
-      "destination": "https://repassa-api-staging.onrender.com/api/docs"
+      "destination": "https://repassa-serasa-experian.onrender.com/api/docs"
     },
     {
       "source": "/api/docs/:path*",
-      "destination": "https://repassa-api-staging.onrender.com/api/docs/:path*"
+      "destination": "https://repassa-serasa-experian.onrender.com/api/docs/:path*"
     },
     {
       "source": "/(.*)",

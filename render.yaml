@@ -5,7 +5,7 @@
 # this file itself.
 services:
   - type: web
-    name: repassa-api-staging
+    name: repassa-serasa-experian
     runtime: node
     rootDir: backend
     plan: starter           # free plan sleeps and drops in-memory state; see DEPLOYMENT.md
