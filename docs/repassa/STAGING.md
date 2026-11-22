@@ -16,10 +16,10 @@ before creating any external resource or running any live deploy.
    with the same settings. Set the `sync: false` secrets in the dashboard:
    `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`. Verify
    `ALLOWED_ORIGINS` matches the final Vercel hostname.
-4. **Vercel project** — deploy the repo; update `vercel.json` rewrite
-   destination `repassa-api-staging.onrender.com` to the real Render hostname
-   if it differs (rename the Render service or edit the file — coordinate with
-   the frontend agent before merging that change).
+4. **Vercel project** — deploy the repo; `vercel.json` rewrites already point
+   to the live Render hostname `repassa-serasa-experian.onrender.com`. If the
+   Render service is ever renamed, update the rewrite destination (coordinate
+   with the frontend agent before merging that change).
 5. **Seed (optional)** — run `npm run db:seed` against staging only with
    `SEED_DEMO_PASSWORD` set and owner consent; institutions/materials are
    fictional per AGENTS.md.

@@ -110,7 +110,7 @@ rewrites them to the Render API. Implemented in DEV-05:
 
 ## 5. Deploy configs (applied by owner, not auto-provisioned)
 
-- `render.yaml` — Render blueprint for `repassa-api-staging` (starter plan,
+- `render.yaml` — Render blueprint for `repassa-serasa-experian` (starter plan,
   `npm ci && npm run build && npm run db:migrate:deploy`, health check
   `/api/v1/health`, `autoDeploy: false`).
 - `vercel.json` — same-origin `/api/v1` rewrites + SPA fallback (root config;
