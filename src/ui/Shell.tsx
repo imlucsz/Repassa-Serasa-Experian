@@ -34,9 +34,21 @@ export function Shell() {
   const [leaving, setLeaving] = useState(false);
   const [logoutError, setLogoutError] = useState(false);
 
+  const [sessionState, setSessionState] = useState<
+    'loading' | 'ready' | 'error'
+  >('loading');
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
-    void restoreSession();
-  }, []);
+    let active = true;
+    setSessionState('loading');
+    restoreSession().then(
+      () => active && setSessionState('ready'),
+      () => active && setSessionState('error'),
+    );
+    return () => {
+      active = false;
+    };
+  }, [attempt]);
   useLayoutEffect(() => {
     if (lastPath.current !== pathname && !hash)
       main.current?.focus({ preventScroll: true });
@@ -90,6 +102,20 @@ export function Shell() {
             </NavLink>
           )}
         </div>
+        {user && (
+          <nav className="frame account-nav" aria-label="Área da conta">
+            {user.role === 'STUDENT' && (
+              <>
+                <NavLink to="/doar">Doar material</NavLink>
+                <NavLink to="/minhas-doacoes">Minhas doações</NavLink>
+              </>
+            )}
+            {user.role === 'STAFF' && (
+              <NavLink to="/instituicao">Instituição</NavLink>
+            )}
+            <NavLink to="/perfil">Meu perfil</NavLink>
+          </nav>
+        )}
         {logoutError && (
           <div className="frame session-error" role="alert">
             <p>
@@ -113,7 +139,14 @@ export function Shell() {
             Carregando…
           </div>
         )}
-        <Outlet />
+        <Outlet
+          context={{
+            sessionState,
+            retry: () => setAttempt((n) => n + 1),
+            signOut,
+            leaving,
+          }}
+        />
       </main>
       <footer className="site-footer">
         <div className="frame site-colophon">

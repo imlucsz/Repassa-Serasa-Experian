@@ -24,7 +24,20 @@ Importe o repositório com diretório raiz `.` e Node.js `22.x`. O `vercel.json`
 
 A estante aceita arraste horizontal, setas do teclado e controles visíveis. A grade é a visualização inicial em telas pequenas e com preferência por movimento reduzido.
 
-O modo de demonstração permite explorar as cinco rotas com dados fictícios. Para entrar, criar uma conta ou reservar um material, a interface precisa de uma API na mesma origem que implemente o contrato. A sessão usa um token de acesso em memória e um cookie de atualização gerenciado pela API. O formulário de doação faz parte de uma etapa posterior.
+O modo de demonstração permite explorar as cinco rotas com dados fictícios. Para entrar, criar uma conta ou reservar um material, a interface precisa de uma API na mesma origem que implemente o contrato. A sessão usa um token de acesso em memória e um cookie de atualização gerenciado pela API.
+
+## Área autenticada
+
+| Rota | Acesso e operação |
+| --- | --- |
+| `/doar` | Estudante cadastra um material, com foto opcional, para entrega em uma instituição ativa |
+| `/minhas-doacoes` | Estudante acompanha as próprias doações e pode cancelar uma entrega pendente |
+| `/perfil` | Pessoa autenticada consulta a conta, edita o nome de exibição e encerra a sessão |
+| `/instituicao` | Equipe consulta os totais da instituição selecionada entre seus vínculos |
+| `/instituicao/recebimentos` | Equipe confirma a chegada física do material ou registra o motivo da recusa |
+| `/instituicao/estoque` | Equipe consulta o inventário da instituição com busca, situação e paginação |
+
+Em desenvolvimento, o Vite encaminha `/api/v1` para `http://127.0.0.1:3001`. Para usar outra porta local, defina `REPASSA_API_TARGET` antes de iniciar o Vite. Configure a origem do frontend em `ALLOWED_ORIGINS` no backend. Na demonstração estática, as rotas privadas explicam o limite da demonstração e direcionam ao acervo.
 
 ## Verificação
 

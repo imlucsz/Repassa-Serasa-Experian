@@ -1,0 +1,213 @@
+.inst-page {
+  padding-block: clamp(32px, 4vw, 64px) var(--space);
+}
+.inst-unit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 16px;
+  border-block: 1px solid var(--line);
+  margin-block: 22px 32px;
+}
+.inst-unit .field {
+  max-width: 100%;
+}
+.inst-unit strong {
+  font-size: 1.12rem;
+}
+.inst-unit > span,
+.inst-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+.inst-unit > span {
+  padding-block: 5px;
+}
+.inst-subtitle {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  letter-spacing: -0.035em;
+}
+.inst-counts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 2px solid var(--forest);
+  border-bottom: 1px solid var(--line);
+  margin-block: 18px 24px;
+}
+.inst-counts div {
+  padding: 22px 16px 18px 0;
+}
+.inst-counts dt {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.inst-counts dd {
+  font: 500 clamp(2.6rem, 5vw, 4rem) / 1 var(--serif);
+  margin-top: 14px;
+}
+.inst-actions,
+.inst-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.inst-message,
+.inst-notice {
+  padding: 18px 20px;
+  background: var(--paper);
+  border-inline-start: 3px solid var(--line);
+  line-height: 1.5;
+  margin-block: 18px;
+}
+.inst-message button {
+  margin-top: 12px;
+}
+.inst-notice {
+  border-color: var(--emerald);
+  background: var(--tint);
+}
+.inst-description {
+  color: var(--muted);
+  line-height: 1.55;
+  max-width: 68ch;
+}
+.inst-filters {
+  align-items: end;
+  gap: 16px;
+  margin-block: 22px;
+}
+.inst-filters .field:first-child {
+  flex: 1 1 260px;
+  max-width: 440px;
+}
+.inst-total {
+  font-weight: 650;
+  font-size: 0.92rem;
+  margin-block: 20px 10px;
+}
+.inst-list {
+  list-style: none;
+  padding: 0;
+  border-top: 2px solid var(--forest);
+}
+.inst-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: start;
+  border-bottom: 1px solid var(--line);
+  padding-block: 22px;
+}
+.inst-material {
+  min-width: 0;
+  max-width: 72ch;
+  overflow-wrap: anywhere;
+}
+.inst-material h2 {
+  margin-block: 4px 8px;
+  font-size: 1.7rem;
+  line-height: 1.1;
+}
+.inst-material p:not(.meta) {
+  color: var(--muted);
+  font-size: 0.94rem;
+  line-height: 1.5;
+}
+.inst-material p + p:not(.meta) {
+  margin-top: 0.4rem;
+}
+.inst-material summary {
+  cursor: pointer;
+  font-weight: 600;
+  min-height: 44px;
+  padding-block: 12px;
+}
+.inst-status {
+  color: var(--forest);
+  font-weight: 650;
+  padding-block: 3px;
+}
+.inst-dialog {
+  width: min(440px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  margin: auto;
+  padding: clamp(20px, 4vw, 30px);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--ivory);
+  color: var(--forest);
+}
+.inst-dialog::backdrop {
+  background: rgb(18 31 24 / 58%);
+}
+.inst-dialog form {
+  display: grid;
+  gap: 18px;
+  overflow-wrap: anywhere;
+}
+.inst-dialog h2 {
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+}
+.inst-dialog p {
+  line-height: 1.5;
+}
+.inst-dialog textarea {
+  resize: vertical;
+  width: 100%;
+  font: inherit;
+  padding: 10px;
+  background: var(--paper);
+  border: 1px solid #989f92;
+  border-radius: 4px;
+  color: var(--forest);
+}
+.inst-dialog .inst-check {
+  display: flex;
+  gap: 10px;
+  align-items: start;
+  line-height: 1.45;
+}
+.inst-check input {
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--emerald);
+}
+.inst-dialog [role='alert'] {
+  color: #893b28;
+}
+@media (max-width: 640px) {
+  .inst-counts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .inst-counts div:nth-child(n + 3) {
+    border-top: 1px solid var(--line);
+  }
+  .inst-list li {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .inst-unit,
+  .inst-unit .field {
+    width: 100%;
+  }
+  .inst-filters .field:first-child {
+    flex-basis: 100%;
+    max-width: none;
+  }
+  .inst-filters .field {
+    flex-grow: 1;
+  }
+  .inst-page .pager {
+    flex-wrap: wrap;
+  }
+}

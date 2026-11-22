@@ -79,7 +79,7 @@ function string(value: unknown): string {
   return value;
 }
 
-function uuid(value: unknown): string {
+export function parseUuid(value: unknown): string {
   const id = string(value);
   if (!/^[a-f\d]{8}-(?:[a-f\d]{4}-){3}[a-f\d]{12}$/i.test(id))
     invalidResponse();
@@ -99,7 +99,7 @@ function integer(value: unknown, minimum: number): number {
 export function parseInstitution(input: unknown): Institution {
   const item = record(input);
   return {
-    id: uuid(item.id),
+    id: parseUuid(item.id),
     name: string(item.name),
     publicAddress: string(item.publicAddress),
     pickupInstructions: string(item.pickupInstructions),
@@ -110,29 +110,40 @@ function isKey<T extends object>(value: unknown, labels: T): value is keyof T {
   return typeof value === 'string' && Object.hasOwn(labels, value);
 }
 
-export function parseMaterial(input: unknown): Material {
+const uploadPath =
+  /^\/api\/v1\/uploads\/[a-f\d]{8}-(?:[a-f\d]{4}-){3}[a-f\d]{12}\.(?:jpg|png|webp)$/;
+
+export function parseMaterialFields(input: unknown): Omit<Material, 'status'> {
   const item = record(input);
   if (
     !isKey(item.category, categoryLabels) ||
     !isKey(item.condition, conditionLabels)
   )
     invalidResponse();
-  if (item.status !== 'AVAILABLE') invalidResponse();
   const createdAt = string(item.createdAt);
   if (!Number.isFinite(Date.parse(createdAt))) invalidResponse();
   const imageUrl = item.imageUrl === null ? null : string(item.imageUrl);
-  if (imageUrl !== null && !/^https?:\/\//i.test(imageUrl)) invalidResponse();
+  if (
+    imageUrl !== null &&
+    !/^https?:\/\//i.test(imageUrl) &&
+    !uploadPath.test(imageUrl)
+  )
+    invalidResponse();
   return {
-    id: uuid(item.id),
+    id: parseUuid(item.id),
     title: string(item.title),
     description: string(item.description),
     category: item.category,
     condition: item.condition,
     imageUrl,
-    status: item.status,
     institution: parseInstitution(item.institution),
     createdAt,
   };
+}
+
+export function parseMaterial(input: unknown): Material {
+  if (record(input).status !== 'AVAILABLE') invalidResponse();
+  return { ...parseMaterialFields(input), status: 'AVAILABLE' };
 }
 
 export function parsePage<T>(
