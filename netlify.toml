@@ -1,0 +1,29 @@
+# RePassa — Netlify Server PoC (feasibility branch, NOT enabled for production).
+# Backend-only Netlify site: the Vercel frontend keeps proxying /api/v1/* to
+# this origin exactly as it does to Render today — same-origin cookie model
+# unchanged. Render config stays untouched as the fallback.
+#
+# Server runs from the backend/ base directory; entry is backend/netlify/server/index.mjs.
+# Requires Node >= 24 builds (Netlify Server minimum); repo engines allow it.
+
+[build]
+  base = "backend"
+  publish = "dist"
+  command = "npm ci && npm run build && npm run db:migrate:deploy"
+
+[server]
+  region = "cmh"          # or "fra" — only two regions exist in Early Access
+  size = "small"          # only size available on Free/Personal plans
+  # Native/binary assets the bundler cannot infer: Prisma query engine and
+  # prebuilt argon2/sharp binaries.
+  includedFiles = [
+    "node_modules/.prisma/**",
+    "node_modules/@prisma/engines/**",
+    "node_modules/**/argon2/**/*.node",
+    "node_modules/**/sharp/**/*.node",
+    "node_modules/**/@img/**"
+  ]
+
+[server.scale]
+  min = 0
+  max = 1                 # Free/Personal plan ceiling during Early Access

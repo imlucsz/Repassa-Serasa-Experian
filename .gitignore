@@ -33,3 +33,6 @@ test-results/
 /.agents/skills/remove-animations/
 /.agents/skills/review-animations/
 /.agents/skills/write-swift/
+
+# Local Netlify folder
+.netlify
