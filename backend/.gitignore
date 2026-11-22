@@ -11,3 +11,6 @@ test/.pg-daemon.pid
 
 # Local upload objects (private storage root; never commit user/demo files)
 storage/
+
+# Local Netlify folder
+.netlify
