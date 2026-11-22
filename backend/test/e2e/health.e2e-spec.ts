@@ -125,12 +125,22 @@ describe('Foundation HTTP surface (e2e, real Postgres)', () => {
   });
 
   it('oversized JSON body returns 413', async () => {
-    const res = await req('POST', '/api/v1/probe', {
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name: 'x'.repeat(2 * 1024 * 1024), kind: 'A' }),
-    });
-    expect(res.status).toBe(413);
-    expect((await json(res)).code).toBe('PAYLOAD_TOO_LARGE');
+    // The server answers 413 and destroys the socket while the client may
+    // still be streaming the oversized body; whether fetch delivers the
+    // response or sees the reset is a race — bounded retry covers it.
+    let res: Response | undefined;
+    for (let attempt = 0; attempt < 3 && !res; attempt++) {
+      try {
+        res = await req('POST', '/api/v1/probe', {
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ name: 'x'.repeat(2 * 1024 * 1024), kind: 'A' }),
+        });
+      } catch (error) {
+        if (attempt === 2) throw error;
+      }
+    }
+    expect(res!.status).toBe(413);
+    expect((await json(res!)).code).toBe('PAYLOAD_TOO_LARGE');
   });
 
   it('CORS: allowlisted origin gets ACAO header, unknown origin does not', async () => {

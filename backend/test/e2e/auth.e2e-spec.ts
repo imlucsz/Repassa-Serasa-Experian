@@ -136,7 +136,7 @@ describe('Auth API (e2e, real Postgres)', () => {
       expect(cookie).not.toBeNull();
       expect(cookie!.raw).toMatch(/HttpOnly/i);
       expect(cookie!.raw).toContain('Path=/api/v1/auth');
-      expect(cookie!.raw).toMatch(/SameSite=Lax/i);
+      expect(cookie!.raw).toMatch(/SameSite=Strict/i);
       expect(cookie!.raw).toMatch(/Max-Age=604800/);
       expect(cookie!.raw).not.toMatch(/Secure/i); // http test env only
 
