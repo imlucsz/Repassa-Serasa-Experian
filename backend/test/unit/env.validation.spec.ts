@@ -53,6 +53,7 @@ describe('validateEnv', () => {
       NODE_ENV: 'production',
       ALLOWED_ORIGINS: 'https://repassa.example.com',
       JWT_ACCESS_SECRET: 'x'.repeat(32),
+      PICKUP_CODE_SECRET: 'y'.repeat(32),
     });
     expect(prod.allowedOrigins).toEqual(['https://repassa.example.com']);
     expect(prod.swaggerEnabled).toBe(false); // default off in production
@@ -118,10 +119,25 @@ describe('validateEnv', () => {
           NODE_ENV: 'production',
           ALLOWED_ORIGINS: 'https://repassa.example.com',
           JWT_ACCESS_SECRET: 'x'.repeat(32),
+      PICKUP_CODE_SECRET: 'y'.repeat(32),
         }),
       ),
     ).toBe('');
     expect(validateEnv({ ...BASE }).jwtAccessSecret).toBeUndefined();
+  });
+
+  it('requires PICKUP_CODE_SECRET in production but not in dev/test', () => {
+    expect(
+      issues(() =>
+        validateEnv({
+          ...BASE,
+          NODE_ENV: 'production',
+          ALLOWED_ORIGINS: 'https://repassa.example.com',
+          JWT_ACCESS_SECRET: 'x'.repeat(32),
+        }),
+      ),
+    ).toContain('PICKUP_CODE_SECRET is required in production');
+    expect(validateEnv({ ...BASE }).pickupCodeSecret).toBeUndefined();
   });
 
   it('applies documented TTL defaults and validates provided ranges', () => {
@@ -147,6 +163,7 @@ describe('validateEnv', () => {
       NODE_ENV: 'production',
       ALLOWED_ORIGINS: 'https://repassa.example.com',
       JWT_ACCESS_SECRET: 'x'.repeat(32),
+      PICKUP_CODE_SECRET: 'y'.repeat(32),
     });
     expect(prod.cookieSecure).toBe(true);
     expect(
@@ -156,6 +173,7 @@ describe('validateEnv', () => {
           NODE_ENV: 'production',
           ALLOWED_ORIGINS: 'https://repassa.example.com',
           JWT_ACCESS_SECRET: 'x'.repeat(32),
+      PICKUP_CODE_SECRET: 'y'.repeat(32),
           COOKIE_SECURE: 'false',
         }),
       ),
