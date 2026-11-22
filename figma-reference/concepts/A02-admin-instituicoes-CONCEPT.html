@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Instituições · RePassa (conceito)</title>
+<link rel="stylesheet" href="concept.css"/>
+</head>
+<body>
+<div class="concept-ribbon">CONCEPT</div>
+
+<header class="site-nav">
+  <a class="site-wordmark" href="#"><img src="repassa.webp" alt=""/><strong>RePassa</strong></a>
+  <nav class="nav-links"><a href="#">Painel</a><a href="#">Instituições</a><a href="#">Usuários</a><a href="#">Materiais</a><a href="#">Auditoria</a><a class="button" href="#">Sair ⇥</a></nav>
+</header>
+
+
+<main class="frame">
+  <div class="page-head">
+    <p class="eyebrow">Administração</p>
+    <h1>Instituições <em>parceiras.</em></h1>
+  </div>
+  <div class="filter-row">
+    <input placeholder="Buscar por nome ou cidade"/>
+    <select><option>Todos os status</option><option>Ativas</option><option>Pendentes</option><option>Suspensas</option></select>
+    <button class="button">Filtrar →</button>
+    <button class="button primary" style="margin-left:auto;">+ Cadastrar instituição</button>
+  </div>
+  <table>
+    <thead><tr><th>Instituição</th><th>Endereço</th><th>Membros</th><th>Materiais</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Instituto Folha Nova</td><td>Vila Mariana, São Paulo/SP</td><td>3</td><td>18</td><td><span class="status" data-status="COMPLETED">● Ativa</span></td></tr>
+      <tr><td>Centro Comunitário Semente</td><td>Santo Amaro, São Paulo/SP</td><td>2</td><td>11</td><td><span class="status" data-status="COMPLETED">● Ativa</span></td></tr>
+      <tr><td>Centro de Estudos Aurora</td><td>Santana, São Paulo/SP</td><td>1</td><td>0</td><td><span class="status" data-status="ACTIVE">● Pendente</span></td></tr>
+      <tr><td>Biblioteca Comunitária Raízes</td><td>Capão Redondo, São Paulo/SP</td><td>1</td><td>0</td><td><span class="status" data-status="ACTIVE">● Pendente</span></td></tr>
+    </tbody>
+  </table>
+</main>
+
+<div class="concept-note">Tela CONCEPT para referência de design — ainda não implementada. Todos os dados são fictícios e servem apenas para composição visual.</div>
+<footer class="site-foot"><span>RePassa · Rede de reuso educacional</span><span>Conceito visual — dados fictícios</span></footer>
+</body>
+</html>

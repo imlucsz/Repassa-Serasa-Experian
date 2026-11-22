@@ -1,0 +1,51 @@
+id,file,role,screen,route,status,viewport,notes
+V01,shots/visitor/V01-home-IMPLEMENTED.png,Visitor,Home,/,IMPLEMENTED,1440x900,Hero + proposta de valor; dobras abaixo do fold existem na página real
+V01,shots/visitor/V01-home-mobile-IMPLEMENTED.png,Visitor,Home,/,IMPLEMENTED,390x844,Versão mobile
+V02,shots/visitor/V02-catalogo-estante-IMPLEMENTED.png,Visitor,Catálogo (estante 3D),/catalogo?vista=estante,IMPLEMENTED,1440x900,Componente 3D preservado; interação por arraste
+V02,shots/visitor/V02b-catalogo-grade-IMPLEMENTED.png,Visitor,Catálogo (grade),/catalogo?vista=grade,IMPLEMENTED,1440x900,Alternativa acessível à estante
+V02,shots/visitor/V02-catalogo-mobile-IMPLEMENTED.png,Visitor,Catálogo (grade),/catalogo?vista=grade,IMPLEMENTED,390x844,Mobile usa grade por padrão
+V03,shots/visitor/V03-material-detalhe-IMPLEMENTED.png,Visitor,Detalhe do material,/materiais/:id,IMPLEMENTED,1440x900,Deep link com CTA de reserva
+V03,shots/visitor/V03-material-detalhe-mobile-IMPLEMENTED.png,Visitor,Detalhe do material,/materiais/:id,IMPLEMENTED,390x844,
+V04,shots/visitor/V04-entrar-IMPLEMENTED.png,Visitor,Login,/entrar,IMPLEMENTED,1440x900,Split ilustração/formulário
+V04,shots/visitor/V04-entrar-mobile-IMPLEMENTED.png,Visitor,Login,/entrar,IMPLEMENTED,390x844,Coluna única
+V05,shots/visitor/V05-cadastro-IMPLEMENTED.png,Visitor,Cadastro,/cadastro,IMPLEMENTED,1440x900,Somente estudante; sem seletor de papel
+V06,shots/visitor/V06-recuperar-senha-CONCEPT.png,Visitor,Recuperar senha,/recuperar-senha,CONCEPT,1440x900,P1 — prerequisito de onboarding real
+V06,shots/visitor/V06-recuperar-senha-CONCEPT-mobile.png,Visitor,Recuperar senha,/recuperar-senha,CONCEPT,390x844,
+V99,shots/visitor/V99-404-IMPLEMENTED.png,Visitor,Não encontrado,*,IMPLEMENTED,1440x900,Estado de erro de rota
+E01,shots/student/E01-doar-IMPLEMENTED.png,Student,Doar material,/doar,IMPLEMENTED,1440x900,Formulário com upload de foto opcional
+E02,shots/student/E02-doacao-confirmada-IMPLEMENTED.png,Student,Doação cadastrada,/doar (após envio),IMPLEMENTED,1440x900,Comprovante com ponto de entrega
+E03,shots/student/E03-minhas-doacoes-IMPLEMENTED.png,Student,Minhas doações,/minhas-doacoes,IMPLEMENTED,1440x900,Badges de status reais
+E03,shots/student/E03-minhas-doacoes-mobile-IMPLEMENTED.png,Student,Minhas doações,/minhas-doacoes,IMPLEMENTED,390x844,
+E04,shots/student/E04-reserva-confirmada-IMPLEMENTED.png,Student,Reserva confirmada + código,/materiais/:id (após reservar),IMPLEMENTED,1440x900,Código de retirada exibido ao dono da reserva; página inteira
+E05,shots/student/E05-minhas-reservas-CONCEPT.png,Student,Minhas reservas,/minhas-reservas,CONCEPT,1440x900,PRIORIDADE — rota ausente; código + prazo + cancelamento
+E05,shots/student/E05-minhas-reservas-CONCEPT-mobile.png,Student,Minhas reservas,/minhas-reservas,CONCEPT,390x844,
+E06,shots/student/E06-reserva-cancelar-CONCEPT.png,Student,Cancelar reserva (confirmação),/minhas-reservas,CONCEPT,1440x900,Diálogo de confirmação
+E07,shots/student/E07-doacao-cancelar-IMPLEMENTED.png,Student,Cancelar doação (confirmação),/minhas-doacoes,IMPLEMENTED,1440x900,Confirmação inline implementada
+E08,shots/student/E08-perfil-IMPLEMENTED.png,Student,Meu perfil,/perfil,IMPLEMENTED,1440x900,Edita displayName + logout
+E09,shots/student/E09-acesso-restrito-IMPLEMENTED.png,Student,Acesso restrito (403),/instituicao como STUDENT,IMPLEMENTED,1440x900,StatePanel forbidden real
+E10,shots/student/E10-sessao-indisponivel-IMPLEMENTED.png,Student,Sessão indisponível,qualquer área privada,IMPLEMENTED,1440x900,Erro de refresh com retry
+E11,shots/student/E11-conta-dados-CONCEPT.png,Student,Dados da conta (LGPD),/perfil/dados,CONCEPT,1440x900,Exportação e exclusão de conta
+I01,shots/institution/I01-instituicao-painel-IMPLEMENTED.png,Institution,Painel,/instituicao,IMPLEMENTED,1440x900,Contadores reais por status
+I02,shots/institution/I02-recebimentos-IMPLEMENTED.png,Institution,Recebimentos,/instituicao/recebimentos,IMPLEMENTED,1440x900,Lista pendente + receber/recusar
+I02,shots/institution/I02-recebimentos-mobile-IMPLEMENTED.png,Institution,Recebimentos,/instituicao/recebimentos,IMPLEMENTED,390x844,
+I03,shots/institution/I03-recebimento-recusar-IMPLEMENTED.png,Institution,Recusar doação (diálogo),/instituicao/recebimentos,IMPLEMENTED,1440x900,Dialog nativo com motivo
+I04,shots/institution/I04-estoque-IMPLEMENTED.png,Institution,Estoque,/instituicao/estoque,IMPLEMENTED,1440x900,Filtros por status + busca
+I05,shots/institution/I05-retirada-codigo-CONCEPT.png,Institution,Confirmar retirada (código),/instituicao/retirada,CONCEPT,1440x900,PRIORIDADE — rota ausente; campo de código
+I05,shots/institution/I05-retirada-codigo-CONCEPT-mobile.png,Institution,Confirmar retirada,/instituicao/retirada,CONCEPT,390x844,
+I06,shots/institution/I06-retirada-confirmada-CONCEPT.png,Institution,Retirada — reserva encontrada + confirmação,/instituicao/retirada,CONCEPT,1440x900,PRIORIDADE — confirmação única
+I06,shots/institution/I06-retirada-confirmada-CONCEPT-mobile.png,Institution,Retirada — resultado,/instituicao/retirada,CONCEPT,390x844,
+I07,shots/institution/I07-cadastro-instituicao-CONCEPT.png,Institution,Cadastro de instituição,/instituicoes/nova,CONCEPT,1440x900,PRIORIDADE — formulário público com análise
+I08,shots/institution/I08-equipe-CONCEPT.png,Institution,Equipe do ponto,/instituicao/equipe,CONCEPT,1440x900,PRIORIDADE — gestão de membros
+I09,shots/institution/I09-historico-CONCEPT.png,Institution,Histórico do ponto,/instituicao/historico,CONCEPT,1440x900,Linha do tempo de operações
+A01,shots/admin/A01-admin-dashboard-CONCEPT.png,Administrator,Painel administrativo,/admin,CONCEPT,1440x900,Métricas + aprovações pendentes
+A01,shots/admin/A01-admin-dashboard-CONCEPT-mobile.png,Administrator,Painel administrativo,/admin,CONCEPT,390x844,
+A02,shots/admin/A02-admin-instituicoes-CONCEPT.png,Administrator,Instituições,/admin/instituicoes,CONCEPT,1440x900,Lista com status e aprovação
+A02,shots/admin/A02-admin-instituicoes-CONCEPT-mobile.png,Administrator,Instituições,/admin/instituicoes,CONCEPT,390x844,
+A03,shots/admin/A03-admin-instituicao-detalhe-CONCEPT.png,Administrator,Instituição — detalhe,/admin/instituicoes/:id,CONCEPT,1440x900,Contadores + equipe + suspender
+A04,shots/admin/A04-admin-usuarios-CONCEPT.png,Administrator,Usuários,/admin/usuarios,CONCEPT,1440x900,Filtros por função e status
+A05,shots/admin/A05-admin-usuario-detalhe-CONCEPT.png,Administrator,Usuário — detalhe,/admin/usuarios/:id,CONCEPT,1440x900,Atividade + desativar conta
+A06,shots/admin/A06-admin-materiais-CONCEPT.png,Administrator,Materiais,/admin/materiais,CONCEPT,1440x900,Somente leitura
+A07,shots/admin/A07-admin-reservas-CONCEPT.png,Administrator,Reservas,/admin/reservas,CONCEPT,1440x900,Sem códigos — só status
+A08,shots/admin/A08-admin-auditoria-CONCEPT.png,Administrator,Auditoria,/admin/auditoria,CONCEPT,1440x900,Trilha de eventos sem dados sensíveis
+A09,shots/admin/A09-admin-configuracoes-CONCEPT.png,Administrator,Configurações,/admin/configuracoes,CONCEPT,1440x900,Regras de reserva + administradores
+A10,shots/admin/A10-admin-relatorios-CONCEPT.png,Administrator,Relatórios,/admin/relatorios,CONCEPT,1440x900,Impacto agregado sem PII

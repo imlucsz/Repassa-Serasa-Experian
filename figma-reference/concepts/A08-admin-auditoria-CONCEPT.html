@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Auditoria · RePassa (conceito)</title>
+<link rel="stylesheet" href="concept.css"/>
+</head>
+<body>
+<div class="concept-ribbon">CONCEPT</div>
+
+<header class="site-nav">
+  <a class="site-wordmark" href="#"><img src="repassa.webp" alt=""/><strong>RePassa</strong></a>
+  <nav class="nav-links"><a href="#">Painel</a><a href="#">Instituições</a><a href="#">Usuários</a><a href="#">Materiais</a><a href="#">Auditoria</a><a class="button" href="#">Sair ⇥</a></nav>
+</header>
+
+
+<main class="frame">
+  <div class="page-head">
+    <p class="eyebrow">Administração</p>
+    <h1>Trilha de <em>auditoria.</em></h1>
+    <p class="lede">Eventos de segurança e operações. Códigos de retirada nunca são registrados.</p>
+  </div>
+  <div class="filter-row">
+    <input placeholder="Buscar por evento ou ator"/>
+    <select><option>Todos os tipos</option><option>Autenticação</option><option>Doações</option><option>Reservas</option><option>Retiradas</option><option>Admin</option></select>
+    <button class="button">Filtrar →</button>
+  </div>
+  <table>
+    <thead><tr><th>Data/hora</th><th>Evento</th><th>Ator</th><th>Contexto</th></tr></thead>
+    <tbody>
+      <tr><td>20 nov. 14:32</td><td>RESERVATION_CREATED</td><td>estudante #84F3</td><td>material #39EA · Folha Nova</td></tr>
+      <tr><td>20 nov. 14:01</td><td>AUTH_LOGIN</td><td>funcionária #9C21</td><td>—</td></tr>
+      <tr><td>19 nov. 16:44</td><td>PICKUP_CONFIRMED</td><td>funcionária #9C21</td><td>reserva #9A1B · Semente</td></tr>
+      <tr><td>19 nov. 09:30</td><td>MATERIAL_RECEIVED</td><td>funcionário #4D77</td><td>material #32FF · Semente</td></tr>
+      <tr><td>18 nov. 11:12</td><td>RESERVATION_EXPIRED</td><td>sistema</td><td>reserva #77EF · Folha Nova</td></tr>
+    </tbody>
+  </table>
+</main>
+
+<div class="concept-note">Tela CONCEPT para referência de design — ainda não implementada. Todos os dados são fictícios e servem apenas para composição visual.</div>
+<footer class="site-foot"><span>RePassa · Rede de reuso educacional</span><span>Conceito visual — dados fictícios</span></footer>
+</body>
+</html>
