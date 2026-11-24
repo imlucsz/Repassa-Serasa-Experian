@@ -37,8 +37,7 @@
     {
       "id": "example-free-provider",
       "billing": "free",
-      "note": "Replace with a provider YOU authorized. Free quota is conditional - set maxDailyCostUsd as a hard cap.",
-      "maxDailyCostUsd": 0,
+      "note": "Replace with a provider YOU authorized. Free quota is conditional - dailyTokens is the rate limit.",
       "models": [{ "id": "example/model-id", "capabilities": ["text", "code"] }],
       "envKey": "EXAMPLE_PROVIDER_KEY"
     },

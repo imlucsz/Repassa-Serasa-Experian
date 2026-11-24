@@ -42,9 +42,11 @@ live in OmniRoute; this server only reads `OMNIROUTE_API_KEY` from your env.
   - `billing: "paid"` requires BOTH an explicit `model`/`provider` argument
     AND a routing profile that lists `"paid"` — automatic routing only ever
     selects `free` providers, so a paid model is never invoked silently
-  - `provider.maxDailyCostUsd` is a hard per-provider daily cap
+  - `provider.maxDailyCostUsd` is a hard per-provider daily cap — it only
+    binds providers that can spend (billing `paid` or declared `pricing`);
+    free providers are rate-limited by `dailyTokens` instead
   - `billing: "free"` is YOUR declaration (free tiers are conditional and
-    unverifiable) — pair it with `maxDailyCostUsd` for a real ceiling
+    unverifiable)
 - **Honest cost accounting**: `usage.costUsd` is estimated only from pricing
   YOU declare (`provider.pricing`); each task records `costBasis`
   (`declared-free` / `declared-pricing` / `unavailable`). The gateway is

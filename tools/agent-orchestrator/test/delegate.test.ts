@@ -115,6 +115,13 @@ test('per-provider daily cost cap blocks further paid calls', async () => {
   assert.equal(task.error?.code, 'provider_budget');
 });
 
+test('a $0 cost cap on a free provider does NOT block zero-cost calls', async () => {
+  const { loaded, store, ledger } = setup();
+  loaded.config.providers.find((p) => p.id === 'mockfree')!.maxDailyCostUsd = 0;
+  const task = await runDelegation(loaded, store, ledger, getRole(loaded, 'researcher'), 'hi', undefined, {});
+  assert.equal(task.status, 'done');
+});
+
 test('unknown-billing provider cannot be invoked explicitly', async () => {
   const { loaded, store, ledger } = setup();
   const task = await runDelegation(loaded, store, ledger, getRole(loaded, 'researcher'), 'hi', undefined, { model: 'mystery/model', routingProfile: 'auto' });

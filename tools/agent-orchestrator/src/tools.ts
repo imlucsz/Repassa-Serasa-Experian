@@ -125,8 +125,12 @@ export async function runDelegation(
     task.status = 'blocked'; task.error = { code: 'routing', message: sel.error }; store.save(task); return task;
   }
 
+  // Cost cap only binds providers that can spend (paid or priced). A
+  // declared-free provider without pricing always records cost 0, so a $0
+  // cap must not block it - dailyTokens is the rate limit for those.
+  const canSpend = sel.provider.billing === 'paid' || sel.provider.pricing !== undefined;
   const provUsage = ledger.providerUsageToday(sel.provider.id);
-  if (sel.provider.maxDailyCostUsd !== undefined && provUsage.costUsd >= sel.provider.maxDailyCostUsd) {
+  if (canSpend && sel.provider.maxDailyCostUsd !== undefined && provUsage.costUsd >= sel.provider.maxDailyCostUsd) {
     task.status = 'blocked';
     task.error = { code: 'provider_budget', message: `provider "${sel.provider.id}" daily cost cap reached ($${provUsage.costUsd}/$${sel.provider.maxDailyCostUsd})` };
     store.save(task); return task;
