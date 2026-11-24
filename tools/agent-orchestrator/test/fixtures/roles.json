@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "roles": [
+    {
+      "id": "researcher",
+      "title": "Researcher",
+      "description": "read-only research",
+      "capabilities": ["text", "code"],
+      "maxOutputTokens": 2048,
+      "writable": false,
+      "systemPrompt": "You are a test researcher. Be concise."
+    },
+    {
+      "id": "frontend-implementer",
+      "title": "Frontend implementer",
+      "description": "writable coder",
+      "capabilities": ["code"],
+      "maxOutputTokens": 4096,
+      "writable": true,
+      "systemPrompt": "You are a test implementer. Output unified diffs only."
+    }
+  ]
+}
