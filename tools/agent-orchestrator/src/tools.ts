@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { LoadedConfig, Role } from './config.js';
 import { TaskStore, BudgetLedger, type TaskRecord } from './tasks.js';
-import { chatCompletion, probeGateway, type ChatMessage } from './gateway.js';
+import { chatCompletion, probeGateway, discoverGatewayModels, type ChatMessage } from './gateway.js';
 import { selectModel, listPolicyModels } from './router.js';
 import { scanForSecrets, checkFileContextAccess } from './safety.js';
 import { workersEnabled, prepareWorktree, collectWorkerFiles, applyPatchToWorktree } from './worktree.js';
@@ -40,6 +40,7 @@ function summary(task: TaskRecord): { content: { type: 'text'; text: string }[];
       provider: task.provider, model: task.model, latencyMs: task.latencyMs,
       usage: task.usage, error: task.error, egressBlocked: task.egressBlocked,
       output: task.status === 'done' ? task.output : undefined,
+      costBasis: task.costBasis,
     },
   };
 }
@@ -124,6 +125,13 @@ export async function runDelegation(
     task.status = 'blocked'; task.error = { code: 'routing', message: sel.error }; store.save(task); return task;
   }
 
+  const provUsage = ledger.providerUsageToday(sel.provider.id);
+  if (sel.provider.maxDailyCostUsd !== undefined && provUsage.costUsd >= sel.provider.maxDailyCostUsd) {
+    task.status = 'blocked';
+    task.error = { code: 'provider_budget', message: `provider "${sel.provider.id}" daily cost cap reached ($${provUsage.costUsd}/$${sel.provider.maxDailyCostUsd})` };
+    store.save(task); return task;
+  }
+
   const maxTokens = Math.min(opts.maxOutputTokens ?? role.maxOutputTokens, cfg.budget.perTaskMaxOutputTokens);
   task.status = 'running'; task.provider = sel.provider.id; task.model = sel.model; store.save(task);
 
@@ -139,8 +147,13 @@ export async function runDelegation(
     task.model = result.model ?? sel.model;
     const outSecrets = scanForSecrets(result.content ?? '');
     if (outSecrets.length) task.output = `[output withheld: matched secret patterns ${outSecrets.join(', ')}]`;
-    task.usage = { inputTokens: result.usage?.inputTokens, outputTokens: result.usage?.outputTokens, costUsd: 0 };
-    ledger.add(result.usage?.totalTokens ?? 0, 0);
+    const pricing = sel.provider.pricing;
+    const inTok = result.usage?.inputTokens ?? 0;
+    const outTok = result.usage?.outputTokens ?? 0;
+    const costUsd = pricing ? +((inTok * pricing.inputPerMToken + outTok * pricing.outputPerMToken) / 1e6).toFixed(6) : 0;
+    task.usage = { inputTokens: inTok, outputTokens: outTok, costUsd };
+    task.costBasis = pricing ? 'declared-pricing' : sel.provider.billing === 'free' ? 'declared-free' : 'unavailable';
+    ledger.add(result.usage?.totalTokens ?? inTok + outTok, costUsd, sel.provider.id);
   } else {
     task.status = result.error?.code === 'timeout' ? 'timeout' : 'error';
     task.error = result.error;
@@ -178,6 +191,10 @@ export function registerTools(server: McpServer, loaded: LoadedConfig): void {
     inputSchema: {},
   }, async () => {
     const usage = ledger.usageToday();
+    const declared = new Set(cfg.providers.flatMap((p) => p.models.map((m) => m.id)));
+    const discovered = (await discoverGatewayModels(cfg))
+      .filter((id) => !declared.has(id))
+      .map((id) => ({ id, callable: false, reason: 'advertised by gateway but NOT declared in providers[] - declare to enable' }));
     return {
       content: [{ type: 'text', text: `${cfg.providers.length} policy providers; mode=${cfg.safety.mode}; today: ${usage.calls} calls, ${usage.tokens} tokens.` }],
       structuredContent: {
@@ -185,6 +202,7 @@ export function registerTools(server: McpServer, loaded: LoadedConfig): void {
         routingProfiles: Object.keys(cfg.routing.profiles),
         defaultProfile: cfg.routing.defaultProfile,
         providers: listPolicyModels(cfg),
+        gatewayDiscovered: discovered,
         roles: loaded.roles.map((r) => ({ id: r.id, title: r.title, capabilities: r.capabilities, writable: r.writable, maxOutputTokens: r.maxOutputTokens })),
         budget: { dailyTokens: cfg.budget.dailyTokens, usedTodayTokens: usage.tokens, dailyCostUsd: cfg.budget.dailyCostUsd, usedTodayCostUsd: usage.costUsd },
         workersEnabled: workersEnabled(cfg).enabled,
@@ -341,8 +359,13 @@ export function registerTools(server: McpServer, loaded: LoadedConfig): void {
     }
     seed.status = 'done';
     seed.output = `Patch applied in worktree ${prep.worktreePath} (branch ${prep.branch}).\n\n${applied.diffStat}`;
-    seed.usage = { inputTokens: result.usage?.inputTokens, outputTokens: result.usage?.outputTokens, costUsd: 0 };
-    ledger.add(result.usage?.totalTokens ?? 0, 0);
+    const wPricing = sel.provider.pricing;
+    const wIn = result.usage?.inputTokens ?? 0;
+    const wOut = result.usage?.outputTokens ?? 0;
+    const wCost = wPricing ? +((wIn * wPricing.inputPerMToken + wOut * wPricing.outputPerMToken) / 1e6).toFixed(6) : 0;
+    seed.usage = { inputTokens: wIn, outputTokens: wOut, costUsd: wCost };
+    seed.costBasis = wPricing ? 'declared-pricing' : sel.provider.billing === 'free' ? 'declared-free' : 'unavailable';
+    ledger.add(result.usage?.totalTokens ?? wIn + wOut, wCost, sel.provider.id);
     store.save(seed);
     return {
       content: [{ type: 'text', text: `Worker ${seed.taskId}: patch applied in ${prep.worktreePath}. Review patchFile/diff before integrating.` }],

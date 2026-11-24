@@ -20,8 +20,7 @@
   "budget": {
     "dailyTokens": 200000,
     "dailyCostUsd": 0,
-    "perTaskMaxOutputTokens": 4096,
-    "allowPaidProviders": false
+    "perTaskMaxOutputTokens": 4096
   },
   "concurrency": { "maxParallel": 3, "perProvider": 2 },
   "stateDir": "%LOCALAPPDATA%/RepassaOrchestrator/state",
@@ -38,9 +37,18 @@
     {
       "id": "example-free-provider",
       "billing": "free",
-      "note": "Replace with a provider YOU authorized. Free quota is conditional - verify current terms.",
+      "note": "Replace with a provider YOU authorized. Free quota is conditional - set maxDailyCostUsd as a hard cap.",
+      "maxDailyCostUsd": 0,
       "models": [{ "id": "example/model-id", "capabilities": ["text", "code"] }],
       "envKey": "EXAMPLE_PROVIDER_KEY"
+    },
+    {
+      "id": "example-paid-provider",
+      "billing": "paid",
+      "note": "Callable ONLY by explicit model/provider selection under a profile that lists 'paid'. Never auto-routed.",
+      "maxDailyCostUsd": 0.5,
+      "pricing": { "inputPerMToken": 0.15, "outputPerMToken": 0.6 },
+      "models": [{ "id": "example/paid-model", "capabilities": ["text", "code"] }]
     }
   ],
   "workers": {

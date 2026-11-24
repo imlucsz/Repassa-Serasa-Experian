@@ -23,6 +23,15 @@ const providerSchema = z.object({
   note: z.string().optional(),
   models: z.array(modelSchema).default([]),
   envKey: z.string().optional(),
+  // Optional owner-declared pricing used ONLY for ledger estimates. Absent
+  // pricing on a free provider records cost 0 with basis 'declared-free';
+  // the gateway is never trusted to report spend.
+  pricing: z.object({
+    inputPerMToken: z.number().min(0),
+    outputPerMToken: z.number().min(0),
+  }).optional(),
+  // Per-provider daily spend ceiling; calls are blocked once reached.
+  maxDailyCostUsd: z.number().min(0).optional(),
 });
 
 export const configSchema = z.object({
@@ -51,7 +60,6 @@ export const configSchema = z.object({
     dailyTokens: z.number().int().positive().default(200000),
     dailyCostUsd: z.number().min(0).default(0),
     perTaskMaxOutputTokens: z.number().int().positive().default(4096),
-    allowPaidProviders: z.boolean().default(false),
   }).prefault({}),
   concurrency: z.object({
     maxParallel: z.number().int().positive().default(3),
@@ -109,16 +117,37 @@ function resolveConfigPath(): string {
   return join(TOOL_ROOT, 'orchestrator.config.example.json');
 }
 
+// Resolve a possibly-relative path deterministically: absolute paths win;
+// relative paths are tried against the config directory first, then the tool
+// installation directory (TOOL_ROOT). For repoRoot a candidate must also look
+// like a repository root (.git or package.json present), so a config copied to
+// %LOCALAPPDATA% can never resolve AppData's parent as "the repo".
+function resolveFromBases(value: string, baseDir: string, repoMarkerCheck: boolean): string {
+  const expanded = expandEnv(value);
+  if (resolve(expanded) === expanded || /^[A-Za-z]:[\\/]/.test(expanded) || expanded.startsWith('\\\\')) {
+    return expanded; // absolute
+  }
+  const candidates = [resolve(baseDir, expanded), resolve(TOOL_ROOT, expanded)];
+  const ok = (c: string) =>
+    existsSync(c) &&
+    (!repoMarkerCheck || existsSync(join(c, '.git')) || existsSync(join(c, 'package.json')));
+  return candidates.find(ok) ?? candidates[candidates.length - 1];
+}
+
+// JSON.parse rejects a UTF-8 BOM; Notepad and PS5.1 Set-Content -Encoding UTF8
+// both write one, so strip it on every config read.
+const readJson = (p: string) => JSON.parse(readFileSync(p, 'utf8').replace(/^﻿/, ''));
+
 export function loadConfig(configPath?: string): LoadedConfig {
   const path = configPath ? resolve(expandEnv(configPath)) : resolveConfigPath();
   if (!existsSync(path)) throw new Error(`Orchestrator config not found: ${path}`);
-  const raw = JSON.parse(readFileSync(path, 'utf8'));
+  const raw = readJson(path);
   const config = configSchema.parse(raw);
   const baseDir = dirname(path);
-  const repoRoot = resolve(baseDir, expandEnv(config.repoRoot));
-  const rolesPath = resolve(baseDir, expandEnv(config.rolesFile));
+  const repoRoot = resolveFromBases(config.repoRoot, baseDir, true);
+  const rolesPath = resolveFromBases(config.rolesFile, baseDir, false);
   const rolesRaw = existsSync(rolesPath)
-    ? JSON.parse(readFileSync(rolesPath, 'utf8'))
+    ? readJson(rolesPath)
     : { version: 1, roles: [] };
   const roles = rolesFileSchema.parse(rolesRaw).roles;
   return { config, roles, repoRoot, stateDir: expandEnv(config.stateDir), configPath: path };

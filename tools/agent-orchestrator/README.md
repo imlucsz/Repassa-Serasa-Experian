@@ -37,8 +37,20 @@ live in OmniRoute; this server only reads `OMNIROUTE_API_KEY` from your env.
 - **Policy-only routing**: only models declared in your
   `orchestrator.config.json` `providers[]` can run; default profile
   `free-only` rejects `billing: "paid"`/`"unknown"`
+- **Fail-closed spend control**:
+  - `billing: "unknown"` is never callable under any profile
+  - `billing: "paid"` requires BOTH an explicit `model`/`provider` argument
+    AND a routing profile that lists `"paid"` — automatic routing only ever
+    selects `free` providers, so a paid model is never invoked silently
+  - `provider.maxDailyCostUsd` is a hard per-provider daily cap
+  - `billing: "free"` is YOUR declaration (free tiers are conditional and
+    unverifiable) — pair it with `maxDailyCostUsd` for a real ceiling
+- **Honest cost accounting**: `usage.costUsd` is estimated only from pricing
+  YOU declare (`provider.pricing`); each task records `costBasis`
+  (`declared-free` / `declared-pricing` / `unavailable`). The gateway is
+  never trusted to report spend, and nothing claims "verified $0".
 - **Budgets**: `dailyTokens`, `dailyCostUsd` (default `0` paid spend),
-  `perTaskMaxOutputTokens`; a local ledger tracks daily usage
+  `perTaskMaxOutputTokens`; a local ledger tracks daily usage per provider
 - **Loop prevention**: `maxDelegationDepth: 1` and workers refuse to re-delegate
 - **No retries** by default (`maxRetries: 0`); no model output is executed
 - File context: repo-root confined, `.env`/secrets/key files denied by built-in
@@ -53,9 +65,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\Install-Orchestrator
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\Install-Orchestrator.ps1           # install
 ```
 
-The installer: builds `dist/`, copies the example config to
-`%LOCALAPPDATA%\RepassaOrchestrator\orchestrator.config.json` (never overwrites
-without `-ForceConfig`), backs up `~/.codex/config.toml`, and appends:
+The installer: builds `dist/`, writes
+`%LOCALAPPDATA%\RepassaOrchestrator\orchestrator.config.json` with **absolute**
+`repoRoot`/`rolesFile`/`stateDir` paths (never overwrites without
+`-ForceConfig`, config kept no matter where it lives), backs up
+`~/.codex/config.toml`, and appends:
 
 ```toml
 [mcp_servers.repassa-orchestrator]
@@ -74,11 +88,33 @@ Then:
 3. Fully restart Codex Desktop.
 4. Verify: `scripts\Test-Orchestrator.ps1` (add `-Deep` for the unit suite)
 
-### Offline demo without a gateway
+### Offline demo without a gateway or API key
 
 Set `"gateway": { "type": "mock" }` in your config to exercise the whole MCP
-flow (tool listing, delegation, budget ledger, egress blocks) without any
-external call. `test/fixtures/` does exactly this in CI.
+flow (tool listing, delegation, budget ledger, egress blocks, second-model
+review) with no gateway installed and no `OMNIROUTE_API_KEY` needed.
+`Test-Orchestrator.ps1` passes fully in mock mode.
+
+## Exact local commands (PowerShell)
+
+```powershell
+cd <repo>\tools\agent-orchestrator
+
+# 1) Dry run - shows prerequisites and planned changes, touches nothing
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\Install-Orchestrator.ps1 -DryRun
+
+# 2) Install (builds, writes user config, registers MCP server after backup)
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\Install-Orchestrator.ps1
+
+# 3) Optional: switch to offline mock mode for a zero-network smoke test
+#    edit %LOCALAPPDATA%\RepassaOrchestrator\orchestrator.config.json -> gateway.type = "mock"
+
+# 4) Verify (add -Deep to also run the unit suite)
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\Test-Orchestrator.ps1
+
+# 5) Rollback registration (add -RemoveState to delete state/ledger/worktrees)
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\Uninstall-Orchestrator.ps1
+```
 
 ## Verification protocol (from Codex Desktop)
 
@@ -108,9 +144,12 @@ required capabilities, output cap and whether it may run worker tasks.
 npm ci && npm run build && npm test
 ```
 
-19 tests: egress scanning, localhost enforcement, path/deny rules, routing
-policy, budget/depth limits, mock end-to-end delegation, and a real stdio
-JSON-RPC handshake exercising `tools/list` + `delegate_task`.
+29 tests: egress scanning, localhost enforcement, path/deny rules, config
+path resolution (out-of-tree configs, spaced paths, repo-marker check),
+fail-closed routing (unknown never callable, paid explicit-only, auto never
+paid), provider cost caps + honest cost accounting, mock end-to-end
+delegation, and a real stdio JSON-RPC handshake exercising `tools/list` +
+`delegate_task`.
 
 ## Rollback
 

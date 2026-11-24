@@ -64,8 +64,10 @@ if ($nodeVer) {
   Check (($maj -gt 22) -or ($maj -eq 22 -and $min -ge 12)) "node $nodeVer >= 22.12" "node $nodeVer is older than 22.12 (MCP SDK requirement)"
 }
 Check ($null -ne (Get-Command npm -ErrorAction SilentlyContinue)) "npm on PATH" "npm not on PATH"
-Check (Test-Path $entryJs -or $SkipBuild) "build output $entryJs" "dist\index.js missing; build will run"
 Check (Test-Path $configSrc) "example config found" "orchestrator.config.example.json missing at $configSrc"
+if (Test-Path $entryJs) { Info "build output present: $entryJs" }
+elseif ($SkipBuild) { Warn "dist\index.js missing but -SkipBuild was given - registration will fail"; $failures++ }
+else { Info "dist\index.js not built yet - build step below will produce it" }
 if (Test-Path $codexCfg) { Info "Codex config: $codexCfg" } else { Warn "No $codexCfg - will create a minimal file" }
 if ($failures -gt 0 -and -not $DryRun) { throw "Prerequisites failed - fix and rerun." }
 if ($DryRun) { Info "(dry-run: continuing to show planned actions even with failures)" }
@@ -80,11 +82,15 @@ if ($DryRun) {
     npm run build | Out-Null
   } finally { Pop-Location }
   Check (Test-Path $entryJs) "built $entryJs" "build produced no dist\index.js"
+  if (-not (Test-Path $entryJs)) { throw "Build failed - cannot register a server with no entry point." }
 } else { Info "skipped (-SkipBuild)" }
 
 Step "Orchestrator config"
+# Absolute paths are baked into the installed copy so repoRoot/rolesFile never
+# depend on where the config file itself lives.
 if ($DryRun) {
-  if (Test-Path $configDest) { Info "would keep existing $configDest" } else { Info "would copy $configSrc -> $configDest" }
+  if (Test-Path $configDest) { Info "would keep existing $configDest" }
+  else { Info "would write $configDest with repoRoot=$RepoRoot and rolesFile=$toolDir\roles.json (absolute)" }
 } else {
   New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
   if ((Test-Path $configDest) -and -not $ForceConfig) {
@@ -94,8 +100,14 @@ if ($DryRun) {
       $bak = Join-Path $stateDir ("orchestrator.config.{0}.bak" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
       Copy-Item $configDest $bak; Info "backed up old config -> $bak"
     }
-    Copy-Item $configSrc $configDest
-    Info "wrote $configDest - edit providers/budget there"
+    $cfgJson = Get-Content $configSrc -Raw | ConvertFrom-Json
+    $cfgJson.repoRoot  = $RepoRoot
+    $cfgJson.rolesFile = (Join-Path $toolDir 'roles.json')
+    $cfgJson.stateDir  = (Join-Path $stateDir 'state')
+    if ($cfgJson.workers) { $cfgJson.workers.worktreeRoot = (Join-Path $stateDir 'worktrees') }
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($configDest, ($cfgJson | ConvertTo-Json -Depth 20), $utf8NoBom)
+    Info "wrote $configDest (repoRoot=$RepoRoot) - edit providers/budget there"
   }
 }
 
@@ -124,7 +136,9 @@ if ($DryRun) {
       $bak = Join-Path $backupDir ("config.toml.{0}.bak" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
       Copy-Item $codexCfg $bak; Info "backed up config.toml -> $bak"
     }
-    Add-Content -Path $codexCfg -Value $section -Encoding UTF8
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    if (Test-Path $codexCfg) { [System.IO.File]::AppendAllText($codexCfg, $section, $utf8NoBom) }
+    else { [System.IO.File]::WriteAllText($codexCfg, $section.TrimStart(), $utf8NoBom) }
     Info "registered [mcp_servers.$serverName]"
   }
 }

@@ -37,8 +37,7 @@
       "properties": {
         "dailyTokens": { "type": "integer" },
         "dailyCostUsd": { "type": "number" },
-        "perTaskMaxOutputTokens": { "type": "integer" },
-        "allowPaidProviders": { "type": "boolean" }
+        "perTaskMaxOutputTokens": { "type": "integer" }
       }
     },
     "providers": {
@@ -49,6 +48,14 @@
         "properties": {
           "id": { "type": "string" },
           "billing": { "enum": ["free", "paid", "unknown"] },
+          "maxDailyCostUsd": { "type": "number" },
+          "pricing": {
+            "type": "object",
+            "properties": {
+              "inputPerMToken": { "type": "number" },
+              "outputPerMToken": { "type": "number" }
+            }
+          },
           "models": {
             "type": "array",
             "items": {

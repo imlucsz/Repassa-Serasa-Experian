@@ -19,6 +19,7 @@ export interface TaskRecord {
   updatedAt: string;
   output?: string;
   usage?: { inputTokens?: number; outputTokens?: number; costUsd?: number };
+  costBasis?: 'declared-free' | 'declared-pricing' | 'unavailable';
   latencyMs?: number;
   error?: { code: string; message: string; retryable?: boolean };
   egressBlocked?: string[];
@@ -60,21 +61,30 @@ export class TaskStore {
   }
 }
 
+interface ProviderUsage { tokens: number; costUsd: number; calls: number }
+type DayUsage = ProviderUsage & { byProvider: Record<string, ProviderUsage> };
+
 export class BudgetLedger {
   constructor(private dir: string) { mkdirSync(dir, { recursive: true }); }
   private key(): string { return new Date().toISOString().slice(0, 10); }
   private file(): string { return join(this.dir, 'ledger.json'); }
-  private read(): Record<string, { tokens: number; costUsd: number; calls: number }> {
+  private read(): Record<string, DayUsage> {
     const f = this.file();
     return existsSync(f) ? JSON.parse(readFileSync(f, 'utf8')) : {};
   }
-  usageToday(): { tokens: number; costUsd: number; calls: number } {
-    return this.read()[this.key()] ?? { tokens: 0, costUsd: 0, calls: 0 };
+  usageToday(): ProviderUsage {
+    const day = this.read()[this.key()];
+    return day ? { tokens: day.tokens, costUsd: day.costUsd, calls: day.calls } : { tokens: 0, costUsd: 0, calls: 0 };
   }
-  add(tokens: number, costUsd: number): void {
+  providerUsageToday(providerId: string): ProviderUsage {
+    return this.read()[this.key()]?.byProvider?.[providerId] ?? { tokens: 0, costUsd: 0, calls: 0 };
+  }
+  add(tokens: number, costUsd: number, providerId: string): void {
     const all = this.read();
-    const day = all[this.key()] ?? { tokens: 0, costUsd: 0, calls: 0 };
-    all[this.key()] = { tokens: day.tokens + tokens, costUsd: +(day.costUsd + costUsd).toFixed(6), calls: day.calls + 1 };
+    const day = all[this.key()] ?? { tokens: 0, costUsd: 0, calls: 0, byProvider: {} };
+    const prov = day.byProvider[providerId] ?? { tokens: 0, costUsd: 0, calls: 0 };
+    day.byProvider[providerId] = { tokens: prov.tokens + tokens, costUsd: +(prov.costUsd + costUsd).toFixed(6), calls: prov.calls + 1 };
+    all[this.key()] = { tokens: day.tokens + tokens, costUsd: +(day.costUsd + costUsd).toFixed(6), calls: day.calls + 1, byProvider: day.byProvider };
     writeFileSync(this.file(), JSON.stringify(all, null, 2));
   }
 }

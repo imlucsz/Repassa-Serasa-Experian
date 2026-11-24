@@ -32,9 +32,21 @@ test('explicit paid model is rejected under free-only profile', () => {
   assert.ok('error' in sel);
 });
 
-test('auto profile can reach paid model', () => {
+test('auto profile can reach paid model only via explicit selection', () => {
   const sel = selectModel(config, researcher, { model: 'paid/big', routingProfile: 'auto' });
   assert.ok(!('error' in sel));
+});
+
+test('automatic routing NEVER picks a paid provider, even under a paid-allowing profile', () => {
+  const sel = selectModel(config, researcher, { routingProfile: 'auto' });
+  assert.ok(!('error' in sel));
+  if (!('error' in sel)) assert.equal(sel.provider.billing, 'free');
+});
+
+test('unknown-billing provider is never callable, even explicitly', () => {
+  const sel = selectModel(config, researcher, { model: 'mystery/model', routingProfile: 'auto' });
+  assert.ok('error' in sel);
+  if ('error' in sel) assert.match(sel.error, /unknown/);
 });
 
 test('unknown provider is rejected explicitly', () => {
@@ -42,8 +54,14 @@ test('unknown provider is rejected explicitly', () => {
   assert.ok('error' in sel);
 });
 
-test('listPolicyModels exposes policy surface', () => {
+test('listPolicyModels exposes policy surface with callability', () => {
   const list = listPolicyModels(config);
-  assert.equal(list.length, 2);
+  assert.equal(list.length, 3);
   assert.equal(list[0].billing, 'free');
+  assert.equal(list[0].callable, true);
+  const paid = list.find((p) => p.billing === 'paid')!;
+  assert.equal(paid.callable, true); // 'auto' profile exists in fixture
+  assert.match(paid.reason ?? '', /explicit/);
+  const unk = list.find((p) => p.billing === 'unknown')!;
+  assert.equal(unk.callable, false);
 });

@@ -98,6 +98,28 @@ export async function chatCompletion(
   return { ok: false, latencyMs: Date.now() - started, error: lastErr ?? { code: 'unknown', message: 'request failed' } };
 }
 
+// Model ids advertised by the gateway (GET /v1/models). Used by list_models to
+// show what exists - discovery never makes a model callable.
+export async function discoverGatewayModels(cfg: OrchestratorConfig): Promise<string[]> {
+  if (cfg.gateway.type === 'mock') return ['mock/chat'];
+  try {
+    assertLocalUrl(cfg.gateway.baseUrl, cfg.safety.localhostOnly);
+  } catch { return []; }
+  const apiKey = cfg.gateway.apiKeyEnv ? process.env[cfg.gateway.apiKeyEnv] : undefined;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const res = await fetch(`${cfg.gateway.baseUrl}/models`, {
+      headers: apiKey ? { authorization: `Bearer ${apiKey}` } : {},
+      signal: ctrl.signal,
+    });
+    if (!res.ok) return [];
+    const j = (await res.json()) as { data?: { id?: string }[] };
+    return (j.data ?? []).map((m) => m.id ?? '').filter(Boolean).slice(0, 200);
+  } catch { return []; }
+  finally { clearTimeout(timer); }
+}
+
 function summarizeError(json: unknown): string {
   const j = json as Record<string, unknown>;
   const err = (j.error ?? j) as Record<string, unknown>;
