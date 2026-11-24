@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RePassa orchestrator config",
+  "type": "object",
+  "required": ["version"],
+  "properties": {
+    "version": { "const": 1 },
+    "safety": {
+      "type": "object",
+      "properties": {
+        "mode": { "enum": ["read-only", "supervised"] },
+        "localhostOnly": { "type": "boolean" },
+        "maxDelegationDepth": { "type": "integer" },
+        "executeModelCommands": { "type": "boolean" },
+        "egress": {
+          "type": "object",
+          "properties": {
+            "onSecret": { "enum": ["block", "redact"] },
+            "maxContextBytes": { "type": "integer" },
+            "maxFileBytes": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "gateway": {
+      "type": "object",
+      "properties": {
+        "type": { "enum": ["openai-compatible", "mock"] },
+        "baseUrl": { "type": "string" },
+        "apiKeyEnv": { "type": "string" },
+        "timeoutSec": { "type": "number" },
+        "maxRetries": { "type": "integer" }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "properties": {
+        "dailyTokens": { "type": "integer" },
+        "dailyCostUsd": { "type": "number" },
+        "perTaskMaxOutputTokens": { "type": "integer" },
+        "allowPaidProviders": { "type": "boolean" }
+      }
+    },
+    "providers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "string" },
+          "billing": { "enum": ["free", "paid", "unknown"] },
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id"],
+              "properties": {
+                "id": { "type": "string" },
+                "capabilities": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

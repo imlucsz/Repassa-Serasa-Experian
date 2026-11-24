@@ -1,0 +1,53 @@
+{
+  "$schema": "./config/orchestrator.schema.json",
+  "version": 1,
+  "safety": {
+    "mode": "read-only",
+    "egress": { "onSecret": "block", "maxContextBytes": 131072, "maxFileBytes": 32768 },
+    "localhostOnly": true,
+    "maxDelegationDepth": 1,
+    "executeModelCommands": false
+  },
+  "gateway": {
+    "type": "openai-compatible",
+    "baseUrl": "http://127.0.0.1:20128/v1",
+    "apiKeyEnv": "OMNIROUTE_API_KEY",
+    "adminBaseUrl": "http://127.0.0.1:20128",
+    "timeoutSec": 60,
+    "maxTimeoutSec": 300,
+    "maxRetries": 0
+  },
+  "budget": {
+    "dailyTokens": 200000,
+    "dailyCostUsd": 0,
+    "perTaskMaxOutputTokens": 4096,
+    "allowPaidProviders": false
+  },
+  "concurrency": { "maxParallel": 3, "perProvider": 2 },
+  "stateDir": "%LOCALAPPDATA%/RepassaOrchestrator/state",
+  "repoRoot": "../..",
+  "rolesFile": "./roles.json",
+  "routing": {
+    "defaultProfile": "free-only",
+    "profiles": {
+      "free-only": { "billing": ["free"] },
+      "auto": { "billing": ["free", "paid"] }
+    }
+  },
+  "providers": [
+    {
+      "id": "example-free-provider",
+      "billing": "free",
+      "note": "Replace with a provider YOU authorized. Free quota is conditional - verify current terms.",
+      "models": [{ "id": "example/model-id", "capabilities": ["text", "code"] }],
+      "envKey": "EXAMPLE_PROVIDER_KEY"
+    }
+  ],
+  "workers": {
+    "enabled": false,
+    "worktreeRoot": "%LOCALAPPDATA%/RepassaOrchestrator/worktrees",
+    "branchPrefix": "worker/",
+    "allowedPathPrefixes": ["src/", "docs/", "tests/", "public/"],
+    "deniedPathGlobs": [".env*", "**/*.key", "**/*.pem", "**/secrets/**", "video/**", "node_modules/**", "backend/storage/**", ".codex/**"]
+  }
+}
