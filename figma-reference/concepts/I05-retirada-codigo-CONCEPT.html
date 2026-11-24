@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Confirmar retirada · RePassa (conceito)</title>
+<link rel="stylesheet" href="concept.css"/>
+</head>
+<body>
+<div class="concept-ribbon">CONCEPT</div>
+
+<header class="site-nav">
+  <a class="site-wordmark" href="#"><img src="repassa.webp" alt=""/><strong>RePassa</strong></a>
+  <nav class="nav-links"><a href="#">Acervo</a><a class="button" href="#">Sair ⇥</a></nav>
+</header>
+<nav class="sub-nav"><a href="#">Visão geral</a><a href="#">Recebimentos</a><a href="#">Estoque</a><a href="#" aria-current="page">Retiradas</a></nav>
+
+<main class="frame" style="max-width:760px;">
+  <div class="page-head">
+    <p class="eyebrow">Área da instituição</p>
+    <h1>Confirmar <em>retirada.</em></h1>
+    <p class="lede">Digite o código apresentado pelo estudante. A confirmação é única e definitiva — faça-a somente com o material em mãos.</p>
+  </div>
+  <form class="card" style="margin-top:24px;max-width:560px;">
+    <div class="field">
+      <label for="code">Código de retirada</label>
+      <input id="code" type="text" placeholder="XXXX-XXXX-XXXX" style="font-family:var(--serif);font-size:1.6rem;letter-spacing:0.14em;text-transform:uppercase;" autocomplete="off"/>
+      <p class="hint">Formato: 3 grupos de 4 caracteres. Letras parecidas como O e 0 não são usadas.</p>
+    </div>
+    <button class="button primary" type="button">Validar código →</button>
+  </form>
+</main>
+
+<div class="concept-note">Tela CONCEPT para referência de design — ainda não implementada. Todos os dados são fictícios e servem apenas para composição visual.</div>
+<footer class="site-foot"><span>RePassa · Rede de reuso educacional</span><span>Conceito visual — dados fictícios</span></footer>
+</body>
+</html>
