@@ -19,7 +19,13 @@ test('safeReturnTo accepts local destinations and rejects external and auth-loop
   assert.equal(safeReturnTo('/cadastro?next=/cadastro'), '/catalogo');
   assert.equal(safeReturnTo('/\u005c\u005cexample.com'), '/catalogo');
   assert.equal(safeReturnTo('/materiais/123', '/'), '/materiais/123');
-  assert.equal(safeReturnTo('/admin'), '/catalogo');
+  assert.equal(safeReturnTo('/painel'), '/catalogo');
+  assert.equal(safeReturnTo('/admin'), '/admin');
+  assert.equal(
+    safeReturnTo('/admin/instituicoes/abc-123'),
+    '/admin/instituicoes/abc-123',
+  );
+  assert.equal(safeReturnTo('/admin/outra'), '/catalogo');
   assert.equal(safeReturnTo('/minhas-reservas'), '/minhas-reservas');
   assert.equal(
     safeReturnTo('/instituicao/retirada?instituicao=A'),

@@ -1,0 +1,234 @@
+.admin-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.admin-heading > p:last-child {
+  color: var(--muted);
+  max-width: 64ch;
+  line-height: 1.55;
+}
+.admin-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border-block: 1px solid var(--line);
+  margin-block: 28px;
+}
+.admin-metrics > div {
+  background: var(--background, #fff);
+  padding: 18px 20px;
+}
+.admin-metrics dt {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.admin-metrics dd {
+  margin: 6px 0 0;
+  font-size: clamp(1.9rem, 3vw, 2.6rem);
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.admin-metrics div[data-tone='warn'] dd {
+  color: #8a5a1d;
+}
+.admin-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 14px;
+  margin-block: 22px;
+}
+.admin-filters .field:first-child {
+  flex: 1 1 240px;
+  max-width: 420px;
+}
+.admin-table-wrap {
+  overflow-x: auto;
+  border-top: 2px solid var(--forest);
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+.admin-table th {
+  text-align: left;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 14px 16px 10px 0;
+  white-space: nowrap;
+}
+.admin-table td {
+  padding: 14px 16px 14px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.admin-table td:last-child,
+.admin-table th:last-child {
+  padding-right: 0;
+}
+.admin-table .admin-cell-main {
+  font-weight: 600;
+}
+.admin-table .admin-cell-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.admin-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.admin-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.admin-pill[data-tone='ok'] {
+  background: var(--tint);
+  color: var(--forest);
+}
+.admin-pill[data-tone='warn'] {
+  background: #f7ead4;
+  color: #8a5a1d;
+}
+.admin-pill[data-tone='danger'] {
+  background: #f6e2db;
+  color: #8f3b2a;
+}
+.admin-pill[data-tone='muted'] {
+  background: var(--paper);
+  color: var(--muted);
+}
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.admin-actions .button {
+  padding: 8px 14px;
+  font-size: 0.84rem;
+}
+.admin-pager {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 22px;
+}
+.admin-pager p {
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.admin-pager .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 0.84rem;
+}
+.admin-section {
+  margin-top: 40px;
+}
+.admin-section > h2 {
+  font-size: clamp(1.4rem, 2vw, 1.8rem);
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+.admin-reason {
+  margin-top: 4px;
+}
+.admin-reason textarea {
+  width: 100%;
+  min-height: 74px;
+  margin-block: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: inherit;
+  resize: vertical;
+}
+.admin-detail-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  margin-block: 24px;
+}
+.admin-detail-grid dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.92rem;
+}
+.admin-detail-grid dt {
+  color: var(--muted);
+}
+.admin-detail-grid dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.admin-inline-error {
+  color: #8f3b2a;
+  font-size: 0.88rem;
+  margin-top: 10px;
+}
+.admin-member-search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+  margin-block: 16px;
+}
+.admin-member-search .field {
+  flex: 1 1 260px;
+  max-width: 420px;
+}
+@media (max-width: 720px) {
+  .admin-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .admin-table tr {
+    display: block;
+    padding-block: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .admin-table td {
+    display: block;
+    border: none;
+    padding: 4px 0;
+  }
+  .admin-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+}

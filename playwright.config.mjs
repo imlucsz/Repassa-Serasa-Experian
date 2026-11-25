@@ -20,6 +20,7 @@ export default defineConfig({
             'donations.spec.mjs',
             'my-reservations.spec.mjs',
             'pickups.spec.mjs',
+            'admin.spec.mjs',
           ]
         : 'demo.spec.mjs',
     use: { baseURL: 'http://127.0.0.1:' + port },
