@@ -6,8 +6,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { LoadedConfig, Role } from './config.js';
 import { TaskStore, BudgetLedger, type TaskRecord } from './tasks.js';
-import { chatCompletion, probeGateway, type ChatMessage } from './gateway.js';
-import { selectModel, listPolicyModels } from './router.js';
+import { chatCompletion, probeGateway, discoverGatewayModels, type ChatMessage } from './gateway.js';
+import { selectModel, listPolicyModels, autoCandidates } from './router.js';
 import { scanForSecrets, checkFileContextAccess } from './safety.js';
 import { workersEnabled, prepareWorktree, collectWorkerFiles, applyPatchToWorktree } from './worktree.js';
 
@@ -40,6 +40,7 @@ function summary(task: TaskRecord): { content: { type: 'text'; text: string }[];
       provider: task.provider, model: task.model, latencyMs: task.latencyMs,
       usage: task.usage, error: task.error, egressBlocked: task.egressBlocked,
       output: task.status === 'done' ? task.output : undefined,
+      costBasis: task.costBasis,
     },
   };
 }
@@ -119,32 +120,62 @@ export async function runDelegation(
     store.save(task); return task;
   }
 
+  const explicitSel = Boolean(opts.model || opts.provider);
   const sel = selectModel(cfg, role, { model: opts.model, provider: opts.provider, routingProfile: opts.routingProfile });
   if ('error' in sel) {
     task.status = 'blocked'; task.error = { code: 'routing', message: sel.error }; store.save(task); return task;
   }
+  // Candidate chain: explicit selection = single target; auto routing = ordered
+  // free candidates (roleModels preference then declaration order). Fallback
+  // only happens between declared free providers, max 3 attempts, never on
+  // non-retryable errors or explicit selections.
+  const candidates = explicitSel ? [sel] : autoCandidates(cfg, role);
+  const capReached = (p: typeof sel.provider) =>
+    (p.billing === 'paid' || p.pricing !== undefined) &&
+    p.maxDailyCostUsd !== undefined &&
+    ledger.providerUsageToday(p.id).costUsd >= p.maxDailyCostUsd;
 
   const maxTokens = Math.min(opts.maxOutputTokens ?? role.maxOutputTokens, cfg.budget.perTaskMaxOutputTokens);
-  task.status = 'running'; task.provider = sel.provider.id; task.model = sel.model; store.save(task);
-
   const messages: ChatMessage[] = [
     { role: 'system', content: role.systemPrompt },
     { role: 'user', content: fullUser },
   ];
-  const result = await chatCompletion(cfg, sel.model, messages, maxTokens, opts.timeoutSec);
-  task.latencyMs = result.latencyMs;
-  if (result.ok) {
-    task.status = 'done';
-    task.output = result.content;
-    task.model = result.model ?? sel.model;
-    const outSecrets = scanForSecrets(result.content ?? '');
-    if (outSecrets.length) task.output = `[output withheld: matched secret patterns ${outSecrets.join(', ')}]`;
-    task.usage = { inputTokens: result.usage?.inputTokens, outputTokens: result.usage?.outputTokens, costUsd: 0 };
-    ledger.add(result.usage?.totalTokens ?? 0, 0);
-  } else {
-    task.status = result.error?.code === 'timeout' ? 'timeout' : 'error';
-    task.error = result.error;
+
+  let result: Awaited<ReturnType<typeof chatCompletion>> | undefined;
+  let chosen: typeof sel | undefined;
+  const attempted: string[] = [];
+  const cappedOut: string[] = [];
+  for (const cand of candidates.slice(0, 3)) {
+    if (capReached(cand.provider)) { cappedOut.push(cand.model); continue; }
+    attempted.push(cand.model);
+    task.status = 'running'; task.provider = cand.provider.id; task.model = cand.model; store.save(task);
+    result = await chatCompletion(cfg, cand.model, messages, maxTokens, opts.timeoutSec);
+    if (result.ok) { chosen = cand; break; }
+    if (explicitSel) break; // explicit selection stays single-shot
   }
+  if (!chosen) {
+    if (attempted.length === 0) {
+      task.status = 'blocked';
+      task.error = { code: 'provider_budget', message: `candidate providers at daily cost cap: ${cappedOut.join(', ') || 'none callable'}` };
+    } else {
+      task.status = result?.error?.code === 'timeout' ? 'timeout' : 'error';
+      task.error = { ...(result?.error ?? { code: 'unknown', message: 'no candidates' }), message: `${result?.error?.message ?? 'no candidates'} (tried: ${attempted.join(', ')})` };
+    }
+    store.save(task); return task;
+  }
+  task.latencyMs = result!.latencyMs;
+  task.status = 'done';
+  task.output = result!.content;
+  task.model = result!.model ?? chosen.model;
+  const outSecrets = scanForSecrets(result!.content ?? '');
+  if (outSecrets.length) task.output = `[output withheld: matched secret patterns ${outSecrets.join(', ')}]`;
+  const pricing = chosen.provider.pricing;
+  const inTok = result!.usage?.inputTokens ?? 0;
+  const outTok = result!.usage?.outputTokens ?? 0;
+  const costUsd = pricing ? +((inTok * pricing.inputPerMToken + outTok * pricing.outputPerMToken) / 1e6).toFixed(6) : 0;
+  task.usage = { inputTokens: inTok, outputTokens: outTok, costUsd };
+  task.costBasis = pricing ? 'declared-pricing' : chosen.provider.billing === 'free' ? 'declared-free' : 'unavailable';
+  ledger.add(result!.usage?.totalTokens ?? inTok + outTok, costUsd, chosen.provider.id);
   store.save(task);
   return task;
 }
@@ -178,6 +209,10 @@ export function registerTools(server: McpServer, loaded: LoadedConfig): void {
     inputSchema: {},
   }, async () => {
     const usage = ledger.usageToday();
+    const declared = new Set(cfg.providers.flatMap((p) => p.models.map((m) => m.id)));
+    const discovered = (await discoverGatewayModels(cfg))
+      .filter((id) => !declared.has(id))
+      .map((id) => ({ id, callable: false, reason: 'advertised by gateway but NOT declared in providers[] - declare to enable' }));
     return {
       content: [{ type: 'text', text: `${cfg.providers.length} policy providers; mode=${cfg.safety.mode}; today: ${usage.calls} calls, ${usage.tokens} tokens.` }],
       structuredContent: {
@@ -185,6 +220,7 @@ export function registerTools(server: McpServer, loaded: LoadedConfig): void {
         routingProfiles: Object.keys(cfg.routing.profiles),
         defaultProfile: cfg.routing.defaultProfile,
         providers: listPolicyModels(cfg),
+        gatewayDiscovered: discovered,
         roles: loaded.roles.map((r) => ({ id: r.id, title: r.title, capabilities: r.capabilities, writable: r.writable, maxOutputTokens: r.maxOutputTokens })),
         budget: { dailyTokens: cfg.budget.dailyTokens, usedTodayTokens: usage.tokens, dailyCostUsd: cfg.budget.dailyCostUsd, usedTodayCostUsd: usage.costUsd },
         workersEnabled: workersEnabled(cfg).enabled,
@@ -341,8 +377,13 @@ export function registerTools(server: McpServer, loaded: LoadedConfig): void {
     }
     seed.status = 'done';
     seed.output = `Patch applied in worktree ${prep.worktreePath} (branch ${prep.branch}).\n\n${applied.diffStat}`;
-    seed.usage = { inputTokens: result.usage?.inputTokens, outputTokens: result.usage?.outputTokens, costUsd: 0 };
-    ledger.add(result.usage?.totalTokens ?? 0, 0);
+    const wPricing = sel.provider.pricing;
+    const wIn = result.usage?.inputTokens ?? 0;
+    const wOut = result.usage?.outputTokens ?? 0;
+    const wCost = wPricing ? +((wIn * wPricing.inputPerMToken + wOut * wPricing.outputPerMToken) / 1e6).toFixed(6) : 0;
+    seed.usage = { inputTokens: wIn, outputTokens: wOut, costUsd: wCost };
+    seed.costBasis = wPricing ? 'declared-pricing' : sel.provider.billing === 'free' ? 'declared-free' : 'unavailable';
+    ledger.add(result.usage?.totalTokens ?? wIn + wOut, wCost, sel.provider.id);
     store.save(seed);
     return {
       content: [{ type: 'text', text: `Worker ${seed.taskId}: patch applied in ${prep.worktreePath}. Review patchFile/diff before integrating.` }],

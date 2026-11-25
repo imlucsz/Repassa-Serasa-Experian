@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "safety": {
+    "mode": "read-only",
+    "egress": { "onSecret": "block", "maxContextBytes": 65536, "maxFileBytes": 16384 },
+    "localhostOnly": true,
+    "maxDelegationDepth": 1,
+    "executeModelCommands": false
+  },
+  "gateway": {
+    "type": "mock",
+    "baseUrl": "http://127.0.0.1:20128/v1",
+    "apiKeyEnv": "OMNIROUTE_API_KEY",
+    "timeoutSec": 5,
+    "maxTimeoutSec": 30,
+    "maxRetries": 0
+  },
+  "budget": {
+    "dailyTokens": 100000,
+    "dailyCostUsd": 0,
+    "perTaskMaxOutputTokens": 2048
+  },
+  "concurrency": { "maxParallel": 2, "perProvider": 2 },
+  "stateDir": "%LOCALAPPDATA%/RepassaOrchestrator/test-state",
+  "repoRoot": "../../../..",
+  "rolesFile": "./roles.json",
+  "routing": {
+    "defaultProfile": "free-only",
+    "profiles": {
+      "free-only": { "billing": ["free"] },
+      "auto": { "billing": ["free", "paid"] }
+    },
+    "roleModels": {
+      "researcher": ["mock/secondary", "mock/chat", "paid/big", "mystery/model", "notdeclared/x"]
+    }
+  },
+  "providers": [
+    {
+      "id": "mockfree",
+      "billing": "free",
+      "note": "test provider",
+      "models": [
+        { "id": "mock/chat", "capabilities": ["text", "code"] },
+        { "id": "mock/secondary", "capabilities": ["text", "code"] }
+      ]
+    },
+    {
+      "id": "mockfree2",
+      "billing": "free",
+      "models": [
+        { "id": "mock/extra", "capabilities": ["text", "code"] }
+      ]
+    },
+    {
+      "id": "mockpaid",
+      "billing": "paid",
+      "pricing": { "inputPerMToken": 1.0, "outputPerMToken": 2.0 },
+      "maxDailyCostUsd": 0.01,
+      "models": [
+        { "id": "paid/big", "capabilities": ["text", "code"] }
+      ]
+    },
+    {
+      "id": "mockunknown",
+      "billing": "unknown",
+      "models": [
+        { "id": "mystery/model", "capabilities": ["text", "code"] }
+      ]
+    }
+  ],
+  "workers": {
+    "enabled": false,
+    "worktreeRoot": "%LOCALAPPDATA%/RepassaOrchestrator/test-worktrees",
+    "branchPrefix": "worker/",
+    "allowedPathPrefixes": ["src/", "docs/", "tests/", "public/", "tools/"],
+    "deniedPathGlobs": ["**/*.key", "**/secrets/**"]
+  }
+}

@@ -20,8 +20,7 @@
   "budget": {
     "dailyTokens": 200000,
     "dailyCostUsd": 0,
-    "perTaskMaxOutputTokens": 4096,
-    "allowPaidProviders": false
+    "perTaskMaxOutputTokens": 4096
   },
   "concurrency": { "maxParallel": 3, "perProvider": 2 },
   "stateDir": "%LOCALAPPDATA%/RepassaOrchestrator/state",
@@ -32,15 +31,30 @@
     "profiles": {
       "free-only": { "billing": ["free"] },
       "auto": { "billing": ["free", "paid"] }
+    },
+    "roleModels": {
+      "researcher": ["groq/openai/gpt-oss-20b", "gemini/gemini-3.1-flash-lite"],
+      "ux-reviewer": ["gemini/gemini-3.1-flash-lite", "groq/qwen/qwen3.8-27b"],
+      "qa-reviewer": ["groq/qwen/qwen3.8-27b", "gemini/gemini-3.1-flash-lite"],
+      "backend-reviewer": ["groq/openai/gpt-oss-120b", "gemini/gemini-3.1-flash-lite"],
+      "frontend-implementer": ["groq/openai/gpt-oss-120b"]
     }
   },
   "providers": [
     {
       "id": "example-free-provider",
       "billing": "free",
-      "note": "Replace with a provider YOU authorized. Free quota is conditional - verify current terms.",
+      "note": "Replace with a provider YOU authorized. Free quota is conditional - dailyTokens is the rate limit.",
       "models": [{ "id": "example/model-id", "capabilities": ["text", "code"] }],
       "envKey": "EXAMPLE_PROVIDER_KEY"
+    },
+    {
+      "id": "example-paid-provider",
+      "billing": "paid",
+      "note": "Callable ONLY by explicit model/provider selection under a profile that lists 'paid'. Never auto-routed.",
+      "maxDailyCostUsd": 0.5,
+      "pricing": { "inputPerMToken": 0.15, "outputPerMToken": 0.6 },
+      "models": [{ "id": "example/paid-model", "capabilities": ["text", "code"] }]
     }
   ],
   "workers": {

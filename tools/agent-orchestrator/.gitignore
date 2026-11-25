@@ -1,2 +1,3 @@
 orchestrator.config.json
+!test/fixtures/orchestrator.config.json
 test-state/

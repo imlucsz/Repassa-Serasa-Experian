@@ -28,7 +28,7 @@ test('delegation to mock provider completes and records usage', async () => {
   const task = await runDelegation(loaded, store, ledger, getRole(loaded, 'researcher'), 'Summarize the repo structure.', undefined, {});
   assert.equal(task.status, 'done');
   assert.equal(task.provider, 'mockfree');
-  assert.match(task.model ?? '', /mock\/chat/);
+  assert.match(task.model ?? '', /mock\/secondary/);
   assert.ok(task.output?.includes('mock response'));
   const usage = ledger.usageToday();
   assert.equal(usage.calls, 1);
@@ -87,6 +87,46 @@ test('daily token budget blocks once exhausted', async () => {
   const second = await runDelegation(loaded, store, ledger, getRole(loaded, 'researcher'), 'x', undefined, {});
   assert.equal(second.status, 'blocked');
   assert.equal(second.error?.code, 'budget_tokens');
+});
+
+test('declared pricing produces honest cost accounting (not silent zero)', async () => {
+  const { loaded, store, ledger } = setup();
+  const task = await runDelegation(loaded, store, ledger, getRole(loaded, 'researcher'), 'price me', undefined, { model: 'paid/big', routingProfile: 'auto' });
+  assert.equal(task.status, 'done');
+  assert.ok(task.usage!.costUsd! > 0, 'paid model call must record nonzero estimated cost');
+  assert.equal(task.costBasis, 'declared-pricing');
+  const prov = ledger.providerUsageToday('mockpaid');
+  assert.ok(prov.costUsd > 0);
+});
+
+test('free provider records zero cost with declared-free basis', async () => {
+  const { loaded, store, ledger } = setup();
+  const task = await runDelegation(loaded, store, ledger, getRole(loaded, 'researcher'), 'free me', undefined, {});
+  assert.equal(task.status, 'done');
+  assert.equal(task.usage!.costUsd, 0);
+  assert.equal(task.costBasis, 'declared-free');
+});
+
+test('per-provider daily cost cap blocks further paid calls', async () => {
+  const { loaded, store, ledger } = setup();
+  loaded.config.providers.find((p) => p.id === 'mockpaid')!.maxDailyCostUsd = 0;
+  const task = await runDelegation(loaded, store, ledger, getRole(loaded, 'researcher'), 'hi', undefined, { model: 'paid/big', routingProfile: 'auto' });
+  assert.equal(task.status, 'blocked');
+  assert.equal(task.error?.code, 'provider_budget');
+});
+
+test('a $0 cost cap on a free provider does NOT block zero-cost calls', async () => {
+  const { loaded, store, ledger } = setup();
+  loaded.config.providers.find((p) => p.id === 'mockfree')!.maxDailyCostUsd = 0;
+  const task = await runDelegation(loaded, store, ledger, getRole(loaded, 'researcher'), 'hi', undefined, {});
+  assert.equal(task.status, 'done');
+});
+
+test('unknown-billing provider cannot be invoked explicitly', async () => {
+  const { loaded, store, ledger } = setup();
+  const task = await runDelegation(loaded, store, ledger, getRole(loaded, 'researcher'), 'hi', undefined, { model: 'mystery/model', routingProfile: 'auto' });
+  assert.equal(task.status, 'blocked');
+  assert.equal(task.error?.code, 'routing');
 });
 
 test('context byte cap blocks oversized file input', async () => {

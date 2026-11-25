@@ -52,16 +52,14 @@ const entry = process.argv[2];
 const cfg = process.argv[3];
 const p = spawn("node", [entry], { env: { ...process.env, ORCHESTRATOR_CONFIG: cfg }, stdio: ["pipe","pipe","pipe"] });
 let buf = "";
-const wants = ["initialize","tools/list"];
-let step = 0;
-const send = (method, params) => p.stdin.write(JSON.stringify({jsonrpc:"2.0",id:++step,method,params})+"\n");
+const send = (method, params, id) => p.stdin.write(JSON.stringify(id===undefined?{jsonrpc:"2.0",method,params}:{jsonrpc:"2.0",id,method,params})+"\n");
 p.stdout.on("data",(d)=>{ buf+=d.toString();
   let n; while((n=buf.indexOf("\n"))>=0){ const line=buf.slice(0,n).trim(); buf=buf.slice(n+1); if(!line)continue;
     let m; try{m=JSON.parse(line)}catch{continue}
-    if(m.id===1){ send("notifications/initialized",{}); send("tools/list",{}); }
-    if(m.id===2){ const names=(m.result.tools||[]).map(t=>t.name);
-      console.log("TOOLS:"+names.join(",")); p.kill(); process.exit(0); } } });
-send("initialize",{protocolVersion:"2025-06-18",capabilities:{},clientInfo:{name:"ps-probe",version:"1"}});
+    if(m.id===1){ send("notifications/initialized",{}); send("tools/list",{},2); }
+    if(m.id===2){ const names=(m.result&&m.result.tools||[]).map(t=>t.name);
+      console.log("TOOLS:"+names.join(",")); p.kill(); process.exit(names.length?0:1); } } });
+send("initialize",{protocolVersion:"2025-06-18",capabilities:{},clientInfo:{name:"ps-probe",version:"1"}},1);
 setTimeout(()=>{ console.log("TIMEOUT"); p.kill(); process.exit(1); }, 15000);
 '@
 $probeFile = Join-Path $env:TEMP 'orch-probe.js'
@@ -78,11 +76,16 @@ if ($out -match 'TOOLS:(.+)') {
 Write-Host "== Gateway and key =="
 if (Test-Path $configDest) {
   $cfg = Get-Content $configDest -Raw | ConvertFrom-Json
-  $envName = $cfg.gateway.apiKeyEnv
-  if (-not $envName) { $envName = 'OMNIROUTE_API_KEY' }
-  Check ([bool][Environment]::GetEnvironmentVariable($envName,'User') -or [bool]$env:OMNIROUTE_API_KEY) "$envName present" "$envName not set (required when gateway type is openai-compatible)"
-  if ($cfg.gateway.type -eq 'mock') { Write-Host "  OK   gateway type is 'mock' (offline test mode)" }
+  if ($cfg.gateway.type -eq 'mock') {
+    Write-Host "  OK   gateway type 'mock' - no real gateway or API key required"
+  }
   else {
+    $envName = $cfg.gateway.apiKeyEnv
+    if (-not $envName) { $envName = 'OMNIROUTE_API_KEY' }
+    $keyVal = [Environment]::GetEnvironmentVariable($envName,'User')
+    if (-not $keyVal) { $keyVal = [Environment]::GetEnvironmentVariable($envName,'Machine') }
+    if (-not $keyVal) { $keyVal = [Environment]::GetEnvironmentVariable($envName,'Process') }
+    Check ([bool]$keyVal) "$envName present" "$envName not set (required when gateway type is openai-compatible)"
     try {
       $u = [uri]$cfg.gateway.baseUrl
       $tcp = Test-NetConnection -ComputerName $u.Host -Port $u.Port -WarningAction SilentlyContinue

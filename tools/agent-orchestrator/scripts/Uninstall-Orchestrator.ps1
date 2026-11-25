@@ -43,7 +43,8 @@ else {
     New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
     $bak = Join-Path $backupDir ("config.toml.{0}.preremove.bak" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
     Copy-Item $codexCfg $bak; Info "backup -> $bak"
-    Set-Content -Path $codexCfg -Value $out -Encoding UTF8
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($codexCfg, ($out -join "`r`n") + "`r`n", $utf8NoBom)
     Info "removed [mcp_servers.$serverName] - restart Codex Desktop to apply"
   }
 }
