@@ -177,7 +177,7 @@ function post(signal?: AbortSignal, json?: object): RequestInit {
       };
 }
 
-export { request as requestOperation };
+export { request as requestOperation, post as postOperation };
 
 function expectChange(
   status: MaterialStatus,

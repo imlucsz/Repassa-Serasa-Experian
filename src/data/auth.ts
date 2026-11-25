@@ -303,8 +303,16 @@ export function safeReturnTo(value: string | null, fallback = '/catalogo') {
         '/instituicao/recebimentos',
         '/instituicao/estoque',
         '/instituicao/retirada',
+        '/instituicoes/nova',
+        '/admin',
+        '/admin/instituicoes',
+        '/admin/usuarios',
+        '/admin/materiais',
+        '/admin/reservas',
+        '/admin/auditoria',
       ].includes(pathname) ||
-      /^\/materiais\/[a-z\d_-]+$/i.test(pathname);
+      /^\/materiais\/[a-z\d_-]+$/i.test(pathname) ||
+      /^\/admin\/instituicoes\/[a-z\d_-]+$/i.test(pathname);
     return url.origin === 'https://repassa.invalid' && implementedPath
       ? `${pathname}${url.search}${url.hash}`
       : fallback;
