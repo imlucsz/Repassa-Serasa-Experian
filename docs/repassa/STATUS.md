@@ -10,7 +10,8 @@ Not a claim of completed implementation. Current GitHub inspection: frontend Vit
 | UX-01..04 | not started / not verified | existing shelf foundation only |
 | DEV-03..06 | merged (PRs #13/#17/#19/#21 `1cb095a`) | materials/donations/reservations/admin + security & concurrency review |
 | UX-01..05 | merged (PRs incl. #20, #22, #23) | catalog, donations, reservations/pickup, admin experience + axe coverage |
-| SH-02 | ready for owner review (PR TBD) | journey 17/17 + security 21/21 + recovery 3/3 on disposable PG16; see `evidence/sh-02/` and `RUNBOOK.md`; open blockers: Render plan (sleep observed vs starter blueprint), rate-limit per replica |
-| SH-03 | pending | SH-02 |
+| SH-02 | merged (PR #25, `a2fb35d`) | journey 17/17 + security 23/23 + recovery 3/3 on disposable PG16; see `evidence/sh-02/` and `RUNBOOK.md`; open blockers: Render plan (sleep observed vs starter blueprint), rate-limit per replica |
+| SH-03 | merged (PR #24, `8b0fd31`) | admin experience refinement; admin.spec + admin-a11y 25/25 incl. 16 axe checks; see `evidence/sh-03/` |
+| RC-01 | ready for owner review (PR TBD) | release readiness on `a2fb35d`: hosted audit, full SH-02 harness rerun on post-SH-03 main (17/17 journey, 23/23 security, 3/3 recovery); see `evidence/rc-01/` and `RUNBOOK.md` |
 
 Update after each merged PR or link to active PR in handoff. Avoid concurrent edits to this file; prefer PR description and update at merge/owner coordination. For each task record branch/PR, actual tests and counts, known limitations, next dependency. Never mark completed from agent summary alone; use commit/check evidence and demo verification.

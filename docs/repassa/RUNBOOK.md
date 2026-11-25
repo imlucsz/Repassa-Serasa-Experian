@@ -14,8 +14,9 @@ Nothing here authorizes deploying, merging or mutating production — owner appr
 | Swagger | `/api/docs` → 404 | `SWAGGER_ENABLED=false` |
 | CORS | 401 via proxy; `allow-credentials: true`, exact origin | `ALLOWED_ORIGINS` = Vercel origin only |
 | DB content | `/materials` `total:0` | no seed — correct for production |
-| **Plan** | service **sleeps** (first request took ~26s) | blueprint says `starter` — **discrepancy, see §5** |
+| **Plan** | service **sleeps** (first request took ~26s); RC-01 re-audit found it **warm** (0.85s) — plan still unconfirmed | blueprint says `starter` — **discrepancy, see §5** |
 | Storage | service boots ⇒ `STORAGE_DRIVER=supabase` valid (`local` aborts in production) | private Supabase bucket |
+| Deployed rev (RC-01) | frontend: `.admin-nav` in served CSS ⇒ ≥ SH-03; backend: `/admin/institutions` ⇒ ≥ DEV-06 = latest backend on main | no drift detected — exact SHAs still unobservable |
 
 ## 2. Deploy / redeploy steps
 
@@ -48,7 +49,11 @@ DATABASE_URL=<disposable-url> npm run db:migrate:deploy
 DATABASE_URL=<disposable-url> \
   npx tsx scripts/provision-admin.ts --generate --email admin-jornada@example.com --name "Admin"
 # 3) backend + frontend (api mode)
-node dist/main.js            # :3001 — build first: npm run build
+# ALLOWED_ORIGINS is REQUIRED: the dev fallback only allows
+# http://localhost:3000 — any other vite port gets 403 on mutations.
+PORT=3001 DATABASE_URL=<disposable-url> \
+  ALLOWED_ORIGINS=http://127.0.0.1:4272 \
+  node dist/main.js            # :3001 — build first: npm run build
 VITE_DATA_MODE=api npm run dev -- --port 4272   # repo root
 # 4) journeys — separate browser contexts per role
 REPASSA_ADMIN_PASSWORD=<one-time> node tests/live/sh02-journey.mjs
@@ -85,6 +90,24 @@ JOURNEY_DB_URL=<disposable-url> \
 - [ ] Negative demos ready: STUDENT on `/admin` (forbidden), duplicate registration (409), reused pickup code (refused)
 - [ ] Warm-up request ~30s before presenting (cold start), keep `/api/v1/health` tab
 - [ ] Verify `/admin` metrics reflect the demo actions live
+- [ ] Fallback ready: if the hosted backend is cold/unreachable mid-demo, the §4
+      disposable stack is the backup environment — the same flow runs locally
+      (`tests/live/sh02-journey.mjs` drives every demo step end-to-end)
+
+### Cold-start mitigation (free plan, no paid resources)
+
+The only free-tier mitigations are discipline, not infrastructure:
+
+- Hit `/api/v1/health` ~30s before the demo and keep that tab open — a live
+  request keeps the instance warm; every interaction during the demo resets
+  the idle timer.
+- Front-load the demo with the API-heavy steps while the warm-up completes
+  in the background (show the catalog page, which needs no warm backend
+  for its first paint).
+- Never rely on an external keep-alive pinger — that is a recurring cost
+  vector and out of scope; warm-up is a manual presenter action.
+- If a cold start hits mid-demo anyway, narrate it (~25–30s) or switch to the
+  local §4 stack — identical product, zero latency.
 
 ## 8. SH-02 verification summary
 
@@ -92,3 +115,13 @@ JOURNEY_DB_URL=<disposable-url> \
 - Security/integration API checks: **21/21** + recovery **3/3**
 - Unit: **41/41** · Playwright (Chrome): **57/57** (incl. axe WCAG2 A/AA on all admin routes, 0 violations) · typecheck/build/agent-guard: clean
 - Evidence: `docs/repassa/evidence/sh-02/` (screenshots + this summary)
+
+## 9. RC-01 rerun on integrated main (25/11/2026, `a2fb35d`)
+
+Full §4 stack rerun post-SH-03 merge — both deliveries verified compatible:
+
+- Journey: **17/17** · Security: **23/23** · Recovery (backend kill+restart): **3/3**
+- Frontend: `npm run lint` clean · `npm run test:ci` **41/41** · `npm run build` clean
+- Backend: `npm run build` clean · unit **51/51** · e2e **121/121** on disposable PG16 (both migrations applied fresh)
+- Harness note: `ALLOWED_ORIGINS` is required for any non-3000 vite port (see §4)
+- Hosted audit: no drift detected; blockers unchanged — see `evidence/rc-01/`
