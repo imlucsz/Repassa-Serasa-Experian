@@ -16,11 +16,13 @@ import {
   type AdminInstitution,
 } from '../data/admin';
 import { statusLabels, type MaterialStatus } from '../data/operations';
+import { categoryLabels, conditionLabels } from '../data/contract';
 import { Field } from '../ui/Field';
 import { actionLabel } from './Admin';
 import {
   Pager,
   Pill,
+  EmptyResults,
   ReadState,
   useRead,
 } from './adminShared';
@@ -107,7 +109,7 @@ export function AdminMaterialsPage() {
   }
 
   return (
-    <section className="frame" aria-labelledby="mat-titulo">
+    <section className="frame admin-page" aria-labelledby="mat-titulo">
       <header className="admin-heading">
         <div>
           <p className="eyebrow">Administração</p>
@@ -155,9 +157,9 @@ export function AdminMaterialsPage() {
       <ReadState result={result} refresh={refresh}>
         {(data) =>
           data.items.length === 0 ? (
-            <p className="inst-message">
+            <EmptyResults>
               Nenhum material encontrado com estes filtros.
-            </p>
+            </EmptyResults>
           ) : (
             <>
               <p className="inst-total">
@@ -185,10 +187,10 @@ export function AdminMaterialsPage() {
                             {material.title}
                           </span>
                           <span className="admin-cell-sub">
-                            {material.condition}
+                            {conditionLabels[material.condition]}
                           </span>
                         </td>
-                        <td data-label="Categoria">{material.category}</td>
+                        <td data-label="Categoria">{categoryLabels[material.category]}</td>
                         <td data-label="Situação">
                           <Pill tone={materialTone(material.status)}>
                             {statusLabels[material.status]}
@@ -267,7 +269,7 @@ export function AdminReservationsPage() {
   }
 
   return (
-    <section className="frame" aria-labelledby="res-titulo">
+    <section className="frame admin-page" aria-labelledby="res-titulo">
       <header className="admin-heading">
         <div>
           <p className="eyebrow">Administração</p>
@@ -327,9 +329,9 @@ export function AdminReservationsPage() {
       <ReadState result={result} refresh={refresh}>
         {(data) =>
           data.items.length === 0 ? (
-            <p className="inst-message">
+            <EmptyResults clearDraft={() => setDraft('')}>
               Nenhuma reserva encontrada com estes filtros.
-            </p>
+            </EmptyResults>
           ) : (
             <>
               <p className="inst-total">
@@ -461,7 +463,7 @@ export function AdminAuditPage() {
   }
 
   return (
-    <section className="frame" aria-labelledby="aud-titulo">
+    <section className="frame admin-page" aria-labelledby="aud-titulo">
       <header className="admin-heading">
         <div>
           <p className="eyebrow">Administração</p>
@@ -470,7 +472,7 @@ export function AdminAuditPage() {
         <p>
           Trilha das ações administrativas e registros sensíveis. Use o nome
           exato da ação ou um prefixo terminado em ponto, como
-          “admin.institution_”.
+          “admin.”.
         </p>
       </header>
       <form className="admin-filters" role="search" onSubmit={search}>
@@ -496,9 +498,9 @@ export function AdminAuditPage() {
       <ReadState result={result} refresh={refresh}>
         {(data) =>
           data.items.length === 0 ? (
-            <p className="inst-message">
+            <EmptyResults clearDraft={() => setDraft('')}>
               Nenhum evento encontrado com este filtro.
-            </p>
+            </EmptyResults>
           ) : (
             <>
               <p className="inst-total">

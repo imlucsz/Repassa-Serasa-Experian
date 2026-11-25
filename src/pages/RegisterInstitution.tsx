@@ -45,11 +45,11 @@ export function RegisterInstitutionPage() {
   }
 
   return (
-    <section className="frame" aria-labelledby="reg-titulo">
+    <section className="frame admin-page admin-registration" aria-labelledby="reg-titulo">
       <header className="admin-heading">
         <div>
           <p className="eyebrow">Instituições parceiras</p>
-          <h1 id="reg-titulo">Cadastrar instituição</h1>
+          <h1 id="reg-titulo">Cadastrar <em>instituição</em></h1>
         </div>
         <p>
           Escolas, bibliotecas e projetos podem se cadastrar como ponto de
@@ -79,7 +79,7 @@ export function RegisterInstitutionPage() {
           </p>
         </div>
       ) : (
-        <form className="donation-form" onSubmit={submit} noValidate={false}>
+        <form className="admin-registration-form" onSubmit={submit} noValidate={false}>
           <Field id="reg-name" label="Nome da instituição">
             <input
               id="reg-name"

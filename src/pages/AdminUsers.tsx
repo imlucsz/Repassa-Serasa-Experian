@@ -14,6 +14,7 @@ import {
   ConfirmAction,
   Pager,
   Pill,
+  EmptyResults,
   ReadState,
   messageFor,
   useRead,
@@ -147,7 +148,7 @@ export function AdminUsersPage() {
   }
 
   return (
-    <section className="frame" aria-labelledby="users-titulo">
+    <section className="frame admin-page" aria-labelledby="users-titulo">
       <header className="admin-heading">
         <div>
           <p className="eyebrow">Administração</p>
@@ -204,9 +205,9 @@ export function AdminUsersPage() {
       <ReadState result={result} refresh={refresh}>
         {(data) =>
           data.items.length === 0 ? (
-            <p className="inst-message">
+            <EmptyResults clearDraft={() => setDraft('')}>
               Nenhum usuário encontrado com estes filtros.
-            </p>
+            </EmptyResults>
           ) : (
             <>
               <p className="inst-total">

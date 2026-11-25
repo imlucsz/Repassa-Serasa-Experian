@@ -41,9 +41,9 @@ function handler(route, path, params) {
   if (path === '/admin/users')
     return route.fulfill({ json: pageOf([student]) });
   if (path === '/admin/materials')
-    return route.fulfill({ json: pageOf([material]) });
+    return route.fulfill({ json: pageOf([material].filter((item) => !params.has('status') || item.status === params.get('status'))) });
   if (path === '/admin/reservations')
-    return route.fulfill({ json: pageOf([reservation]) });
+    return route.fulfill({ json: pageOf([reservation].filter((item) => !params.has('status') || item.status === params.get('status'))) });
   if (path === '/admin/audit-events')
     return route.fulfill({ json: pageOf([auditEvent]) });
   expect.unreachable('unhandled path ' + path);
@@ -61,6 +61,11 @@ for (const width of [390, 1440]) {
         await expect(page.locator('main h1').first()).toBeVisible({
           timeout: 15000,
         });
+        if (routePath === '/instituicoes/nova') {
+          await expect(page.getByLabel('Instruções de retirada')).toBeVisible();
+        } else {
+          await expect(page.getByRole('table').first()).toBeVisible();
+        }
         await expect(
           await page.evaluate(
             () => document.documentElement.scrollWidth <= innerWidth,
@@ -84,6 +89,8 @@ test('admin nav and confirm buttons are reachable by keyboard', async ({
   page,
 }) => {
   await adminSession(page, handler);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/admin/instituicoes?status=PENDING');
   const tabs = page.getByRole('navigation', { name: 'Administração' });
   await tabs.getByRole('link', { name: 'Usuários' }).focus();
@@ -96,5 +103,12 @@ test('admin nav and confirm buttons are reachable by keyboard', async ({
   await expect(
     page.getByRole('button', { name: 'Aprovar instituição' }),
   ).toBeVisible();
+  const confirmation = page.getByRole('group', { name: /Aprovar Escola Horizonte/ });
+  await expect(confirmation.locator('p')).toBeFocused();
+  expect(await confirmation.evaluate((el) => getComputedStyle(el).animationName)).toBe('none');
+  await page.keyboard.press('Tab');
+  await expect(confirmation.getByRole('button', { name: 'Aprovar instituição' })).toBeFocused();
   await page.keyboard.press('Escape');
+  await expect(confirmation).toHaveCount(0);
+  await expect(approve).toBeFocused();
 });

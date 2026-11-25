@@ -52,8 +52,8 @@ test('o painel mostra métricas, pendências e atividade e leva à revisão', as
   await expect(
     page.getByRole('heading', { name: 'Visão geral' }),
   ).toBeVisible({ timeout: 15000 });
-  const metrics = page.locator('.admin-metrics');
-  await expect(metrics.getByText('Aprovações pendentes')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Aprovações pendentes' })).toBeVisible();
+  await expect(page.locator('.admin-metrics dt')).toHaveCount(4);
   await expect(
     page.getByText('Uma instituição aguarda análise'),
   ).toBeVisible();
@@ -63,6 +63,25 @@ test('o painel mostra métricas, pendências e atividade e leva à revisão', as
   await page.getByRole('link', { name: 'Revisar cadastros pendentes' }).click();
   await expect(page).toHaveURL(/\/admin\/instituicoes\?status=PENDING/);
   expect(reads).toContain('/admin/audit-events');
+});
+
+test('o painel sem pendências mantém os indicadores em duas linhas no celular', async ({ page }) => {
+  await adminSession(page, (route) => route.fulfill({ json: pageOf([]) }));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/admin');
+  await expect(page.getByText('Nenhuma instituição aguarda análise.')).toBeVisible();
+  await expect(page.getByText('Nenhum evento administrativo registrado ainda.')).toBeVisible();
+  const counters = page.locator('.admin-metrics > div');
+  await expect(counters).toHaveCount(4);
+  const cells = await counters.evaluateAll((items) => items.map((item) => {
+    const { x, y } = item.getBoundingClientRect();
+    return { x, y };
+  }));
+  expect(cells[0].y).toBe(cells[1].y);
+  expect(cells[2].y).toBeGreaterThan(cells[0].y);
+  expect(cells[2].y).toBe(cells[3].y);
+  expect(cells[0].x).toBe(cells[2].x);
+  expect(cells[1].x).toBe(cells[3].x);
 });
 
 test('instituições pendentes são aprovadas ou recusadas com justificativa', async ({
@@ -113,7 +132,7 @@ test('instituições pendentes são aprovadas ou recusadas com justificativa', a
     .getByRole('row', { name: /Escola Horizonte/ })
     .getByRole('button', { name: 'Recusar' })
     .click();
-  await page.getByLabel('Justificativa').fill('Endereço fora da área atendida');
+  await page.getByRole('textbox', { name: 'Justificativa', exact: true }).fill('Endereço fora da área atendida');
   await page.getByRole('button', { name: 'Recusar cadastro' }).click();
   await expect(posts).toEqual([
     '/admin/institutions/' + pending.id + '/approve',
@@ -170,7 +189,7 @@ test('o detalhe gerencia ciclo de vida e membros da equipe', async ({
     .getByRole('button', { name: 'Suspender instituição' })
     .click();
   await page
-    .locator('.donation-confirm')
+    .getByRole('group')
     .getByRole('button', { name: 'Suspender instituição' })
     .click();
   await expect(posts).toContain(
@@ -200,7 +219,7 @@ test('usuários mudam de função e acesso; admin e a própria conta ficam prote
   const studentRow = page.getByRole('row', { name: /Estudante de teste/ });
   await studentRow.getByRole('button', { name: 'Tornar equipe' }).click();
   await studentRow
-    .locator('.donation-confirm')
+    .getByRole('group')
     .getByRole('button', { name: 'Tornar equipe' })
     .click();
   await expect(posts).toEqual(['/admin/users/' + student.id + '/role']);
@@ -212,7 +231,7 @@ test('usuários mudam de função e acesso; admin e a própria conta ficam prote
 test('materiais, reservas e auditoria são consultas sem códigos de retirada', async ({
   page,
 }) => {
-  await adminSession(page, (route, path) => {
+  await adminSession(page, (route, path, params) => {
     if (path === '/admin/materials')
       return route.fulfill({ json: pageOf([material]) });
     if (path === '/admin/reservations')
@@ -220,7 +239,7 @@ test('materiais, reservas e auditoria são consultas sem códigos de retirada', 
         json: pageOf([{ ...reservation, pickupCode: '1234-5678-90' }]),
       });
     if (path === '/admin/audit-events')
-      return route.fulfill({ json: pageOf([auditEvent]) });
+      return route.fulfill({ json: pageOf(params.has('action') ? [] : [auditEvent]) });
     expect(path).toBe('/admin/institutions');
     return route.fulfill({ json: pageOf([approved]) });
   });
@@ -241,6 +260,10 @@ test('materiais, reservas e auditoria são consultas sem códigos de retirada', 
   await page.getByLabel('Filtrar por ação').fill('admin.institution_');
   await page.getByRole('button', { name: 'Filtrar' }).click();
   await expect(page).toHaveURL(/acao=admin\.institution_/);
+  await expect(page.getByRole('status')).toHaveText('Nenhum evento encontrado com este filtro.');
+  await page.getByRole('button', { name: 'Limpar filtros' }).click();
+  await expect(page.getByLabel('Filtrar por ação')).toHaveValue('');
+  await expect(page.getByText('Instituição aprovada')).toBeVisible();
 });
 
 test('estudantes e equipe não acessam a administração; cadastro institucional é aberto', async ({

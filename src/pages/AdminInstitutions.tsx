@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useState,
   type FormEvent,
 } from 'react';
@@ -29,6 +30,7 @@ import {
   ConfirmAction,
   Pager,
   Pill,
+  EmptyResults,
   ReadState,
   messageFor,
   useRead,
@@ -67,6 +69,7 @@ function RejectAction({
   busy: boolean;
   onReject: (reason: string) => void;
 }) {
+  const reasonId = useId();
   const [reason, setReason] = useState('');
   return (
     <ConfirmAction
@@ -78,9 +81,9 @@ function RejectAction({
       onConfirm={() => onReject(reason.trim())}
     >
       <div className="admin-reason">
-        <label htmlFor="reject-reason">Justificativa</label>
+        <label htmlFor={reasonId}>Justificativa</label>
         <textarea
-          id="reject-reason"
+          id={reasonId}
           value={reason}
           minLength={3}
           maxLength={240}
@@ -178,7 +181,7 @@ export function AdminInstitutionsPage() {
   }
 
   return (
-    <section className="frame" aria-labelledby="inst-titulo">
+    <section className="frame admin-page" aria-labelledby="inst-titulo">
       <header className="admin-heading">
         <div>
           <p className="eyebrow">Administração</p>
@@ -234,9 +237,9 @@ export function AdminInstitutionsPage() {
       <ReadState result={result} refresh={refresh}>
         {(data) =>
           data.items.length === 0 ? (
-            <p className="inst-message">
+            <EmptyResults clearDraft={() => setDraft('')}>
               Nenhuma instituição encontrada com estes filtros.
-            </p>
+            </EmptyResults>
           ) : (
             <>
               <p className="inst-total">
@@ -429,7 +432,7 @@ function MemberManager({ institution }: { institution: AdminInstitution }) {
           )
         }
       </ReadState>
-      <h3 style={{ marginTop: 28 }}>Vincular usuário</h3>
+      <h3 className="admin-member-title">Vincular usuário</h3>
       <form
         className="admin-member-search"
         role="search"
@@ -456,7 +459,7 @@ function MemberManager({ institution }: { institution: AdminInstitution }) {
                 Nenhum usuário ativo encontrado para “{search}”.
               </p>
             ) : (
-              <ul className="inst-list">
+              <ul className="admin-candidates">
                 {page.items.map((user: AdminUser) => {
                   const already = memberIds.has(user.id);
                   const self = currentUser?.id === user.id;
@@ -535,7 +538,7 @@ export function AdminInstitutionDetailPage() {
     return <StatePanel kind="missing" />;
 
   return (
-    <section className="frame" aria-labelledby="inst-det-titulo">
+    <section className="frame admin-page" aria-labelledby="inst-det-titulo">
       <p style={{ marginBottom: 14 }}>
         <Link to="/admin/instituicoes">← Todas as instituições</Link>
       </p>
@@ -580,7 +583,7 @@ export function AdminInstitutionDetailPage() {
                   </div>
                 </dl>
               </div>
-              <h2 style={{ fontSize: '1rem' }}>Instruções de retirada</h2>
+              <h2 className="admin-detail-label">Instruções de retirada</h2>
               <p className="inst-description">
                 {institution.pickupInstructions}
               </p>

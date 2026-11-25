@@ -6,10 +6,20 @@ import {
   useLocation,
   useOutletContext,
 } from 'react-router-dom';
+import { BookOpen, Building2, ClipboardList, History, LayoutDashboard, Users } from 'lucide-react';
 import { isDemo } from '../data/catalog';
 import { useAuthUser, type AuthUser } from '../data/auth';
 import { StatePanel } from './StatePanel';
 import './account.css';
+
+const adminLinks = [
+  { to: '/admin', label: 'Visão geral', icon: LayoutDashboard },
+  { to: '/admin/instituicoes', label: 'Instituições', icon: Building2 },
+  { to: '/admin/usuarios', label: 'Usuários', icon: Users },
+  { to: '/admin/materiais', label: 'Materiais', icon: BookOpen },
+  { to: '/admin/reservas', label: 'Reservas', icon: ClipboardList },
+  { to: '/admin/auditoria', label: 'Auditoria', icon: History },
+];
 
 export interface AccountContext {
   sessionState: 'loading' | 'ready' | 'error';
@@ -85,18 +95,13 @@ export function PrivateArea({ role }: { role?: AuthUser['role'] }) {
         </nav>
       )}
       {role === 'ADMIN' && (
-        <nav
-          className="frame account-nav institution-tabs"
-          aria-label="Administração"
-        >
-          <NavLink end to="/admin">
-            Visão geral
-          </NavLink>
-          <NavLink to="/admin/instituicoes">Instituições</NavLink>
-          <NavLink to="/admin/usuarios">Usuários</NavLink>
-          <NavLink to="/admin/materiais">Materiais</NavLink>
-          <NavLink to="/admin/reservas">Reservas</NavLink>
-          <NavLink to="/admin/auditoria">Auditoria</NavLink>
+        <nav className="frame admin-nav" aria-label="Administração">
+          {adminLinks.map(({ to, label, icon: Icon }) => (
+            <NavLink key={to} to={to} end={to === '/admin'}>
+              <Icon size={16} aria-hidden="true" />
+              {label}
+            </NavLink>
+          ))}
         </nav>
       )}
       <Outlet context={context} />

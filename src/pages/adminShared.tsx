@@ -1,4 +1,5 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { adminMessage } from '../data/admin';
 
@@ -58,6 +59,33 @@ export function ReadState<T>({
       </div>
     );
   return children(result.data);
+}
+
+export function EmptyResults({
+  children,
+  clearDraft,
+}: {
+  children: ReactNode;
+  clearDraft?: () => void;
+}) {
+  const [params, setParams] = useSearchParams();
+  return (
+    <div className="inst-message">
+      <p role="status">{children}</p>
+      {params.size > 0 && (
+        <button
+          className="button"
+          type="button"
+          onClick={() => {
+            clearDraft?.();
+            setParams({}, { replace: true });
+          }}
+        >
+          Limpar filtros
+        </button>
+      )}
+    </div>
+  );
 }
 
 export function Pager({
@@ -132,6 +160,24 @@ export function ConfirmAction({
   children?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const promptId = useId();
+  const promptRef = useRef<HTMLParagraphElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const returnFocus = useRef(false);
+
+  function cancel() {
+    returnFocus.current = true;
+    setOpen(false);
+  }
+
+  useEffect(() => {
+    if (open) promptRef.current?.focus();
+    else if (returnFocus.current) {
+      triggerRef.current?.focus();
+      returnFocus.current = false;
+    }
+  }, [open]);
+
   useEffect(() => {
     if (!busy) setOpen(false);
   }, [busy]);
@@ -139,22 +185,35 @@ export function ConfirmAction({
     return (
       <button
         type="button"
-        className={'button' + (danger ? ' donation-danger' : '')}
+        className={'button' + (danger ? ' admin-danger' : '')}
+        ref={triggerRef}
+        disabled={busy}
         onClick={() => setOpen(true)}
       >
         {label}
       </button>
     );
   return (
-    <div className="donation-confirm">
-      <p>
+    <div
+      className="admin-confirm"
+      role="group"
+      aria-labelledby={promptId}
+      data-danger={danger}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && !busy) {
+          event.stopPropagation();
+          cancel();
+        }
+      }}
+    >
+      <p id={promptId} ref={promptRef} tabIndex={-1}>
         <strong>{prompt}</strong>
       </p>
       {children}
-      <div>
+      <div className="admin-actions">
         <button
           type="button"
-          className={'button' + (danger ? ' donation-danger' : ' primary')}
+          className={'button' + (danger ? ' admin-danger' : ' primary')}
           disabled={busy}
           onClick={onConfirm}
         >
@@ -164,7 +223,7 @@ export function ConfirmAction({
           type="button"
           className="button"
           disabled={busy}
-          onClick={() => setOpen(false)}
+          onClick={cancel}
         >
           Voltar
         </button>
