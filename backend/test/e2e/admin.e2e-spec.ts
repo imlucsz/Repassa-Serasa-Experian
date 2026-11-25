@@ -163,6 +163,59 @@ describe('Admin endpoints (e2e, real Postgres)', () => {
       expect(audit?.institutionId).toBe(created.id);
     });
 
+    it('rejects duplicate name+address while pending/approved, allows re-register after rejection', async () => {
+      await createUser('s@t.dev', 'STUDENT');
+      const token = await accessTokenFor('s@t.dev');
+      const { token: adminJwt } = await adminToken('admin@t.dev');
+
+      const first = await req('POST', '/api/v1/institutions', {
+        headers: authed(token),
+        body: JSON.stringify(registrationBody),
+      });
+      expect(first.status).toBe(201);
+      const created = (await first.json()) as { id: string };
+
+      const dup = await req('POST', '/api/v1/institutions', {
+        headers: authed(token),
+        body: JSON.stringify(registrationBody),
+      });
+      expect(dup.status).toBe(409);
+
+      // Same name alone is not a duplicate — address differs.
+      const notDup = await req('POST', '/api/v1/institutions', {
+        headers: authed(token),
+        body: JSON.stringify({ ...registrationBody, publicAddress: 'Outro endereço fictício, 77' }),
+      });
+      expect(notDup.status).toBe(201);
+
+      // After rejection the name+address pair is free again.
+      const reject = await req('POST', `/api/v1/admin/institutions/${created.id}/reject`, {
+        headers: authed(adminJwt),
+        body: JSON.stringify({ reason: 'Dados insuficientes' }),
+      });
+      expect(reject.status).toBe(200);
+      const again = await req('POST', '/api/v1/institutions', {
+        headers: authed(token),
+        body: JSON.stringify(registrationBody),
+      });
+      expect(again.status).toBe(201);
+    });
+
+    it('rate-limits registration spam per user', async () => {
+      await createUser('s@t.dev', 'STUDENT');
+      const token = await accessTokenFor('s@t.dev');
+      const statuses: number[] = [];
+      for (let i = 0; i < 6; i++) {
+        const res = await req('POST', '/api/v1/institutions', {
+          headers: authed(token),
+          body: JSON.stringify({ ...registrationBody, name: `Escola ${i} (fictícia)`, publicAddress: `Rua ${i}, fictício` }),
+        });
+        statuses.push(res.status);
+      }
+      expect(statuses.slice(0, 5)).toEqual([201, 201, 201, 201, 201]);
+      expect(statuses[5]).toBe(429);
+    });
+
     it('rejects institution registration without a token', async () => {
       const res = await req('POST', '/api/v1/institutions', {
         headers: JSON_HEADERS,
@@ -299,6 +352,61 @@ describe('Admin endpoints (e2e, real Postgres)', () => {
       expect(back.status).toBe(200);
       const listed = (await (await req('GET', '/api/v1/institutions')).json()) as PageBody;
       expect(listed.items.map((i) => i.id)).toContain(inst.id);
+    });
+
+    it('in-flight reservations still complete and cancel after deactivation', async () => {
+      const { token } = await adminToken();
+      const inst = await createInstitution('APPROVED', true);
+      const donor = await createUser('d@t.dev', 'STUDENT');
+      await createUser('s@t.dev', 'STUDENT');
+      const staff = await createUser('f@t.dev', 'STAFF');
+      await prisma.membership.create({ data: { userId: staff.id, institutionId: inst.id } });
+      const mkMaterial = (title: string) =>
+        prisma.material.create({
+          data: {
+            donorId: donor.id,
+            institutionId: inst.id,
+            title,
+            description: 'Descrição longa o suficiente para passar na validação.',
+            category: 'BOOK',
+            condition: 'GOOD',
+            status: 'AVAILABLE',
+          },
+          select: { id: true },
+        });
+      const m1 = await mkMaterial('Livro reservável de teste');
+      const m2 = await mkMaterial('Segundo livro reservável');
+
+      // Two real reservations BEFORE deactivation — one to pick up, one to cancel.
+      const studentToken = await accessTokenFor('s@t.dev');
+      const r1 = await req('POST', `/api/v1/materials/${m1.id}/reservations`, { headers: authed(studentToken) });
+      const r2 = await req('POST', `/api/v1/materials/${m2.id}/reservations`, { headers: authed(studentToken) });
+      expect(r1.status).toBe(201);
+      expect(r2.status).toBe(201);
+      const { pickupCode } = (await r1.json()) as { pickupCode: string };
+      const { id: resId2 } = (await r2.json()) as { id: string };
+
+      const off = await req('POST', `/api/v1/admin/institutions/${inst.id}/deactivate`, {
+        headers: authed(token),
+      });
+      expect(off.status).toBe(200);
+
+      // Staff pickup confirmation still completes (deactivation stops new
+      // intake, never strands an in-flight pickup — business rule).
+      const staffToken = await accessTokenFor('f@t.dev');
+      const pickup = await req('POST', `/api/v1/institutions/${inst.id}/pickups/confirm`, {
+        headers: authed(staffToken),
+        body: JSON.stringify({ code: pickupCode }),
+      });
+      expect(pickup.status).toBe(200);
+      expect(((await pickup.json()) as { status: string }).status).toBe('COMPLETED');
+
+      // Owner cancellation still works on the deactivated institution.
+      const cancel = await req('POST', `/api/v1/reservations/${resId2}/cancel`, {
+        headers: authed(studentToken),
+      });
+      expect(cancel.status).toBe(200);
+      expect(((await cancel.json()) as { status: string }).status).toBe('CANCELED');
     });
 
     it('pending and rejected institutions cannot be activated', async () => {

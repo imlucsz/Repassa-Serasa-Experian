@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import type { Institution } from '@prisma/client';
+import type { Institution, User } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import {
@@ -80,16 +80,19 @@ export class AdminService {
     return { items: items.map(toAdminInstitutionDto), page: query.page, pageSize: query.pageSize, total };
   }
 
-  /** PENDING → APPROVED (+isActive). Any other state is a 409. */
+  /** PENDING → APPROVED (+isActive). Atomic conditional update — concurrent
+   *  approve/reject on the same row can only win once; losers get 409. */
   async approveInstitution(admin: AuthenticatedUser, id: string): Promise<AdminInstitutionDto> {
     const updated = await this.prisma.$transaction(async (tx) => {
-      const inst = await this.findInstitution(tx, id);
-      if (inst.status !== 'PENDING') {
-        throw new ConflictException(`Institution is ${inst.status.toLowerCase()}; only pending institutions can be approved`);
-      }
-      const next = await tx.institution.update({
-        where: { id },
+      const { count } = await tx.institution.updateMany({
+        where: { id, status: 'PENDING' },
         data: { status: 'APPROVED', isActive: true },
+      });
+      if (count === 0) {
+        throw await this.institutionTransitionConflict(tx, id, 'approved');
+      }
+      const next = await tx.institution.findUniqueOrThrow({
+        where: { id },
         include: { _count: { select: { memberships: true, materials: true } } },
       });
       await this.audit(tx, admin, 'admin.institution_approve', { institutionId: id });
@@ -98,16 +101,19 @@ export class AdminService {
     return toAdminInstitutionDto(updated);
   }
 
-  /** PENDING → REJECTED (terminal). Reason is required for accountability. */
+  /** PENDING → REJECTED (terminal). Reason is required for accountability.
+   *  Atomic conditional update — races with approve resolve to one winner. */
   async rejectInstitution(admin: AuthenticatedUser, id: string, reason: string): Promise<AdminInstitutionDto> {
     const updated = await this.prisma.$transaction(async (tx) => {
-      const inst = await this.findInstitution(tx, id);
-      if (inst.status !== 'PENDING') {
-        throw new ConflictException(`Institution is ${inst.status.toLowerCase()}; only pending institutions can be rejected`);
-      }
-      const next = await tx.institution.update({
-        where: { id },
+      const { count } = await tx.institution.updateMany({
+        where: { id, status: 'PENDING' },
         data: { status: 'REJECTED', isActive: false },
+      });
+      if (count === 0) {
+        throw await this.institutionTransitionConflict(tx, id, 'rejected');
+      }
+      const next = await tx.institution.findUniqueOrThrow({
+        where: { id },
         include: { _count: { select: { memberships: true, materials: true } } },
       });
       await this.audit(tx, admin, 'admin.institution_reject', {
@@ -136,16 +142,23 @@ export class AdminService {
     isActive: boolean,
   ): Promise<AdminInstitutionDto> {
     const updated = await this.prisma.$transaction(async (tx) => {
-      const inst = await this.findInstitution(tx, id);
-      if (inst.status !== 'APPROVED') {
-        throw new ConflictException(`Institution is ${inst.status.toLowerCase()}; only approved institutions can be activated or deactivated`);
-      }
-      if (inst.isActive === isActive) {
+      // Conditional update is the state machine itself: only APPROVED rows in
+      // the opposite isActive state match, so double-toggles and approve-vs-
+      // deactivate races serialize to exactly one winner.
+      const { count } = await tx.institution.updateMany({
+        where: { id, status: 'APPROVED', isActive: !isActive },
+        data: { isActive },
+      });
+      if (count === 0) {
+        const inst = await tx.institution.findUnique({ where: { id } });
+        if (!inst) throw new NotFoundException(NOT_FOUND);
+        if (inst.status !== 'APPROVED') {
+          throw new ConflictException(`Institution is ${inst.status.toLowerCase()}; only approved institutions can be activated or deactivated`);
+        }
         throw new ConflictException(`Institution is already ${isActive ? 'active' : 'inactive'}`);
       }
-      const next = await tx.institution.update({
+      const next = await tx.institution.findUniqueOrThrow({
         where: { id },
-        data: { isActive },
         include: { _count: { select: { memberships: true, materials: true } } },
       });
       await this.audit(tx, admin, isActive ? 'admin.institution_activate' : 'admin.institution_deactivate', {
@@ -175,12 +188,13 @@ export class AdminService {
    */
   async assignMember(admin: AuthenticatedUser, institutionId: string, userId: string): Promise<AdminMemberDto> {
     const created = await this.prisma.$transaction(async (tx) => {
-      const inst = await this.findInstitution(tx, institutionId);
+      // Lock order: institution row before user row — serializes against
+      // approve/deactivate and every other user-scoped admin mutation.
+      const inst = await this.lockInstitution(tx, institutionId);
       if (inst.status !== 'APPROVED') {
         throw new ConflictException('Staff can only be assigned to approved institutions');
       }
-      const user = await tx.user.findUnique({ where: { id: userId } });
-      if (!user) throw new NotFoundException(NOT_FOUND);
+      const user = await this.lockUser(tx, userId);
       if (!user.isActive) throw new ConflictException('Cannot assign membership to a deactivated user');
       if (user.role === 'ADMIN') throw new ConflictException('Administrator accounts cannot hold staff memberships');
 
@@ -210,6 +224,9 @@ export class AdminService {
    */
   async revokeMember(admin: AuthenticatedUser, institutionId: string, userId: string): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
+      // Locking the user row serializes the delete→count→demote sequence with
+      // concurrent assignments/role changes for the same user.
+      await this.lockUser(tx, userId);
       const membership = await tx.membership.findUnique({
         where: { userId_institutionId: { userId, institutionId } },
       });
@@ -258,8 +275,7 @@ export class AdminService {
    *  provisioning). STAFF → STUDENT drops all memberships in the same tx. */
   async setUserRole(admin: AuthenticatedUser, userId: string, role: 'STUDENT' | 'STAFF'): Promise<AdminUserDto> {
     const updated = await this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.findUnique({ where: { id: userId } });
-      if (!user) throw new NotFoundException(NOT_FOUND);
+      const user = await this.lockUser(tx, userId);
       if (user.role === 'ADMIN') throw new ConflictException('Administrator roles are managed out of band');
       if (userId === admin.id) throw new ConflictException('Administrators cannot change their own role');
       if (user.role === role) throw new ConflictException(`User already has role ${role}`);
@@ -290,8 +306,7 @@ export class AdminService {
     isActive: boolean,
   ): Promise<AdminUserDto> {
     const updated = await this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.findUnique({ where: { id: userId } });
-      if (!user) throw new NotFoundException(NOT_FOUND);
+      const user = await this.lockUser(tx, userId);
       if (!isActive && userId === admin.id) {
         throw new ConflictException('Administrators cannot deactivate their own account');
       }
@@ -384,6 +399,45 @@ export class AdminService {
     const inst = await db.institution.findUnique({ where: { id } });
     if (!inst) throw new NotFoundException(NOT_FOUND);
     return inst;
+  }
+
+  /** Row-lock an institution FOR UPDATE inside the caller's transaction. */
+  private async lockInstitution(
+    tx: Prisma.TransactionClient,
+    id: string,
+  ): Promise<Pick<Institution, 'id' | 'status' | 'isActive'>> {
+    const rows = await tx.$queryRaw<Pick<Institution, 'id' | 'status' | 'isActive'>[]>`
+      SELECT id, status, is_active AS "isActive"
+        FROM "institutions" WHERE id = ${id}::uuid
+        FOR UPDATE`;
+    if (!rows[0]) throw new NotFoundException(NOT_FOUND);
+    return rows[0];
+  }
+
+  /** Row-lock a user FOR UPDATE inside the caller's transaction — serializes
+   *  all user-scoped admin mutations (role, activation, memberships). */
+  private async lockUser(
+    tx: Prisma.TransactionClient,
+    id: string,
+  ): Promise<Pick<User, 'id' | 'role' | 'isActive'>> {
+    const rows = await tx.$queryRaw<Pick<User, 'id' | 'role' | 'isActive'>[]>`
+      SELECT id, role, is_active AS "isActive"
+        FROM "users" WHERE id = ${id}::uuid
+        FOR UPDATE`;
+    if (!rows[0]) throw new NotFoundException(NOT_FOUND);
+    return rows[0];
+  }
+
+  /** 404 when the institution is gone, otherwise the state-machine 409 — used
+   *  after a conditional update matched zero rows. */
+  private async institutionTransitionConflict(
+    tx: Prisma.TransactionClient,
+    id: string,
+    verb: string,
+  ): Promise<ConflictException | NotFoundException> {
+    const inst = await tx.institution.findUnique({ where: { id } });
+    if (!inst) return new NotFoundException(NOT_FOUND);
+    return new ConflictException(`Institution is ${inst.status.toLowerCase()}; only pending institutions can be ${verb}`);
   }
 
   private async audit(
