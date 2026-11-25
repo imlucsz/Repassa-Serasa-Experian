@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import sharp from 'sharp';
+import sharp, { type Sharp } from 'sharp';
 import {
   IMAGE_FORMATS,
   UPLOAD_MAX_BYTES,
@@ -40,7 +40,7 @@ export class StorageService {
       throw new BadRequestException('Unsupported image type');
     }
 
-    let pipeline: sharp.Sharp;
+    let pipeline: Sharp;
     let format: string;
     try {
       // limitInputPixels + bounded dims guard decompression bombs.

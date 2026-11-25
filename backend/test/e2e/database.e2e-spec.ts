@@ -118,6 +118,7 @@ async function seedUserInstitutionMaterial(prisma: PrismaClient) {
       name: 'Instituto de Testes (fictício)',
       publicAddress: 'Rua Fictícia, 1',
       pickupInstructions: 'Balcão 1',
+      status: 'APPROVED',
     },
   });
   const material = await prisma.material.create({

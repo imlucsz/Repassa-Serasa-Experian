@@ -84,6 +84,7 @@ describe('Reservations and pickup lifecycle (e2e, real Postgres)', () => {
         name: 'Instituto Central (fictício)',
         publicAddress: 'Av. C, 100 — fictício',
         pickupInstructions: 'Balcão principal',
+        status: 'APPROVED',
         isActive: true,
       },
     });

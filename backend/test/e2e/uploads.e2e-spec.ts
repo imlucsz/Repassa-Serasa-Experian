@@ -99,6 +99,7 @@ describe('Uploads API (e2e, real Postgres)', () => {
         name: 'Instituto Upload (fictício)',
         publicAddress: 'Av. U, 1 — fictício',
         pickupInstructions: 'Balcão',
+        status: 'APPROVED',
       },
     });
   }

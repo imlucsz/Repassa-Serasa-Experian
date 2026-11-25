@@ -20,7 +20,7 @@ describe('Seed (real disposable PostgreSQL)', () => {
   it('creates synthetic demo data and is idempotent on re-run', async () => {
     await runSeed(prisma);
     const first = await counts(prisma);
-    expect(first).toEqual({ institutions: 2, users: 4, memberships: 2, materials: 6 });
+    expect(first).toEqual({ institutions: 3, users: 5, memberships: 2, materials: 6, reservations: 1 });
 
     await runSeed(prisma); // second run must not duplicate
     const second = await counts(prisma);
@@ -37,6 +37,16 @@ describe('Seed (real disposable PostgreSQL)', () => {
     );
     const students = await prisma.user.findMany({ where: { role: 'STUDENT' } });
     expect(students).toHaveLength(2);
+    const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
+    expect(admins).toHaveLength(1);
+  });
+
+  it('seeds an approved set plus one pending institution for the admin flow', async () => {
+    await runSeed(prisma);
+    const byStatus = await prisma.institution.groupBy({ by: ['status'], _count: { _all: true } });
+    const count = (s: string) => byStatus.find((g) => g.status === s)?._count._all ?? 0;
+    expect(count('APPROVED')).toBe(2);
+    expect(count('PENDING')).toBe(1);
   });
 
   it('refuses to run in production', async () => {
@@ -51,11 +61,12 @@ describe('Seed (real disposable PostgreSQL)', () => {
 });
 
 async function counts(prisma: PrismaClient) {
-  const [institutions, users, memberships, materials] = await prisma.$transaction([
+  const [institutions, users, memberships, materials, reservations] = await prisma.$transaction([
     prisma.institution.count(),
     prisma.user.count(),
     prisma.membership.count(),
     prisma.material.count(),
+    prisma.reservation.count(),
   ]);
-  return { institutions, users, memberships, materials };
+  return { institutions, users, memberships, materials, reservations };
 }

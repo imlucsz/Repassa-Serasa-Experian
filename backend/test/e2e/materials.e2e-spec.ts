@@ -103,6 +103,7 @@ describe('Donations, stock and public catalog (e2e, real Postgres)', () => {
         name,
         publicAddress: 'Av. C, 100 — fictício',
         pickupInstructions: 'Balcão principal',
+        status: 'APPROVED',
         isActive,
       },
     });
