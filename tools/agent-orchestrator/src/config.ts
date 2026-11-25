@@ -71,6 +71,9 @@ export const configSchema = z.object({
   routing: z.object({
     defaultProfile: z.string().default('free-only'),
     profiles: z.record(z.string(), z.object({ billing: z.array(billingEnum) })).prefault({}),
+    // Ordered per-role model candidates for automatic routing + free-only
+    // fallback on upstream failure. Ids must exist in providers[].
+    roleModels: z.record(z.string(), z.array(z.string())).prefault({}),
   }).prefault({}),
   providers: z.array(providerSchema).default([]),
   workers: z.object({

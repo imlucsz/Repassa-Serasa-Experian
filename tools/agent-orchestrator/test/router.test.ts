@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { loadConfig } from '../src/config.js';
-import { selectModel, listPolicyModels } from '../src/router.js';
+import { selectModel, listPolicyModels, autoCandidates } from '../src/router.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fixture = join(here, 'fixtures', 'orchestrator.config.json');
@@ -23,7 +23,7 @@ test('free-only profile selects only free provider', () => {
   assert.ok(!('error' in sel));
   if (!('error' in sel)) {
     assert.equal(sel.provider.id, 'mockfree');
-    assert.equal(sel.model, 'mock/chat');
+    assert.equal(sel.model, 'mock/secondary'); // roleModels[researcher][0] wins
   }
 });
 
@@ -54,9 +54,31 @@ test('unknown provider is rejected explicitly', () => {
   assert.ok('error' in sel);
 });
 
+test('autoCandidates orders roleModels first, then remaining free models; never paid/unknown/undeclared', () => {
+  const cands = autoCandidates(config, researcher);
+  const ids = cands.map((c) => c.model);
+  // roleModels order honored: secondary before chat
+  assert.equal(ids[0], 'mock/secondary');
+  assert.equal(ids[1], 'mock/chat');
+  // remaining declared free models appended for fallback
+  assert.ok(ids.includes('mock/extra'));
+  // paid, unknown and undeclared ids never enter the candidate chain
+  assert.ok(!ids.includes('paid/big'));
+  assert.ok(!ids.includes('mystery/model'));
+  assert.ok(!ids.includes('notdeclared/x'));
+  assert.ok(cands.every((c) => c.provider.billing === 'free'));
+});
+
+test('autoCandidates falls back to declaration order for roles without roleModels', () => {
+  const other = roles.find((r) => r.id !== 'researcher')!;
+  const cands = autoCandidates(config, other);
+  assert.ok(cands.length >= 1);
+  assert.equal(cands[0].provider.billing, 'free');
+});
+
 test('listPolicyModels exposes policy surface with callability', () => {
   const list = listPolicyModels(config);
-  assert.equal(list.length, 3);
+  assert.equal(list.length, 4);
   assert.equal(list[0].billing, 'free');
   assert.equal(list[0].callable, true);
   const paid = list.find((p) => p.billing === 'paid')!;

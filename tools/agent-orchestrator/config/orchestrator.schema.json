@@ -40,6 +40,24 @@
         "perTaskMaxOutputTokens": { "type": "integer" }
       }
     },
+    "routing": {
+      "type": "object",
+      "properties": {
+        "defaultProfile": { "type": "string" },
+        "profiles": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": { "billing": { "type": "array", "items": { "enum": ["free", "paid", "unknown"] } } }
+          }
+        },
+        "roleModels": {
+          "type": "object",
+          "description": "Per-role ordered model candidates for automatic routing; ids must exist in providers[]. Fallback stays within declared free providers, max 3 attempts.",
+          "additionalProperties": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
     "providers": {
       "type": "array",
       "items": {

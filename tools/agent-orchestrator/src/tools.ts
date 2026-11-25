@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import type { LoadedConfig, Role } from './config.js';
 import { TaskStore, BudgetLedger, type TaskRecord } from './tasks.js';
 import { chatCompletion, probeGateway, discoverGatewayModels, type ChatMessage } from './gateway.js';
-import { selectModel, listPolicyModels } from './router.js';
+import { selectModel, listPolicyModels, autoCandidates } from './router.js';
 import { scanForSecrets, checkFileContextAccess } from './safety.js';
 import { workersEnabled, prepareWorktree, collectWorkerFiles, applyPatchToWorktree } from './worktree.js';
 
@@ -120,48 +120,62 @@ export async function runDelegation(
     store.save(task); return task;
   }
 
+  const explicitSel = Boolean(opts.model || opts.provider);
   const sel = selectModel(cfg, role, { model: opts.model, provider: opts.provider, routingProfile: opts.routingProfile });
   if ('error' in sel) {
     task.status = 'blocked'; task.error = { code: 'routing', message: sel.error }; store.save(task); return task;
   }
-
-  // Cost cap only binds providers that can spend (paid or priced). A
-  // declared-free provider without pricing always records cost 0, so a $0
-  // cap must not block it - dailyTokens is the rate limit for those.
-  const canSpend = sel.provider.billing === 'paid' || sel.provider.pricing !== undefined;
-  const provUsage = ledger.providerUsageToday(sel.provider.id);
-  if (canSpend && sel.provider.maxDailyCostUsd !== undefined && provUsage.costUsd >= sel.provider.maxDailyCostUsd) {
-    task.status = 'blocked';
-    task.error = { code: 'provider_budget', message: `provider "${sel.provider.id}" daily cost cap reached ($${provUsage.costUsd}/$${sel.provider.maxDailyCostUsd})` };
-    store.save(task); return task;
-  }
+  // Candidate chain: explicit selection = single target; auto routing = ordered
+  // free candidates (roleModels preference then declaration order). Fallback
+  // only happens between declared free providers, max 3 attempts, never on
+  // non-retryable errors or explicit selections.
+  const candidates = explicitSel ? [sel] : autoCandidates(cfg, role);
+  const capReached = (p: typeof sel.provider) =>
+    (p.billing === 'paid' || p.pricing !== undefined) &&
+    p.maxDailyCostUsd !== undefined &&
+    ledger.providerUsageToday(p.id).costUsd >= p.maxDailyCostUsd;
 
   const maxTokens = Math.min(opts.maxOutputTokens ?? role.maxOutputTokens, cfg.budget.perTaskMaxOutputTokens);
-  task.status = 'running'; task.provider = sel.provider.id; task.model = sel.model; store.save(task);
-
   const messages: ChatMessage[] = [
     { role: 'system', content: role.systemPrompt },
     { role: 'user', content: fullUser },
   ];
-  const result = await chatCompletion(cfg, sel.model, messages, maxTokens, opts.timeoutSec);
-  task.latencyMs = result.latencyMs;
-  if (result.ok) {
-    task.status = 'done';
-    task.output = result.content;
-    task.model = result.model ?? sel.model;
-    const outSecrets = scanForSecrets(result.content ?? '');
-    if (outSecrets.length) task.output = `[output withheld: matched secret patterns ${outSecrets.join(', ')}]`;
-    const pricing = sel.provider.pricing;
-    const inTok = result.usage?.inputTokens ?? 0;
-    const outTok = result.usage?.outputTokens ?? 0;
-    const costUsd = pricing ? +((inTok * pricing.inputPerMToken + outTok * pricing.outputPerMToken) / 1e6).toFixed(6) : 0;
-    task.usage = { inputTokens: inTok, outputTokens: outTok, costUsd };
-    task.costBasis = pricing ? 'declared-pricing' : sel.provider.billing === 'free' ? 'declared-free' : 'unavailable';
-    ledger.add(result.usage?.totalTokens ?? inTok + outTok, costUsd, sel.provider.id);
-  } else {
-    task.status = result.error?.code === 'timeout' ? 'timeout' : 'error';
-    task.error = result.error;
+
+  let result: Awaited<ReturnType<typeof chatCompletion>> | undefined;
+  let chosen: typeof sel | undefined;
+  const attempted: string[] = [];
+  const cappedOut: string[] = [];
+  for (const cand of candidates.slice(0, 3)) {
+    if (capReached(cand.provider)) { cappedOut.push(cand.model); continue; }
+    attempted.push(cand.model);
+    task.status = 'running'; task.provider = cand.provider.id; task.model = cand.model; store.save(task);
+    result = await chatCompletion(cfg, cand.model, messages, maxTokens, opts.timeoutSec);
+    if (result.ok) { chosen = cand; break; }
+    if (explicitSel) break; // explicit selection stays single-shot
   }
+  if (!chosen) {
+    if (attempted.length === 0) {
+      task.status = 'blocked';
+      task.error = { code: 'provider_budget', message: `candidate providers at daily cost cap: ${cappedOut.join(', ') || 'none callable'}` };
+    } else {
+      task.status = result?.error?.code === 'timeout' ? 'timeout' : 'error';
+      task.error = { ...(result?.error ?? { code: 'unknown', message: 'no candidates' }), message: `${result?.error?.message ?? 'no candidates'} (tried: ${attempted.join(', ')})` };
+    }
+    store.save(task); return task;
+  }
+  task.latencyMs = result!.latencyMs;
+  task.status = 'done';
+  task.output = result!.content;
+  task.model = result!.model ?? chosen.model;
+  const outSecrets = scanForSecrets(result!.content ?? '');
+  if (outSecrets.length) task.output = `[output withheld: matched secret patterns ${outSecrets.join(', ')}]`;
+  const pricing = chosen.provider.pricing;
+  const inTok = result!.usage?.inputTokens ?? 0;
+  const outTok = result!.usage?.outputTokens ?? 0;
+  const costUsd = pricing ? +((inTok * pricing.inputPerMToken + outTok * pricing.outputPerMToken) / 1e6).toFixed(6) : 0;
+  task.usage = { inputTokens: inTok, outputTokens: outTok, costUsd };
+  task.costBasis = pricing ? 'declared-pricing' : chosen.provider.billing === 'free' ? 'declared-free' : 'unavailable';
+  ledger.add(result!.usage?.totalTokens ?? inTok + outTok, costUsd, chosen.provider.id);
   store.save(task);
   return task;
 }

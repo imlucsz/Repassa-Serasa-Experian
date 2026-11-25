@@ -28,7 +28,7 @@ test('delegation to mock provider completes and records usage', async () => {
   const task = await runDelegation(loaded, store, ledger, getRole(loaded, 'researcher'), 'Summarize the repo structure.', undefined, {});
   assert.equal(task.status, 'done');
   assert.equal(task.provider, 'mockfree');
-  assert.match(task.model ?? '', /mock\/chat/);
+  assert.match(task.model ?? '', /mock\/secondary/);
   assert.ok(task.output?.includes('mock response'));
   const usage = ledger.usageToday();
   assert.equal(usage.calls, 1);

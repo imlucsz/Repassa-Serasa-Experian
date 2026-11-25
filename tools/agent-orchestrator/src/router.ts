@@ -52,12 +52,34 @@ export function selectModel(
   }
 
   // Automatic routing: free providers only, ever.
+  const candidates = autoCandidates(cfg, role);
+  const first = candidates[0];
+  if (first) return first;
+  return { error: `no free provider satisfies role ${role.id}; declare one in providers[] or select a model explicitly` };
+}
+
+// Ordered free candidates for a role: routing.roleModels[role.id] first
+// (order = preference), then every other declared free capable model.
+export function autoCandidates(cfg: OrchestratorConfig, role: Role): SelectedModel[] {
+  const out: SelectedModel[] = [];
+  const seen = new Set<string>();
+  const push = (p: ProviderDecl, id: string) => {
+    if (seen.has(id)) return;
+    seen.add(id);
+    out.push({ provider: p, model: id });
+  };
+  for (const want of cfg.routing.roleModels[role.id] ?? []) {
+    for (const p of cfg.providers) {
+      if (p.billing !== 'free') continue;
+      const m = p.models.find((mm) => mm.id === want);
+      if (m && modelSatisfies(role, m)) push(p, m.id);
+    }
+  }
   for (const p of cfg.providers) {
     if (p.billing !== 'free') continue;
-    const m = p.models.find((mm) => modelSatisfies(role, mm));
-    if (m) return { provider: p, model: m.id };
+    for (const m of p.models) if (modelSatisfies(role, m)) push(p, m.id);
   }
-  return { error: `no free provider satisfies role ${role.id}; declare one in providers[] or select a model explicitly` };
+  return out;
 }
 
 export interface ProviderCallability {
