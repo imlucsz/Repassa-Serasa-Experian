@@ -46,8 +46,12 @@ untouched.
 - `npm run lint` (tsc ×2): clean
 - `npm run test:ci`: **40/40** (8 new `src/data/admin.test.ts` cases)
 - `npm run build`: ok (admin routes lazy-chunked)
-- `PLAYWRIGHT_CHANNEL=chrome npx playwright test`: **40/40**
-  (7 new `admin.spec.mjs` cases on the intercepted API)
+- `PLAYWRIGHT_CHANNEL=chrome npx playwright test`: **57/57**
+  (7 `admin.spec.mjs` + 17 `admin-a11y.spec.mjs` cases on the
+  intercepted API)
+- axe (`@axe-core/playwright`, WCAG 2.x A/AA): **0 violations** on all 8
+  admin/registration routes at 390px and 1440px; no horizontal overflow;
+  admin tab strip and inline confirmations keyboard-reachable
 - Real-API validation against DEV-06 backend (`1cb095a`) on disposable
   embedded Postgres: **24/24 checks** — approval/rejection persisted,
   member assign promotes to STAFF and last revoke demotes to STUDENT,
@@ -62,6 +66,27 @@ untouched.
 - `admin-usuarios-1440.png`, `admin-materiais-1440.png`,
   `admin-reservas-1440.png`, `admin-auditoria-1440.png`
 - `cadastro-instituicao-1440.png`, `admin-rbac-estudante-1440.png`
+
+## Integration & deploy checklist
+
+- [x] Contract reviewed at DEV-06 `1cb095a` (openapi.yaml unchanged vs.
+      implementation; API.md lifecycle/concurrency semantics honoured)
+- [x] All admin endpoints exist in `contracts/openapi.yaml` — none invented
+- [x] Frontend builds with `VITE_DATA_MODE=api`; no silent mock fallback
+- [x] ADMIN role checked client-side (routes/nav) AND server-side (403
+      verified for STUDENT/STAFF on `/admin/*` in real-API run)
+- [x] No secrets in code; `SEED_DEMO_PASSWORD`/validation script kept
+      untracked and local
+- [x] First ADMIN provisioning is out-of-band
+      (`backend/scripts/provision-admin.ts`) — no frontend bootstrap path
+- [x] Error matrix covered: 400/401/403/404/409/429 mapped via
+      `adminMessage` + contextual 409s
+- [ ] Production env: same-origin `/api/v1` proxy required (Vite dev proxy
+      only used for validation)
+- [ ] Seed/demo data must NOT run in production (`seed.ts` refuses when
+      NODE_ENV=production)
+- [ ] Owner decides when demo accounts rotate out (`admin.demo@example.com`
+      is seed-only, not a provision path)
 
 ## Limitations / handoff notes for Astra refinement
 
