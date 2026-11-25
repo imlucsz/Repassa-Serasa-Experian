@@ -84,6 +84,21 @@ export function PrivateArea({ role }: { role?: AuthUser['role'] }) {
           <NavLink to={'/instituicao/retirada' + search}>Retiradas</NavLink>
         </nav>
       )}
+      {role === 'ADMIN' && (
+        <nav
+          className="frame account-nav institution-tabs"
+          aria-label="Administração"
+        >
+          <NavLink end to="/admin">
+            Visão geral
+          </NavLink>
+          <NavLink to="/admin/instituicoes">Instituições</NavLink>
+          <NavLink to="/admin/usuarios">Usuários</NavLink>
+          <NavLink to="/admin/materiais">Materiais</NavLink>
+          <NavLink to="/admin/reservas">Reservas</NavLink>
+          <NavLink to="/admin/auditoria">Auditoria</NavLink>
+        </nav>
+      )}
       <Outlet context={context} />
     </div>
   );

@@ -101,7 +101,11 @@ export function LoginPage() {
     params.get('returnTo') ??
       params.get('next') ??
       (params.get('intent') === 'doar' ? '/doar' : null),
-    user?.role === 'STAFF' ? '/instituicao' : '/catalogo',
+    user?.role === 'ADMIN'
+      ? '/admin'
+      : user?.role === 'STAFF'
+        ? '/instituicao'
+        : '/catalogo',
   );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

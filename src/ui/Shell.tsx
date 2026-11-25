@@ -114,6 +114,9 @@ export function Shell() {
             {user.role === 'STAFF' && (
               <NavLink to="/instituicao">Instituição</NavLink>
             )}
+            {user.role === 'ADMIN' && (
+              <NavLink to="/admin">Administração</NavLink>
+            )}
             <NavLink to="/perfil">Meu perfil</NavLink>
           </nav>
         )}

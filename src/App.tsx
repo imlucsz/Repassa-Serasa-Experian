@@ -93,12 +93,70 @@ const router = createBrowserRouter([
         ],
       },
       {
+        element: <PrivateArea role="ADMIN" />,
+        children: [
+          {
+            path: 'admin',
+            lazy: async () => ({
+              Component: (await import('./pages/Admin')).AdminDashboardPage,
+            }),
+          },
+          {
+            path: 'admin/instituicoes',
+            lazy: async () => ({
+              Component: (await import('./pages/AdminInstitutions'))
+                .AdminInstitutionsPage,
+            }),
+          },
+          {
+            path: 'admin/instituicoes/:id',
+            lazy: async () => ({
+              Component: (await import('./pages/AdminInstitutions'))
+                .AdminInstitutionDetailPage,
+            }),
+          },
+          {
+            path: 'admin/usuarios',
+            lazy: async () => ({
+              Component: (await import('./pages/AdminUsers')).AdminUsersPage,
+            }),
+          },
+          {
+            path: 'admin/materiais',
+            lazy: async () => ({
+              Component: (await import('./pages/AdminViews'))
+                .AdminMaterialsPage,
+            }),
+          },
+          {
+            path: 'admin/reservas',
+            lazy: async () => ({
+              Component: (await import('./pages/AdminViews'))
+                .AdminReservationsPage,
+            }),
+          },
+          {
+            path: 'admin/auditoria',
+            lazy: async () => ({
+              Component: (await import('./pages/AdminViews')).AdminAuditPage,
+            }),
+          },
+        ],
+      },
+      {
         element: <PrivateArea />,
         children: [
           {
             path: 'perfil',
             lazy: async () => ({
               Component: (await import('./pages/Profile')).ProfilePage,
+            }),
+          },
+          {
+            path: 'instituicoes/nova',
+            lazy: async () => ({
+              Component: (await import('./pages/RegisterInstitution'))
+                .RegisterInstitutionPage,
             }),
           },
         ],
