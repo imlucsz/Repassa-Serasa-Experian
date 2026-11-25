@@ -28,4 +28,9 @@ Branch `feat/UX-04-reservations-pickups`, baseada em `origin/main` no commit `d8
 ## Pendências que permanecem
 
 - A validação manual com leitor de tela segue pendente.
-- Commits, publicação da branch, PR e verificação dos checks do GitHub — em andamento nesta sessão.
+
+## Publicação
+
+- Commits `c6b9485` (camada de dados) e `95d5ec6` (telas/testes/evidências) criados com hooks ativos e guard limpo.
+- Branch publicada e PR aberto: https://github.com/imlucsz/Repassa-Serasa-Experian/pull/20
+- Checks do GitHub no head: `agent-guard`, `frontend-quality`, `backend-quality` e Vercel — todos verdes; PR mergeable.
