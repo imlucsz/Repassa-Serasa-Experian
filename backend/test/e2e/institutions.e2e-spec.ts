@@ -84,6 +84,7 @@ describe('Institutions endpoints (e2e, real Postgres)', () => {
         name: 'Instituto Zeta (fictício)',
         publicAddress: 'Av. Z, 10 — fictício',
         pickupInstructions: 'Balcão A',
+        status: 'APPROVED',
       },
     });
     const activeB = await prisma.institution.create({
@@ -91,6 +92,7 @@ describe('Institutions endpoints (e2e, real Postgres)', () => {
         name: 'Instituto Alfa (fictício)',
         publicAddress: 'Av. A, 20 — fictício',
         pickupInstructions: 'Balcão B',
+        status: 'APPROVED',
       },
     });
     const inactive = await prisma.institution.create({
@@ -98,6 +100,7 @@ describe('Institutions endpoints (e2e, real Postgres)', () => {
         name: 'Instituto Fechado (fictício)',
         publicAddress: 'Av. F, 30 — fictício',
         pickupInstructions: 'Fechado',
+        status: 'APPROVED',
         isActive: false,
       },
     });

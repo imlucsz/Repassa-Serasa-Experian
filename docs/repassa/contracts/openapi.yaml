@@ -312,6 +312,35 @@ paths:
           minimum: 1
           maximum: 50
           default: 20
+    post:
+      operationId: registerInstitution
+      summary: registerInstitution
+      description: 'Access: any authenticated user. Creates a PENDING institution (isActive=false). Grants no staff membership or role. Public catalogs stay APPROVED+active only until an admin approves it.'
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminInstitution'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterInstitutionInput'
   /me/institutions:
     get:
       operationId: listMyInstitutions
@@ -953,6 +982,654 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PickupInput'
+  /admin/institutions:
+    get:
+      operationId: adminListInstitutions
+      summary: adminListInstitutions
+      description: 'Access: ADMIN. All institutions across all statuses.'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminInstitutionPage'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/InstitutionStatus'
+      - name: isActive
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: q
+        in: query
+        required: false
+        description: Case-insensitive substring on name/publicAddress.
+        schema:
+          type: string
+          maxLength: 120
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+  /admin/institutions/{id}/approve:
+    post:
+      operationId: adminApproveInstitution
+      summary: adminApproveInstitution
+      description: 'Access: ADMIN. PENDING → APPROVED and isActive=true. 409 on any other status.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminInstitution'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+  /admin/institutions/{id}/reject:
+    post:
+      operationId: adminRejectInstitution
+      summary: adminRejectInstitution
+      description: 'Access: ADMIN. PENDING → REJECTED (terminal). Reason is mandatory.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminInstitution'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectInstitutionInput'
+  /admin/institutions/{id}/activate:
+    post:
+      operationId: adminActivateInstitution
+      summary: adminActivateInstitution
+      description: 'Access: ADMIN. isActive → true. Only APPROVED institutions; 409 otherwise (PENDING/REJECTED can never be activated).'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminInstitution'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+  /admin/institutions/{id}/deactivate:
+    post:
+      operationId: adminDeactivateInstitution
+      summary: adminDeactivateInstitution
+      description: 'Access: ADMIN. isActive → false. Institution leaves public catalog; new donations and reservations to it fail; existing reservations keep their lifecycle.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminInstitution'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+  /admin/institutions/{id}/members:
+    get:
+      operationId: adminListInstitutionMembers
+      summary: adminListInstitutionMembers
+      description: 'Access: ADMIN. Staff memberships of the institution.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminMember'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+    post:
+      operationId: adminAssignInstitutionMember
+      summary: adminAssignMember
+      description: 'Access: ADMIN. Grants a membership and promotes the user to STAFF. 201 on create. 409 when already a member, target is ADMIN/inactive, or institution is not APPROVED.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminMember'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignMemberInput'
+  /admin/institutions/{id}/members/{userId}/revoke:
+    post:
+      operationId: adminRevokeInstitutionMember
+      summary: adminRevokeMember
+      description: 'Access: ADMIN. Deletes the membership; demotes to STUDENT when it was the user''s last membership. 404 when the membership does not exist.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Revoked
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+  /admin/users:
+    get:
+      operationId: adminListUsers
+      summary: adminListUsers
+      description: 'Access: ADMIN. Never includes passwordHash.'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserPage'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: role
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/Role'
+      - name: isActive
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: q
+        in: query
+        required: false
+        description: Case-insensitive substring on email/displayName.
+        schema:
+          type: string
+          maxLength: 160
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+  /admin/users/{id}/role:
+    post:
+      operationId: adminSetUserRole
+      summary: adminSetUserRole
+      description: 'Access: ADMIN. Bounded to STUDENT↔STAFF — ADMIN cannot be granted via the API and existing ADMIN rows are immutable (409). Demoting STAFF→STUDENT drops all memberships.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetUserRoleInput'
+  /admin/users/{id}/activate:
+    post:
+      operationId: adminActivateUser
+      summary: adminActivateUser
+      description: 'Access: ADMIN. isActive → true.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+  /admin/users/{id}/deactivate:
+    post:
+      operationId: adminDeactivateUser
+      summary: adminDeactivateUser
+      description: 'Access: ADMIN. isActive → false and ALL refresh sessions revoked; tokens stop working immediately. An admin cannot deactivate itself (409).'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+  /admin/materials:
+    get:
+      operationId: adminListMaterials
+      summary: adminListMaterials
+      description: 'Access: ADMIN. All materials across tenants and statuses.'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialPage'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/MaterialStatus'
+      - name: institutionId
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+  /admin/reservations:
+    get:
+      operationId: adminListReservations
+      summary: adminListReservations
+      description: 'Access: ADMIN. All reservations across tenants. Pickup codes are NEVER included.'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminReservationPage'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/ReservationStatus'
+      - name: institutionId
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: studentId
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+  /admin/audit-events:
+    get:
+      operationId: adminListAuditEvents
+      summary: adminListAuditEvents
+      description: 'Access: ADMIN. Audit log of privileged actions (admin.*, institution.register, lifecycle events).'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAuditEventPage'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      parameters:
+      - name: action
+        in: query
+        required: false
+        description: Exact action name or prefix ending in "." (e.g. "admin." lists all admin actions).
+        schema:
+          type: string
+          maxLength: 120
+      - name: institutionId
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: actorId
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
 components:
   securitySchemes:
     bearerAuth:
@@ -999,6 +1676,17 @@ components:
       - CANCELED
       - EXPIRED
       - COMPLETED
+    InstitutionStatus:
+      type: string
+      description: >-
+        Lifecycle: PENDING (registered, awaiting admin), APPROVED (admin
+        approved), REJECTED (admin rejected — terminal). Only APPROVED +
+        isActive institutions appear publicly and can receive donations,
+        materials and reservations.
+      enum:
+      - PENDING
+      - APPROVED
+      - REJECTED
     ErrorResponse:
       type: object
       additionalProperties: false
@@ -1405,6 +2093,323 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Reservation'
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 50
+        total:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - pageSize
+      - total
+    RegisterInstitutionInput:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 120
+        publicAddress:
+          type: string
+          minLength: 5
+          maxLength: 300
+        pickupInstructions:
+          type: string
+          minLength: 5
+          maxLength: 500
+      required:
+      - name
+      - publicAddress
+      - pickupInstructions
+    RejectInstitutionInput:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+      required:
+      - reason
+    AssignMemberInput:
+      type: object
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+          format: uuid
+      required:
+      - userId
+    SetUserRoleInput:
+      type: object
+      additionalProperties: false
+      properties:
+        role:
+          type: string
+          description: ADMIN is not accepted by the API.
+          enum:
+          - STUDENT
+          - STAFF
+      required:
+      - role
+    AdminInstitution:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        publicAddress:
+          type: string
+        pickupInstructions:
+          type: string
+        status:
+          $ref: '#/components/schemas/InstitutionStatus'
+        isActive:
+          type: boolean
+        memberCount:
+          type: integer
+        materialCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - name
+      - publicAddress
+      - pickupInstructions
+      - status
+      - isActive
+      - memberCount
+      - materialCount
+      - createdAt
+      - updatedAt
+    AdminUser:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+        isActive:
+          type: boolean
+        membershipCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - email
+      - displayName
+      - role
+      - isActive
+      - membershipCount
+      - createdAt
+      - updatedAt
+    AdminMember:
+      type: object
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+          format: uuid
+        institutionId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - userId
+      - institutionId
+      - email
+      - displayName
+      - createdAt
+    AdminReservation:
+      type: object
+      additionalProperties: false
+      description: Pickup code intentionally absent (staff-scope data).
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/ReservationStatus'
+        materialId:
+          type: string
+          format: uuid
+        material:
+          $ref: '#/components/schemas/Material'
+        institutionId:
+          type: string
+          format: uuid
+        studentId:
+          type: string
+          format: uuid
+        expiresAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - status
+      - materialId
+      - material
+      - institutionId
+      - studentId
+      - expiresAt
+      - completedAt
+      - createdAt
+    AdminAuditEvent:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        action:
+          type: string
+        actorId:
+          type: string
+          format: uuid
+          nullable: true
+        institutionId:
+          type: string
+          format: uuid
+          nullable: true
+        materialId:
+          type: string
+          format: uuid
+          nullable: true
+        reservationId:
+          type: string
+          format: uuid
+          nullable: true
+        metadata: {}
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - action
+      - actorId
+      - institutionId
+      - materialId
+      - reservationId
+      - metadata
+      - createdAt
+    AdminInstitutionPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminInstitution'
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 50
+        total:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - pageSize
+      - total
+    AdminUserPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminUser'
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 50
+        total:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - pageSize
+      - total
+    AdminReservationPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminReservation'
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 50
+        total:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - pageSize
+      - total
+    AdminAuditEventPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminAuditEvent'
         page:
           type: integer
           minimum: 1

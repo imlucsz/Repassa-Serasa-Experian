@@ -35,6 +35,12 @@ enum Condition {
   @@map("condition")
 }
 
+enum InstitutionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum MaterialStatus {
   PENDING_RECEIPT
   AVAILABLE
@@ -79,11 +85,12 @@ model User {
 }
 
 model Institution {
-  id                 String   @id @default(uuid()) @db.Uuid
+  id                 String            @id @default(uuid()) @db.Uuid
   name               String
-  publicAddress      String   @map("public_address")
-  pickupInstructions String   @map("pickup_instructions")
-  isActive           Boolean  @default(true) @map("is_active")
+  publicAddress      String            @map("public_address")
+  pickupInstructions String            @map("pickup_instructions")
+  status             InstitutionStatus @default(PENDING)
+  isActive           Boolean           @default(true) @map("is_active")
   createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 

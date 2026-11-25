@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RateLimitModule } from './common/rate-limit/rate-limit.module';
 import { validateEnv } from './config/env.validation';
+import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
 import { InstitutionsModule } from './institutions/institutions.module';
@@ -23,6 +24,7 @@ import { UsersModule } from './users/users.module';
     PrismaModule,
     RateLimitModule,
     AuthModule,
+    AdminModule,
     UsersModule,
     InstitutionsModule,
     MaterialsModule,

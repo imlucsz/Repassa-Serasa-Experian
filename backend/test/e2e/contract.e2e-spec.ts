@@ -44,6 +44,22 @@ describe('Generated OpenAPI surface (e2e)', () => {
       'get /api/v1/institutions/{institutionId}/materials': 'institutionMaterials',
       'post /api/v1/institutions/{institutionId}/materials/{id}/receive': 'receiveDonation',
       'post /api/v1/institutions/{institutionId}/materials/{id}/reject': 'rejectDonation',
+      'post /api/v1/institutions': 'registerInstitution',
+      'get /api/v1/admin/institutions': 'adminListInstitutions',
+      'post /api/v1/admin/institutions/{id}/approve': 'adminApproveInstitution',
+      'post /api/v1/admin/institutions/{id}/reject': 'adminRejectInstitution',
+      'post /api/v1/admin/institutions/{id}/activate': 'adminActivateInstitution',
+      'post /api/v1/admin/institutions/{id}/deactivate': 'adminDeactivateInstitution',
+      'get /api/v1/admin/institutions/{id}/members': 'adminListInstitutionMembers',
+      'post /api/v1/admin/institutions/{id}/members': 'adminAssignInstitutionMember',
+      'post /api/v1/admin/institutions/{id}/members/{userId}/revoke': 'adminRevokeInstitutionMember',
+      'get /api/v1/admin/users': 'adminListUsers',
+      'post /api/v1/admin/users/{id}/role': 'adminSetUserRole',
+      'post /api/v1/admin/users/{id}/activate': 'adminActivateUser',
+      'post /api/v1/admin/users/{id}/deactivate': 'adminDeactivateUser',
+      'get /api/v1/admin/materials': 'adminListMaterials',
+      'get /api/v1/admin/reservations': 'adminListReservations',
+      'get /api/v1/admin/audit-events': 'adminListAuditEvents',
     };
     for (const [key, operationId] of Object.entries(expected)) {
       const [method, path] = key.split(' ');

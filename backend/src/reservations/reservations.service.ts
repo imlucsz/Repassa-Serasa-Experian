@@ -298,7 +298,7 @@ export class ReservationsService {
       SELECT m.id,
              m.donor_id AS "donorId",
              m.institution_id AS "institutionId",
-             i.is_active AS "institutionIsActive",
+             (i.is_active AND i.status = 'APPROVED') AS "institutionIsActive",
              m.status
         FROM materials m
         JOIN institutions i ON i.id = m.institution_id

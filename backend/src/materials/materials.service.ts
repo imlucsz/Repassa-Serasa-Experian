@@ -54,7 +54,7 @@ export class MaterialsService {
     await this.expiry.reconcileExpired();
     const where: Prisma.MaterialWhereInput = {
       status: 'AVAILABLE',
-      institution: { isActive: true },
+      institution: { status: 'APPROVED', isActive: true },
       ...(query.category ? { category: query.category } : {}),
       ...(query.institutionId ? { institutionId: query.institutionId } : {}),
       ...(query.q
@@ -83,7 +83,7 @@ export class MaterialsService {
   async getPublicMaterial(id: string): Promise<MaterialDto> {
     await this.expiry.reconcileExpired({ materialId: id });
     const material = await this.prisma.material.findFirst({
-      where: { id, status: 'AVAILABLE', institution: { isActive: true } },
+      where: { id, status: 'AVAILABLE', institution: { status: 'APPROVED', isActive: true } },
       include: { institution: true },
     });
     if (!material) throw new NotFoundException(NOT_FOUND);
@@ -97,9 +97,9 @@ export class MaterialsService {
   async createDonation(donor: AuthenticatedUser, dto: DonationDto): Promise<ManagedMaterialDto> {
     const institution = await this.prisma.institution.findUnique({
       where: { id: dto.institutionId },
-      select: { isActive: true },
+      select: { isActive: true, status: true },
     });
-    if (!institution?.isActive) {
+    if (!institution || institution.status !== 'APPROVED' || !institution.isActive) {
       throw new BadRequestException({
         message: 'Validation failed',
         fieldErrors: { institutionId: ['must reference an active institution'] },
