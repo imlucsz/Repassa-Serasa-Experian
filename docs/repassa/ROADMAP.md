@@ -13,7 +13,7 @@
 | UX-03 | Codex | donate, history, profile, staff receipt/stock | UX-01, API contract; integrate DEV-02/03 endpoints |
 | DEV-04 | Devin | reserve/cancel/expiry/pickup/dashboard | DEV-03; real Postgres concurrency/security tests |
 | UX-04 | Codex | reservations, pickup and staff dashboard | UX-03; integrate DEV-04, no fake state |
-| SH-02 | both | integrated E2E + deployment | DEV-04/UX-04; full demo flow, smoke test and error handling |
+| SH-02 | both | integrated E2E + deployment | DEV-04/UX-04; full demo flow, smoke test and error handling — **verified 25/11**: journey 17/17, security 21/21, recovery 3/3 (`tests/live/`, `RUNBOOK.md`, `evidence/sh-02/`); deploy blockers list owner actions |
 | SH-03 | owner/both | polish, freeze, rehearsal | SH-02; all P0 verified or limitations disclosed, backup video |
 
 Do not assign 10 overlapping PRs at once. Two agents can run parallel within ownership. Each task leads to PR; close only with evidence. If backend foundation behind schedule, keep UI explicitly mock for development and prioritize auth + donation/receipt + reserve/pickup over secondary pages. Production rollout and paid services separate owner approval.

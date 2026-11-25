@@ -279,6 +279,19 @@ export function listAdminInstitutions(
   );
 }
 
+/** Every admin institution across all pages (filter dropdowns). */
+export async function listAllAdminInstitutions(
+  signal?: AbortSignal,
+): Promise<AdminInstitution[]> {
+  const items: AdminInstitution[] = [];
+  for (let page = 1; ; page++) {
+    const result = await listAdminInstitutions({ page, pageSize: 50 }, signal);
+    items.push(...result.items);
+    if (!result.items.length || page * result.pageSize >= result.total)
+      return items;
+  }
+}
+
 /** Paged lookup for a single admin institution (no single-get endpoint). */
 export async function findAdminInstitution(
   id: string,

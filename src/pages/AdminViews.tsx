@@ -9,7 +9,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import {
   listAdminAuditEvents,
-  listAdminInstitutions,
+  listAllAdminInstitutions,
   listAdminMaterials,
   listAdminReservations,
   reservationStatusLabels,
@@ -38,12 +38,12 @@ function useInstitutionOptions() {
   const { result } = useRead(
     useCallback(
       (signal: AbortSignal) =>
-        listAdminInstitutions({ pageSize: 50 }, signal),
+        listAllAdminInstitutions(signal),
       [],
     ),
   );
   return useMemo(
-    () => (result && 'data' in result ? result.data.items : []),
+    () => (result && 'data' in result ? result.data : []),
     [result],
   );
 }

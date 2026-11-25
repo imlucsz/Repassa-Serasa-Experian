@@ -6,6 +6,7 @@ import {
   assignInstitutionMember,
   findAdminInstitution,
   listAdminAuditEvents,
+  listAllAdminInstitutions,
   listAdminInstitutions,
   listAdminMaterials,
   listAdminReservations,
@@ -112,6 +113,30 @@ test('approve, reject with reason and activate hit the lifecycle endpoints', asy
     Response.json({ ...institution, status: 'GHOST' }),
   );
   await assert.rejects(approveInstitution(institution.id), { status: 502 });
+});
+
+test('listAllAdminInstitutions aggregates every page for dropdowns', async (t) => {
+  let reads = 0;
+  t.mock.method(globalThis, 'fetch', async (request: Request) => {
+    const url = new URL(request.url);
+    reads++;
+    const page = Number(url.searchParams.get('page'));
+    assert.equal(url.searchParams.get('pageSize'), '50');
+    if (page === 1)
+      return Response.json({
+        items: Array.from({ length: 50 }, (_, i) => ({
+          ...institution,
+          id: book.id.slice(0, -2) + String(i % 10) + String((i / 10) | 0),
+        })),
+        page: 1,
+        pageSize: 50,
+        total: 51,
+      });
+    return Response.json(pageOf([institution], 2, 50));
+  });
+  const all = await listAllAdminInstitutions();
+  assert.equal(all.length, 51);
+  assert.equal(reads, 2);
 });
 
 test('findAdminInstitution pages until the id or the list ends', async (t) => {
