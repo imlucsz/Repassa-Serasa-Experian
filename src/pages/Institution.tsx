@@ -32,6 +32,7 @@ import {
   type MaterialStatus,
 } from '../data/operations';
 import { Field } from '../ui/Field';
+import { PickupDesk } from './PickupDesk';
 import './institution.css';
 
 type Read<T> = { data: T } | { error: unknown } | null;
@@ -251,6 +252,9 @@ function Summary({ institution }: { institution: Institution }) {
         </Link>
         <Link className="button" to={'/instituicao/estoque' + search}>
           Consultar estoque
+        </Link>
+        <Link className="button" to={'/instituicao/retirada' + search}>
+          Registrar retirada
         </Link>
       </div>
     </>
@@ -642,6 +646,14 @@ export function StockPage() {
       {(institution) => (
         <MaterialList institution={institution} receipts={false} />
       )}
+    </InstitutionScope>
+  );
+}
+
+export function PickupsPage() {
+  return (
+    <InstitutionScope title="Retiradas">
+      {(institution) => <PickupDesk institution={institution} />}
     </InstitutionScope>
   );
 }

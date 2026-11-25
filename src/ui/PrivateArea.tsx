@@ -28,8 +28,8 @@ export function PrivateArea({ role }: { role?: AuthUser['role'] }) {
         <p className="eyebrow">Demonstração</p>
         <h1>Área de conta</h1>
         <p>
-          Esta demonstração permite explorar o acervo fictício. Doações e
-          operações institucionais exigem uma conta conectada ao serviço.
+          Esta demonstração permite explorar o acervo fictício. Para doar,
+          reservar ou confirmar retiradas, é preciso uma conta conectada ao serviço.
         </p>
         <Link className="button primary" to="/catalogo">
           Explorar o acervo
@@ -81,6 +81,7 @@ export function PrivateArea({ role }: { role?: AuthUser['role'] }) {
             Recebimentos
           </NavLink>
           <NavLink to={'/instituicao/estoque' + search}>Estoque</NavLink>
+          <NavLink to={'/instituicao/retirada' + search}>Retiradas</NavLink>
         </nav>
       )}
       <Outlet context={context} />

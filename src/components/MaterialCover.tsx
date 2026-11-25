@@ -3,13 +3,24 @@ import { categoryLabels } from '../data/catalog';
 import './shelf.css';
 
 // Original geometric jacket designs. A supplied material photograph takes precedence.
-export function jacketVariant(material: Material) {
+export function jacketVariant(material: Pick<Material, 'id'>) {
   const palettes = [5, 3, 4, 2, 1, 0] as const;
   const seed = parseInt(material.id.slice(-8), 16);
   return palettes[seed % palettes.length] ?? 0;
 }
 
-export function MaterialCover({ material }: { material: Material }) {
+type CoverMaterial = Pick<
+  Material,
+  'id' | 'title' | 'description' | 'category' | 'imageUrl'
+>;
+
+export function MaterialCover({
+  material,
+  showPhoto = true,
+}: {
+  material: CoverMaterial;
+  showPhoto?: boolean;
+}) {
   const subject = `${material.title} ${material.description}`
     .normalize('NFD')
     .replace(/\p{M}/gu, '')
@@ -103,7 +114,7 @@ export function MaterialCover({ material }: { material: Material }) {
         </div>
         <span className="jacket-imprint">RePassa</span>
       </div>
-      {material.imageUrl && (
+      {showPhoto && material.imageUrl && (
         <img
           className="jacket-photo"
           src={material.imageUrl}

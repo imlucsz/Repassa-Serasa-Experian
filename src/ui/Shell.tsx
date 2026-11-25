@@ -108,6 +108,7 @@ export function Shell() {
               <>
                 <NavLink to="/doar">Doar material</NavLink>
                 <NavLink to="/minhas-doacoes">Minhas doações</NavLink>
+                <NavLink to="/minhas-reservas">Minhas reservas</NavLink>
               </>
             )}
             {user.role === 'STAFF' && (

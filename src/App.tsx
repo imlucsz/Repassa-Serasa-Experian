@@ -1,8 +1,18 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+  useLocation,
+} from 'react-router-dom';
 import { PrivateArea } from './ui/PrivateArea';
 import { Shell } from './ui/Shell';
 import { StatePanel } from './ui/StatePanel';
 import { Home } from './pages/Home';
+
+function PickupRedirect() {
+  const { search } = useLocation();
+  return <Navigate to={'/instituicao/retirada' + search} replace />;
+}
 
 const router = createBrowserRouter([
   {
@@ -28,9 +38,17 @@ const router = createBrowserRouter([
       },
       { path: 'catalogo', lazy: () => import('./pages/Catalog') },
       { path: 'materiais/:id', lazy: () => import('./pages/Detail') },
+      { path: 'instituicao/retiradas', Component: PickupRedirect },
       {
         element: <PrivateArea role="STUDENT" />,
         children: [
+          {
+            path: 'minhas-reservas',
+            lazy: async () => ({
+              Component: (await import('./pages/Reservations'))
+                .ReservationsPage,
+            }),
+          },
           {
             path: 'doar',
             lazy: async () => ({
@@ -48,6 +66,12 @@ const router = createBrowserRouter([
       {
         element: <PrivateArea role="STAFF" />,
         children: [
+          {
+            path: 'instituicao/retirada',
+            lazy: async () => ({
+              Component: (await import('./pages/Institution')).PickupsPage,
+            }),
+          },
           {
             path: 'instituicao',
             lazy: async () => ({

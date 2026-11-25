@@ -1,0 +1,108 @@
+.reservation-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.reservation-tools > span {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.reservation-history {
+  margin: 0;
+}
+.reservation-material {
+  display: grid;
+  grid-template-columns: clamp(48px, 4.5vw, 68px) minmax(0, 1fr);
+  gap: clamp(12px, 1.3vw, 20px);
+  align-items: start;
+}
+.reservation-jacket {
+  aspect-ratio: 2 / 3;
+  box-shadow: 1px 3px 6px #1c29251c;
+}
+.reservation-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr) minmax(240px, 0.9fr);
+  gap: clamp(18px, 3vw, 48px);
+  align-items: start;
+  padding-block: clamp(22px, 3vw, 40px);
+  overflow-wrap: anywhere;
+}
+.reservation-status[data-status='ACTIVE'] {
+  background: var(--tint);
+  color: var(--forest);
+}
+.reservation-status[data-status='ACTIVE']::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--emerald);
+}
+.reservation-status + .donation-date {
+  margin-top: 8px;
+}
+.reservation-point {
+  padding-top: 3px;
+}
+.reservation-point svg {
+  flex-shrink: 0;
+}
+.reservation-point p + p {
+  margin-top: 7px;
+}
+.reservation-ticket {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding: 18px 20px;
+  border-left: 3px solid var(--emerald);
+  background: var(--paper);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.reservation-ticket .button {
+  min-height: 42px;
+}
+.reservation-deadline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 650;
+  color: var(--emerald);
+  font-variant-numeric: tabular-nums;
+}
+.reservation-cancel {
+  color: #7d493a;
+}
+.reservation-code {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  border-block: 1px solid var(--line);
+  padding-block: 12px;
+}
+.reservation-code > strong {
+  font:
+    600 clamp(1rem, 1.6vw, 1.35rem) / 1.4 ui-monospace,
+    monospace;
+  letter-spacing: 0.04em;
+  user-select: all;
+}
+@media (max-width: 950px) {
+  .reservation-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .reservation-ticket {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 600px) {
+  .reservation-row {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}

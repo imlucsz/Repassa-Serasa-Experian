@@ -116,10 +116,12 @@ test('operações privadas explicam os limites da demonstração sem chamar a AP
   for (const path of [
     '/doar',
     '/minhas-doacoes',
+    '/minhas-reservas',
     '/perfil',
     '/instituicao',
     '/instituicao/recebimentos',
     '/instituicao/estoque',
+    '/instituicao/retirada',
   ]) {
     await page.goto(path);
     await expect(
