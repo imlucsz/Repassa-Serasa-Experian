@@ -170,7 +170,7 @@
   border-radius: 4px;
   color: var(--forest);
 }
-.inst-dialog .inst-check {
+.inst-check {
   display: flex;
   gap: 10px;
   align-items: start;
@@ -182,8 +182,43 @@
   height: 1.15rem;
   accent-color: var(--emerald);
 }
-.inst-dialog [role='alert'] {
+.inst-dialog [role='alert'],
+.inst-pickup [role='alert'] {
   color: #893b28;
+}
+.inst-pickup {
+  display: grid;
+  justify-items: start;
+  gap: 18px;
+  max-width: 40rem;
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--forest);
+  background: var(--paper);
+  padding: clamp(18px, 3vw, 32px);
+}
+.inst-pickup .inst-description {
+  margin-top: -10px;
+}
+.inst-pickup .field {
+  width: min(100%, 25rem);
+}
+.inst-pickup input.inst-code {
+  font-family: var(--mono);
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+}
+.inst-hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-top: -12px;
+}
+.inst-pickup .inst-check {
+  padding-block: 10px;
+}
+.inst-result p {
+  line-height: 1.55;
 }
 @media (max-width: 640px) {
   .inst-counts {

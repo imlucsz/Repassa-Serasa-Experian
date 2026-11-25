@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowUpRight, Check, MapPin } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, MapPin } from 'lucide-react';
 import {
   Link,
   useLoaderData,
@@ -57,6 +57,8 @@ function MaterialDetail({
   const [result, setResult] = useState<ReservationResult | null>(null);
   const [pending, setPending] = useState(false);
   const request = useRef<AbortController | null>(null);
+  const reservationAction = useRef<HTMLDivElement>(null);
+  const historyLink = useRef<HTMLAnchorElement>(null);
   useLayoutEffect(() => () => request.current?.abort(), []);
   useEffect(() => {
     document.title = material.title + ' · RePassa';
@@ -66,12 +68,15 @@ function MaterialDetail({
     state.catalogSearch.startsWith('?')
       ? state.catalogSearch
       : '';
-  const confirmed = result?.kind === 'confirmed' ? result.reservation : null;
-  const [expired, setExpired] = useState(false);
+  const confirmed = result?.kind === 'confirmed' ? result : null;
+  const [pastDeadline, setPastDeadline] = useState(false);
+  const expired =
+    pastDeadline ||
+    (!!confirmed && Date.parse(confirmed.expiresAt) <= Date.now());
   useEffect(() => {
     if (!confirmed) return;
     const timer = window.setTimeout(
-      () => setExpired(true),
+      () => setPastDeadline(true),
       Math.max(0, Date.parse(confirmed.expiresAt) - Date.now()),
     );
     return () => window.clearTimeout(timer);
@@ -79,10 +84,16 @@ function MaterialDetail({
   const canReserve = !isDemo && (!user || user.role === 'STUDENT');
   const unavailable = result?.kind === 'unavailable';
   const checkOnly = result?.kind === 'uncertain';
+  useEffect(() => {
+    if (
+      (confirmed || unavailable) &&
+      (document.activeElement === document.body ||
+        reservationAction.current?.contains(document.activeElement))
+    )
+      historyLink.current?.focus({ preventScroll: true });
+  }, [confirmed, unavailable]);
   let action = 'Reservar este material';
   if (pending) action = 'Consultando…';
-  else if (confirmed)
-    action = expired ? 'Prazo encerrado' : 'Reserva confirmada';
   else if (unavailable || !canReserve) action = 'Reserva indisponível';
   else if (checkOnly) action = 'Consultar minha reserva';
   else if (!user) action = 'Entrar para reservar';
@@ -97,7 +108,7 @@ function MaterialDetail({
   else if (confirmed)
     message = expired
       ? 'O prazo de retirada terminou. Consulte a disponibilidade no acervo.'
-      : 'Anote os dados de retirada antes de sair desta página.';
+      : 'Reserva confirmada. Seu código de retirada está em Minhas reservas.';
 
   async function reserve() {
     if (!canReserve || pending || request.current || confirmed || unavailable)
@@ -176,30 +187,41 @@ function MaterialDetail({
             <p>{material.institution.publicAddress}</p>
             <p>{material.institution.pickupInstructions}</p>
           </section>
-          <div className="reservation-action">
-            <button
-              className="button primary"
-              type="button"
-              onClick={() => void reserve()}
-              disabled={!canReserve || pending || !!confirmed || unavailable}
-            >
-              {action}{' '}
-              {confirmed ? <Check size={18} /> : <ArrowUpRight size={18} />}
-            </button>
+          <div className="reservation-action" ref={reservationAction}>
+            {confirmed ? (
+              <Link
+                ref={historyLink}
+                className="button primary"
+                to="/minhas-reservas"
+              >
+                Ver minhas reservas{' '}
+                <ArrowUpRight size={18} aria-hidden="true" />
+              </Link>
+            ) : (
+              <button
+                className="button primary"
+                type="button"
+                onClick={() => void reserve()}
+                disabled={!canReserve || pending || unavailable}
+              >
+                {action} <ArrowUpRight size={18} aria-hidden="true" />
+              </button>
+            )}
             <p role="status">{message}</p>
             {confirmed && !expired && (
-              <div className="pickup-code">
-                {confirmed.pickupCode && (
-                  <>
-                    <span>Código para retirada</span>
-                    <strong>{confirmed.pickupCode}</strong>
-                  </>
-                )}
-                <small>
-                  Retire até {deadline.format(new Date(confirmed.expiresAt))}{' '}
-                  (horário de Brasília).
-                </small>
-              </div>
+              <p>
+                Retire até{' '}
+                <time dateTime={confirmed.expiresAt}>
+                  {deadline.format(new Date(confirmed.expiresAt))}
+                </time>{' '}
+                (horário de São Paulo).
+              </p>
+            )}
+            {(unavailable || checkOnly) && user?.role === 'STUDENT' && (
+              <Link ref={historyLink} className="back" to="/minhas-reservas">
+                Ver minhas reservas{' '}
+                <ArrowUpRight size={16} aria-hidden="true" />
+              </Link>
             )}
           </div>
         </div>

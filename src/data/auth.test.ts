@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { authenticatedFetch, login, logout, safeReturnTo } from './auth.ts';
+import {
+  authenticatedFetch,
+  getAuthUser,
+  login,
+  logout,
+  safeReturnTo,
+} from './auth.ts';
 
 test('safeReturnTo accepts local destinations and rejects external and auth-loop targets', () => {
   assert.equal(
@@ -14,6 +20,11 @@ test('safeReturnTo accepts local destinations and rejects external and auth-loop
   assert.equal(safeReturnTo('/\u005c\u005cexample.com'), '/catalogo');
   assert.equal(safeReturnTo('/materiais/123', '/'), '/materiais/123');
   assert.equal(safeReturnTo('/admin'), '/catalogo');
+  assert.equal(safeReturnTo('/minhas-reservas'), '/minhas-reservas');
+  assert.equal(
+    safeReturnTo('/instituicao/retirada?instituicao=A'),
+    '/instituicao/retirada?instituicao=A',
+  );
   assert.equal(safeReturnTo('///example.com'), '/catalogo');
   assert.equal(safeReturnTo('/catalogo/../entrar'), '/catalogo');
   assert.equal(safeReturnTo('/materiais/123/extra'), '/catalogo');
@@ -155,6 +166,53 @@ test('a refresh response arriving after logout cannot restore the old session', 
     Object.defineProperty(globalThis, 'window', {
       configurable: true,
       value: originalWindow,
+    });
+  }
+});
+
+test('a second 401 clears only the rejected session and stops retrying', async (t) => {
+  const previous = globalThis.window;
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: { location: { origin: 'http://localhost' } },
+  });
+  const calls: string[] = [];
+  t.mock.method(globalThis, 'fetch', async (input: Request | string) => {
+    const path = new URL(
+      input instanceof Request ? input.url : input,
+      'http://localhost',
+    ).pathname;
+    calls.push(path);
+    if (path.includes('/auth/'))
+      return Response.json({
+        accessToken: path.endsWith('/refresh')
+          ? 'synthetic-new'
+          : 'synthetic-old',
+        expiresIn: 900,
+        user: {
+          id: 'student-test',
+          displayName: 'Teste',
+          email: 'teste@example.invalid',
+          role: 'STUDENT',
+        },
+      });
+    return new Response(null, { status: 401 });
+  });
+  try {
+    await login({ email: 'teste@example.invalid', password: 'synthetic' });
+    const path = '/api/v1/me/reservations';
+    assert.equal((await authenticatedFetch(path)).status, 401);
+    assert.equal(getAuthUser(), null);
+    assert.deepEqual(calls, [
+      '/api/v1/auth/login',
+      path,
+      '/api/v1/auth/refresh',
+      path,
+    ]);
+  } finally {
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: previous,
     });
   }
 });

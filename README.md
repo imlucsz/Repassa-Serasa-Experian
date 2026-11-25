@@ -32,10 +32,12 @@ O modo de demonstração permite explorar as cinco rotas com dados fictícios. P
 | --- | --- |
 | `/doar` | Estudante cadastra um material, com foto opcional, para entrega em uma instituição ativa |
 | `/minhas-doacoes` | Estudante acompanha as próprias doações e pode cancelar uma entrega pendente |
+| `/minhas-reservas` | Estudante consulta o prazo em São Paulo, revela o código de retirada de uma reserva ativa e pode cancelá-la |
 | `/perfil` | Pessoa autenticada consulta a conta, edita o nome de exibição e encerra a sessão |
 | `/instituicao` | Equipe consulta os totais da instituição selecionada entre seus vínculos |
 | `/instituicao/recebimentos` | Equipe confirma a chegada física do material ou registra o motivo da recusa |
 | `/instituicao/estoque` | Equipe consulta o inventário da instituição com busca, situação e paginação |
+| `/instituicao/retirada` | Equipe confirma a entrega física com o código apresentado pelo estudante |
 
 Em desenvolvimento, o Vite encaminha `/api/v1` para `http://127.0.0.1:3001`. Para usar outra porta local, defina `REPASSA_API_TARGET` antes de iniciar o Vite. Configure a origem do frontend em `ALLOWED_ORIGINS` no backend. Na demonstração estática, as rotas privadas explicam o limite da demonstração e direcionam ao acervo.
 

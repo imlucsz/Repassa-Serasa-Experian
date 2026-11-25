@@ -143,26 +143,6 @@
   line-height: 1.5;
 }
 
-.pickup-code {
-  display: grid;
-  gap: 7px;
-  min-width: min(100%, 300px);
-  padding: 17px 20px;
-  border-inline-start: 4px solid var(--coral);
-  background: #e9e7da;
-}
-
-.pickup-code span,
-.pickup-code small {
-  color: var(--muted);
-  font-size: 0.82rem;
-}
-
-.pickup-code strong {
-  font: 600 clamp(1.2rem, 4vw, 1.65rem) / 1.2 var(--mono);
-  letter-spacing: 0.08em;
-}
-
 .material-grid li > a {
   display: block;
 }

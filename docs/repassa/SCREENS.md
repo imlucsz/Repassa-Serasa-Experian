@@ -15,7 +15,7 @@ Public browsing allowed; login required for donate/reserve/my pages. Institution
 | `/instituicao` | Staff dashboard | selected membership, real counters and links; no data across tenants |
 | `/instituicao/recebimentos` | Receive | pending list, confirm physical arrival or reject with reason |
 | `/instituicao/estoque` | Stock | list/filter scoped materials, states and history; no arbitrary status writes |
-| `/instituicao/retirada` | Pickup | enter/scan manually typed code, confirm actual handoff, accessible result and reset |
+| `/instituicao/retirada` | Pickup | enter pickup code, confirm physical handoff, accessible result and reset |
 | `*` | Not found | clear return paths |
 | `/recuperar-senha` | Password recovery (P1) | prerequisite for real public onboarding |
 

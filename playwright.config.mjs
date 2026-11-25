@@ -18,6 +18,8 @@ export default defineConfig({
             'institution.spec.mjs',
             'student.spec.mjs',
             'donations.spec.mjs',
+            'my-reservations.spec.mjs',
+            'pickups.spec.mjs',
           ]
         : 'demo.spec.mjs',
     use: { baseURL: 'http://127.0.0.1:' + port },

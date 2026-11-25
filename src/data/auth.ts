@@ -238,6 +238,8 @@ export async function authenticatedFetch(
   const send = (token: string | null) => {
     const headers = new Headers(request.headers);
     if (token) headers.set('Authorization', `Bearer ${token}`);
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method))
+      headers.set('X-Repassa-Request', '1');
     return fetch(
       new Request(request.clone(), {
         headers,
@@ -256,16 +258,23 @@ export async function authenticatedFetch(
       startingUserId !== (currentUser?.id ?? null)
     )
       return response;
-    if (accessToken !== tokenAtRequest && accessToken) {
-      response = await send(accessToken);
-    } else {
-      const token = await refresh();
+    const token =
+      accessToken !== tokenAtRequest && accessToken
+        ? accessToken
+        : await refresh();
+    if (
+      token &&
+      startingVersion === sessionVersion &&
+      startingUserId === (currentUser?.id ?? null)
+    ) {
+      response = await send(token);
       if (
-        token &&
+        response.status === 401 &&
+        token === accessToken &&
         startingVersion === sessionVersion &&
         startingUserId === (currentUser?.id ?? null)
       )
-        response = await send(token);
+        clearSession();
     }
   }
   return response;
@@ -289,9 +298,11 @@ export function safeReturnTo(value: string | null, fallback = '/catalogo') {
         '/perfil',
         '/doar',
         '/minhas-doacoes',
+        '/minhas-reservas',
         '/instituicao',
         '/instituicao/recebimentos',
         '/instituicao/estoque',
+        '/instituicao/retirada',
       ].includes(pathname) ||
       /^\/materiais\/[a-z\d_-]+$/i.test(pathname);
     return url.origin === 'https://repassa.invalid' && implementedPath
