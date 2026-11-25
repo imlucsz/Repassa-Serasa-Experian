@@ -1,8 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, LibraryBig } from 'lucide-react';
 import {
-  institutionStatusLabels,
   listAdminAuditEvents,
   listAdminInstitutions,
   listAdminMaterials,
@@ -74,11 +73,11 @@ export function AdminDashboardPage() {
   }, []);
 
   return (
-    <section className="frame" aria-labelledby="admin-titulo">
+    <section className="frame admin-page" aria-labelledby="admin-titulo">
       <header className="admin-heading">
         <div>
           <p className="eyebrow">Administração</p>
-          <h1 id="admin-titulo">Visão geral</h1>
+          <h1 id="admin-titulo">Visão <em>geral</em></h1>
         </div>
         <Link className="button" to="/instituicoes/nova">
           Cadastrar instituição <ArrowUpRight size={15} aria-hidden="true" />
@@ -87,49 +86,45 @@ export function AdminDashboardPage() {
       <ReadState result={result} refresh={refresh}>
         {(data) => (
           <>
-            <dl className="admin-metrics">
-              <div data-tone={data.pending.total > 0 ? 'warn' : undefined}>
-                <dt>Aprovações pendentes</dt>
-                <dd>{data.pending.total}</dd>
-              </div>
-              <div>
-                <dt>Instituições ativas</dt>
-                <dd>{data.activeInstitutions}</dd>
-              </div>
-              <div>
-                <dt>Estudantes</dt>
-                <dd>{data.students}</dd>
-              </div>
-              <div>
-                <dt>Materiais disponíveis</dt>
-                <dd>{data.materials}</dd>
-              </div>
-              <div>
-                <dt>Retiradas concluídas</dt>
-                <dd>{data.delivered}</dd>
-              </div>
-            </dl>
-            {data.pending.total > 0 && (
-              <div className="inst-notice">
-                <p>
-                  <strong>
-                    {data.pending.total === 1
-                      ? 'Uma instituição aguarda análise'
-                      : `${data.pending.total} instituições aguardam análise`}
-                    .
-                  </strong>{' '}
-                  {data.pending.items.map((item) => item.name).join(', ')}
-                  {data.pending.total > data.pending.items.length ? '…' : '.'}
+            <div className="admin-overview">
+              <section className="admin-queue" aria-labelledby="queue-heading">
+                <div className="admin-queue-label">
+                  <LibraryBig size={22} aria-hidden="true" />
+                  <h2 id="queue-heading">Aprovações pendentes</h2>
+                </div>
+                <p className="admin-queue-count">{data.pending.total}</p>
+                <p className="admin-queue-summary">
+                  {data.pending.total === 0
+                    ? 'Nenhuma instituição aguarda análise.'
+                    : data.pending.total === 1
+                      ? 'Uma instituição aguarda análise.'
+                      : `${data.pending.total} instituições aguardam análise.`}
                 </p>
-                <p style={{ marginTop: 10 }}>
-                  <Link to="/admin/instituicoes?status=PENDING">
-                    Revisar cadastros pendentes
-                  </Link>
-                </p>
-              </div>
-            )}
+                {data.pending.items.length > 0 && (
+                  <p className="admin-queue-names">
+                    {data.pending.items.map((item) => item.name).join(' · ')}
+                    {data.pending.total > data.pending.items.length && '…'}
+                  </p>
+                )}
+                <Link className="admin-queue-link" to="/admin/instituicoes?status=PENDING">
+                  {data.pending.total > 0 ? 'Revisar cadastros pendentes' : 'Consultar fila de aprovação'}
+                  <ArrowRight size={17} aria-hidden="true" />
+                </Link>
+              </section>
+              <dl className="admin-metrics">
+                <div><dt>Instituições ativas</dt><dd>{data.activeInstitutions}</dd></div>
+                <div><dt>Estudantes</dt><dd>{data.students}</dd></div>
+                <div><dt>Materiais disponíveis</dt><dd>{data.materials}</dd></div>
+                <div><dt>Retiradas concluídas</dt><dd>{data.delivered}</dd></div>
+              </dl>
+            </div>
             <section className="admin-section" aria-labelledby="admin-atividade">
-              <h2 id="admin-atividade">Atividade recente</h2>
+              <header className="admin-section-head">
+                <h2 id="admin-atividade">Atividade recente</h2>
+                <Link className="admin-text-link" to="/admin/auditoria">
+                  Ver histórico completo de auditoria <ArrowUpRight size={15} aria-hidden="true" />
+                </Link>
+              </header>
               {data.events.length === 0 ? (
                 <p className="inst-message">
                   Nenhum evento administrativo registrado ainda.
@@ -150,9 +145,6 @@ export function AdminDashboardPage() {
                             <span className="admin-cell-main">
                               {actionLabel(event.action)}
                             </span>
-                            <span className="admin-cell-sub">
-                              {event.action}
-                            </span>
                           </td>
                           <td data-label="Data">
                             {dateTime.format(new Date(event.createdAt))}
@@ -163,11 +155,6 @@ export function AdminDashboardPage() {
                   </table>
                 </div>
               )}
-              <p style={{ marginTop: 18 }}>
-                <Link to="/admin/auditoria">
-                  Ver histórico completo de auditoria
-                </Link>
-              </p>
             </section>
           </>
         )}
