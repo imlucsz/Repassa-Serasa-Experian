@@ -40,6 +40,12 @@ export type Dashboard = {
   reserved: number;
   delivered: number;
 };
+export type PickupResult = {
+  reservationId: string;
+  materialId: string;
+  status: 'COMPLETED';
+  completedAt: string;
+};
 export type ManagedQuery = {
   status?: MaterialStatus;
   q?: string;
@@ -116,6 +122,7 @@ async function request<T>(
   path: string,
   init: RequestInit,
   parse: (value: unknown) => T,
+  expectedStatus?: number,
 ): Promise<T> {
   let response: Response;
   try {
@@ -150,6 +157,8 @@ async function request<T>(
       fieldErrors,
     );
   }
+  if (expectedStatus !== undefined && response.status !== expectedStatus)
+    invalid();
   try {
     return parse(body);
   } catch {
@@ -167,6 +176,8 @@ function post(signal?: AbortSignal, json?: object): RequestInit {
         body: JSON.stringify(json),
       };
 }
+
+export { request as requestOperation };
 
 function expectChange(
   status: MaterialStatus,
@@ -326,19 +337,57 @@ export function rejectMaterial(
   );
 }
 
-/** DEV-03 returns filtered, institution-scoped totals from the stock endpoint. */
-export async function getDashboard(
+function count(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0)
+    invalid();
+  return value;
+}
+
+export function getDashboard(
   institutionId: string,
   signal?: AbortSignal,
 ): Promise<Dashboard> {
-  const count = async (status: MaterialStatus) =>
-    (await listManagedMaterials(institutionId, { status, pageSize: 1 }, signal))
-      .total;
-  const [pendingReceipt, available, reserved, delivered] = await Promise.all([
-    count('PENDING_RECEIPT'),
-    count('AVAILABLE'),
-    count('RESERVED'),
-    count('DELIVERED'),
-  ]);
-  return { pendingReceipt, available, reserved, delivered };
+  return request(
+    'institutions/' + parseUuid(institutionId) + '/dashboard',
+    { signal },
+    (value) => {
+      if (!record(value)) invalid();
+      return {
+        pendingReceipt: count(value.pendingReceipt),
+        available: count(value.available),
+        reserved: count(value.reserved),
+        delivered: count(value.delivered),
+      };
+    },
+    200,
+  );
+}
+
+export const pickupCodeFormat =
+  /^[0-9A-HJKMNP-TV-Z]{4}-?[0-9A-HJKMNP-TV-Z]{4}-?[0-9A-HJKMNP-TV-Z]{4}$/i;
+
+export function confirmPickup(
+  institutionId: string,
+  code: string,
+  signal?: AbortSignal,
+): Promise<PickupResult> {
+  return request(
+    'institutions/' + parseUuid(institutionId) + '/pickups/confirm',
+    post(signal, { code }),
+    (value) => {
+      if (
+        !record(value) ||
+        value.status !== 'COMPLETED' ||
+        !isDate(value.completedAt)
+      )
+        invalid();
+      return {
+        reservationId: parseUuid(value.reservationId),
+        materialId: parseUuid(value.materialId),
+        status: value.status,
+        completedAt: value.completedAt,
+      };
+    },
+    200,
+  );
 }

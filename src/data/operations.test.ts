@@ -3,6 +3,7 @@ import { after, before, test } from 'node:test';
 import { mockCatalog } from './mockCatalog.ts';
 import {
   cancelDonation,
+  confirmPickup,
   createDonation,
   getDashboard,
   listDonations,
@@ -159,38 +160,65 @@ test('memberships consume each authenticated page; stock rows must match the req
   await assert.rejects(listManagedMaterials(institutionId), { status: 502 });
 });
 
-test('dashboard reads scoped stock totals, fails when a counter is denied', async (t) => {
+test('dashboard reads one scoped snapshot and rejects invalid counters or denied access', async (t) => {
   const totals = {
-    PENDING_RECEIPT: 4,
-    AVAILABLE: 20,
-    DELIVERED: 13,
-    RESERVED: 1,
+    pendingReceipt: 4,
+    available: 20,
+    delivered: 13,
+    reserved: 1,
   };
   const fetch = t.mock.method(globalThis, 'fetch', async (request: Request) => {
     const url = new URL(request.url);
     assert.equal(
       url.pathname,
-      '/api/v1/institutions/' + institutionId + '/materials',
+      '/api/v1/institutions/' + institutionId + '/dashboard',
     );
-    assert.equal(url.searchParams.get('pageSize'), '1');
-    const status = url.searchParams.get('status') as keyof typeof totals;
-    return Response.json({
-      total: totals[status],
-      page: 1,
-      pageSize: 1,
-      items: [{ ...pending, status }],
-    });
+    assert.equal(request.method, 'GET');
+    return Response.json(totals);
   });
-  assert.deepEqual(await getDashboard(institutionId), {
-    pendingReceipt: 4,
-    available: 20,
-    delivered: 13,
-    reserved: 1,
-  });
+  assert.deepEqual(await getDashboard(institutionId), totals);
+  assert.equal(fetch.mock.callCount(), 1);
+  fetch.mock.mockImplementation(async () =>
+    Response.json({ ...totals, reserved: -1 }),
+  );
+  await assert.rejects(getDashboard(institutionId), { status: 502 });
   fetch.mock.mockImplementation(
     async () => new Response(null, { status: 403 }),
   );
   await assert.rejects(getDashboard(institutionId), { status: 403 });
+});
+
+test('pickup posts only the synthetic code and requires a completed receipt', async (t) => {
+  const code = 'abcd-2345-6789';
+  const receipt = {
+    reservationId: book.id,
+    materialId: book.id,
+    status: 'COMPLETED',
+    completedAt: '2026-11-22T13:15:00Z',
+  };
+  const fetch = t.mock.method(globalThis, 'fetch', async (request: Request) => {
+    assert.equal(
+      new URL(request.url).pathname,
+      '/api/v1/institutions/' + institutionId + '/pickups/confirm',
+    );
+    assert.equal(request.method, 'POST');
+    assert.deepEqual(await request.json(), { code });
+    return Response.json(receipt);
+  });
+  assert.deepEqual(await confirmPickup(institutionId, code), receipt);
+  fetch.mock.mockImplementation(async () =>
+    Response.json(receipt, { status: 202 }),
+  );
+  await assert.rejects(confirmPickup(institutionId, code), { status: 502 });
+  fetch.mock.mockImplementation(async () =>
+    Response.json({ ...receipt, status: 'ACTIVE' }),
+  );
+  await assert.rejects(confirmPickup(institutionId, code), { status: 502 });
+  fetch.mock.mockImplementation(
+    async () => new Response(null, { status: 404 }),
+  );
+  await assert.rejects(confirmPickup(institutionId, code), { status: 404 });
+  assert.equal(fetch.mock.callCount(), 4);
 });
 
 test('validation and conflict remain distinguishable from uncertain network outcomes', async (t) => {

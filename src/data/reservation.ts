@@ -1,112 +1,56 @@
 import { authenticatedFetch } from './auth.ts';
-
-export type OwnReservation = {
-  id: string;
-  status: 'ACTIVE' | 'CANCELED' | 'EXPIRED' | 'COMPLETED';
-  materialId: string;
-  expiresAt: string;
-  pickupCode: string | null;
-};
-
-const uuidPattern = /^[a-f\d]{8}-(?:[a-f\d]{4}-){3}[a-f\d]{12}$/i;
-const pickupCodePattern =
-  /^[0-9A-HJKMNP-TV-Z]{4}(?:-?[0-9A-HJKMNP-TV-Z]{4}){2}$/i;
-
-export function parseOwnReservation(value: unknown): OwnReservation | null {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  const result = value as Record<string, unknown>;
-  const material = result.material;
-  if (!material || typeof material !== 'object' || Array.isArray(material))
-    return null;
-  const materialId = (material as Record<string, unknown>).id;
-  if (
-    typeof result.id !== 'string' ||
-    !uuidPattern.test(result.id) ||
-    typeof materialId !== 'string' ||
-    !uuidPattern.test(materialId) ||
-    !['ACTIVE', 'CANCELED', 'EXPIRED', 'COMPLETED'].includes(
-      String(result.status),
-    ) ||
-    typeof result.expiresAt !== 'string' ||
-    !Number.isFinite(Date.parse(result.expiresAt)) ||
-    typeof result.createdAt !== 'string' ||
-    !Number.isFinite(Date.parse(result.createdAt)) ||
-    !(
-      result.completedAt === null ||
-      (typeof result.completedAt === 'string' &&
-        Number.isFinite(Date.parse(result.completedAt)))
-    ) ||
-    !(
-      result.pickupCode === null ||
-      (typeof result.pickupCode === 'string' &&
-        pickupCodePattern.test(result.pickupCode))
-    )
-  )
-    return null;
-
-  return {
-    id: result.id,
-    status: result.status as OwnReservation['status'],
-    materialId,
-    expiresAt: result.expiresAt,
-    pickupCode: result.pickupCode,
-  };
-}
-
-export function findOwnReservation(
-  value: unknown,
-  materialId: string,
-): OwnReservation | null {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  const items = (value as Record<string, unknown>).items;
-  if (!Array.isArray(items)) return null;
-  for (const item of items) {
-    const reservation = parseOwnReservation(item);
-    if (
-      reservation?.materialId === materialId &&
-      reservation.status === 'ACTIVE'
-    )
-      return reservation;
-  }
-  return null;
-}
+import { listMyReservations } from './myReservations.ts';
+import { OperationError } from './operations.ts';
+import {
+  parseOwnReservation,
+  type OwnReservation,
+} from './reservationModel.ts';
 
 export type ReservationResult =
-  | { kind: 'confirmed'; reservation: OwnReservation }
+  | { kind: 'confirmed'; expiresAt: string }
   | { kind: 'login' | 'unavailable' | 'uncertain' | 'retry'; message: string };
 
-/** Read the student's own history when a POST may already have committed. */
+function confirmed(reservation: OwnReservation | null, materialId: string) {
+  if (
+    reservation?.materialId === materialId &&
+    reservation.status === 'ACTIVE' &&
+    Date.parse(reservation.expiresAt) > Date.now()
+  ) {
+    // The shareable material route needs the deadline only.
+    return { kind: 'confirmed', expiresAt: reservation.expiresAt } as const;
+  }
+}
+
+const loginRequired = {
+  kind: 'login',
+  message: 'Entre para continuar.',
+} as const;
+
+/** A lost POST response may already represent a committed reservation. Only read on recovery. */
 export async function checkReservation(
   materialId: string,
   signal: AbortSignal,
 ): Promise<ReservationResult> {
   try {
     for (let page = 1; ; page++) {
-      const response = await authenticatedFetch(
-        '/api/v1/me/reservations?page=' + page + '&pageSize=50',
-        { signal },
+      const history = await listMyReservations(page, 50, signal, 'ACTIVE');
+      const match = history.items.find(
+        (item) => item.materialId === materialId,
       );
-      if (!response.ok) break;
-      const data = await response.json();
-      const found = findOwnReservation(data, materialId);
-      if (found) return { kind: 'confirmed', reservation: found };
-      if (
-        data?.page !== page ||
-        !Number.isSafeInteger(data.total) ||
-        !Number.isSafeInteger(data.pageSize) ||
-        data.pageSize < 1 ||
-        !data.items?.length ||
-        page * data.pageSize >= data.total
-      )
+      const result = confirmed(match ?? null, materialId);
+      if (result) return result;
+      if (!history.items.length || page * history.pageSize >= history.total)
         break;
     }
-  } catch {
+  } catch (error) {
     signal.throwIfAborted();
+    if (error instanceof OperationError && error.status === 401)
+      return loginRequired;
   }
   return {
     kind: 'uncertain',
     message:
-      'A solicitação foi enviada. Consulte a situação da reserva antes de fazer outro pedido.',
+      'Ainda não foi possível confirmar a reserva. Consulte suas reservas antes de fazer outro pedido.',
   };
 }
 
@@ -121,27 +65,31 @@ export async function reserveMaterial(
     );
     switch (response.status) {
       case 201: {
-        const reservation = parseOwnReservation(await response.json());
-        if (
-          reservation?.materialId === materialId &&
-          reservation.status === 'ACTIVE'
-        )
-          return { kind: 'confirmed', reservation };
+        const result = confirmed(
+          parseOwnReservation(await response.json()),
+          materialId,
+        );
+        if (result) return result;
         break;
       }
       case 401:
-        return { kind: 'login', message: 'Entre para continuar.' };
+        return loginRequired;
       case 403:
         return {
           kind: 'unavailable',
-          message: 'Sua conta não pode reservar este material.',
+          message:
+            'Sua conta não pode reservar este material. A reserva deve ser feita por outro estudante que não seja o doador.',
         };
       case 404:
+        return {
+          kind: 'unavailable',
+          message: 'Este material já não está disponível no acervo.',
+        };
       case 409:
         return {
           kind: 'unavailable',
           message:
-            'Este material está indisponível para esta reserva. Volte ao acervo para conferir as opções.',
+            'Este material já foi reservado. Consulte suas reservas ou escolha outro material no acervo.',
         };
       case 429:
         return {

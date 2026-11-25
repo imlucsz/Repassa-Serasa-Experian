@@ -45,6 +45,7 @@ test('reservation returns to the same material after login and handles conflict'
       });
     }
     if (path === '/materials/' + id + '/reservations') {
+      expect(request.headers()['x-repassa-request']).toBe('1');
       expect(request.headers().authorization).toBe(
         'Bearer test_browser_session',
       );
@@ -136,7 +137,7 @@ test('lost reservation response is recovered with a read and cleared on logout',
       const reservation = {
         id: user.id,
         status: 'ACTIVE',
-        material,
+        material: { ...material, status: 'RESERVED' },
         createdAt: new Date(now).toISOString(),
         expiresAt: new Date(now + 3600_000).toISOString(),
         completedAt: null,
@@ -153,7 +154,10 @@ test('lost reservation response is recovered with a read and cleared on logout',
   await expect(
     page.getByText('Reservado por você', { exact: true }),
   ).toBeVisible();
-  await expect(page.getByText('Código para retirada')).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Ver minhas reservas' }),
+  ).toHaveAttribute('href', '/minhas-reservas');
+  await expect(page.getByText('TEST-2345-ABCD')).toHaveCount(0);
   await page.getByRole('button', { name: 'Sair', exact: true }).click();
   await expect(
     page.getByRole('button', { name: 'Entrar para reservar' }),
@@ -190,4 +194,58 @@ test('unavailable catalog shows loading, retry and the server permission state',
   await expect(
     page.getByRole('heading', { name: 'Sessão necessária' }),
   ).toBeVisible();
+});
+
+test('solicitação sem resposta permite consultar novamente sem repetir o POST', async ({
+  page,
+}) => {
+  let posts = 0;
+  let reads = 0;
+  const reservation = {
+    id: user.id,
+    status: 'ACTIVE',
+    material: { ...material, status: 'RESERVED' },
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+    completedAt: null,
+    pickupCode: 'TEST-2345-ABCD',
+  };
+  await page.route('**/api/v1/**', async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith('/auth/refresh'))
+      return route.fulfill({
+        json: { user, accessToken: 'synthetic-session', expiresIn: 900 },
+      });
+    if (url.pathname.endsWith('/materials/' + id))
+      return route.fulfill({ json: material });
+    if (url.pathname.endsWith('/materials/' + id + '/reservations')) {
+      posts++;
+      return route.fulfill({ status: 503, json: {} });
+    }
+    if (url.pathname.endsWith('/me/reservations')) {
+      expect(url.searchParams.get('status')).toBe('ACTIVE');
+      reads++;
+      if (reads === 1) return route.abort('connectionreset');
+      return route.fulfill({
+        json: { items: [reservation], page: 1, pageSize: 50, total: 1 },
+      });
+    }
+    throw Error('Rota de teste inesperada');
+  });
+  await page.goto(detail);
+  // Two activations before React has a chance to repaint.
+  await page
+    .getByRole('button', { name: 'Reservar este material' })
+    .evaluate((button) => {
+      button.click();
+      button.click();
+    });
+  await expect(page.getByRole('status')).toContainText(
+    'Ainda não foi possível confirmar',
+  );
+  await expect(page.getByText('Reservado por você')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Consultar minha reserva' }).click();
+  await expect(page.getByRole('status')).toContainText('Reserva confirmada');
+  await expect(page.getByText(reservation.pickupCode)).toHaveCount(0);
+  expect({ posts, reads }).toEqual({ posts: 1, reads: 2 });
 });
