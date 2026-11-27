@@ -24,8 +24,8 @@ for (const viewport of [
     await page.setViewportSize(viewport);
     await page.goto(preview);
     const h1 = page.getByRole('heading', { level: 1 });
-    await expect(h1).toContainText('O conhecimento não termina em quem aprende.');
-    await expect(h1).toContainText('Ele continua quando alguém repassa.');
+    await expect(h1).toHaveText('Toda última página tem um recomeço.');
+    await expect(page.getByRole('heading', { level: 2 }).last()).toContainText('Ele continua quando alguém repassa.');
     const cta = page.getByRole('link', { name: 'Encontrar um material' });
     await expect(cta).toBeVisible();
     const box = await cta.boundingBox();

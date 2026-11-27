@@ -53,30 +53,6 @@
   font-style: italic;
 }
 
-.cine-repassa {
-  position: relative;
-  display: inline-block;
-}
-
-.cine-repassa svg {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -0.11em;
-  width: 100%;
-  height: 0.16em;
-  overflow: visible;
-}
-
-.cine-repassa path {
-  fill: none;
-  stroke: var(--coral);
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-dasharray: 120;
-  stroke-dashoffset: 0;
-}
-
 .cine-hero-intro {
   margin-top: clamp(28px, 3vw, 44px);
 }
@@ -165,170 +141,6 @@
 
   .cine-text-link:hover {
     text-underline-offset: 8px;
-  }
-}
-
-.cine-art {
-  position: relative;
-  min-width: 0;
-}
-
-.cine-art-frame {
-  width: min(100%, 600px);
-  overflow: hidden;
-  background: #efe1c7;
-}
-
-.cine-art-frame img {
-  width: 100%;
-  height: auto;
-  mix-blend-mode: multiply;
-}
-
-.cine-peek-motion {
-  position: absolute;
-  bottom: 5%;
-  left: -24px;
-  z-index: 2;
-  width: 210px;
-}
-
-.cine-peek-card {
-  display: grid;
-  gap: 14px;
-  padding: 15px;
-  border: 1px solid #d8cfbd;
-  border-radius: 8px;
-  background: var(--paper);
-  box-shadow: 0 12px 28px -18px rgb(28 41 37 / 34%);
-  color: var(--forest);
-  font-family: var(--serif);
-  font-size: 1.05rem;
-  transform: rotate(-4deg);
-}
-
-.cine-peek-slots {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 9px;
-}
-
-.cine-peek-slots i {
-  height: 31px;
-  border: 1px dashed var(--line);
-  border-radius: 5px;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .cine-title-line-one {
-    animation: cine-title-enter 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  .cine-title-line-two {
-    animation: cine-title-enter 620ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
-  }
-
-  .cine-hero-intro {
-    animation: cine-intro-enter 480ms cubic-bezier(0.16, 1, 0.3, 1) 240ms both;
-  }
-
-  .cine-art-frame {
-    animation: cine-art-enter 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  .cine-peek-card {
-    animation: cine-peek-enter 520ms cubic-bezier(0.16, 1, 0.3, 1) 380ms both;
-  }
-
-  .cine-repassa path {
-    animation: cine-underline-draw 650ms ease-out 640ms both;
-  }
-
-  @keyframes cine-title-enter {
-    from {
-      opacity: 0;
-      transform: translateY(0.5em);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes cine-intro-enter {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes cine-art-enter {
-    from {
-      opacity: 0;
-      transform: scale(1.015);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  @keyframes cine-peek-enter {
-    from {
-      opacity: 0;
-      transform: translateY(12px) rotate(-4deg);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) rotate(-4deg);
-    }
-  }
-
-  @keyframes cine-underline-draw {
-    from {
-      stroke-dashoffset: 120;
-    }
-    to {
-      stroke-dashoffset: 0;
-    }
-  }
-}
-
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .cine-art {
-      animation: cine-art-depth linear both;
-      animation-timeline: view();
-      animation-range: exit 0% exit 100%;
-    }
-
-    .cine-peek-motion {
-      animation: cine-peek-depth linear both;
-      animation-timeline: view();
-      animation-range: exit 0% exit 100%;
-    }
-
-    @keyframes cine-art-depth {
-      from {
-        transform: translateY(0);
-      }
-      to {
-        transform: translateY(-32px);
-      }
-    }
-
-    @keyframes cine-peek-depth {
-      from {
-        transform: translateY(0) rotate(0deg);
-      }
-      to {
-        transform: translateY(-80px) rotate(3deg);
-      }
-    }
   }
 }
 
@@ -493,10 +305,10 @@
 
 .cine-chapters li {
   display: flex;
-  min-height: 64vh;
+  min-height: clamp(270px, 36vh, 390px);
   flex-direction: column;
   justify-content: center;
-  padding-block: 10vh;
+  padding-block: 40px;
   scroll-margin-top: 44px;
 }
 
@@ -566,7 +378,7 @@
 }
 
 .cine-close h2 {
-  max-width: 14ch;
+  max-width: 24ch;
   margin-top: 25px;
   font-size: clamp(2.4rem, 5.6vw, 5rem);
   font-weight: 400;
@@ -603,31 +415,6 @@
     gap: 30px;
     min-height: 0;
     padding-block: 38px 58px;
-  }
-
-  .cine-art {
-    width: 86vw;
-    margin-inline: auto;
-  }
-
-  .cine-peek-motion {
-    bottom: 3%;
-    left: -12px;
-    width: 160px;
-  }
-
-  .cine-peek-card {
-    gap: 10px;
-    padding: 12px;
-    font-size: 0.92rem;
-  }
-
-  .cine-peek-slots {
-    gap: 7px;
-  }
-
-  .cine-peek-slots i {
-    height: 24px;
   }
 
   .cine-story {
@@ -706,8 +493,8 @@
   }
 
   .cine-chapters li {
-    min-height: 56svh;
-    padding-block: 11vh;
+    min-height: 290px;
+    padding-block: 38px;
     scroll-margin-top: 110px;
   }
 
@@ -724,25 +511,5 @@
   .cine-actions {
     align-items: flex-start;
     gap: 9px 20px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cine-repassa path {
-    animation: none;
-    stroke-dashoffset: 0;
-  }
-
-  .cine-stamp {
-    transform: rotate(var(--r));
-    transition: opacity 160ms ease;
-  }
-
-  .cine-stamp[data-stamped='true'] {
-    transform: rotate(var(--r));
-  }
-
-  .cine-note::after {
-    transition: none;
   }
 }
