@@ -157,3 +157,50 @@
 @media (prefers-reduced-motion: reduce) {
   .cine-page *, .cine-page *::after { animation: none !important; transition: none !important; }
 }
+
+/* Let the illustration meet the cover stock at its upper paper edge. */
+.cine-jacket img {
+  mask-image: linear-gradient(to bottom, transparent, black 8%);
+}
+.cine-jacket::after {
+  border-left: 1px solid #fff4ce6b;
+  box-shadow: inset 6px 0 6px -4px #362e2699;
+}
+.cine-film-status:not(:empty) {
+  position: absolute;
+  inset: 8px 8px auto;
+  padding: 8px;
+  background: #17392e;
+  color: var(--ivory);
+  font-size: .85rem;
+  text-align: center;
+  pointer-events: none;
+}
+.cine-film-play span { transition: background 160ms ease, transform 160ms ease; }
+.cine-film-play:active span { transform: translateX(-50%) scale(.97); }
+@media (max-width: 899px) {
+  .cine-card-stage {
+    display: block;
+    color: var(--muted);
+    font: 500 clamp(.6rem, 2.7vw, .78rem)/1.3 var(--sans);
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+  .cine-card-row {
+    display: grid;
+    justify-content: stretch;
+    align-content: start;
+    gap: 5px;
+    background: transparent;
+  }
+  .cine-stamp-slot {
+    max-width: none;
+    height: 29px;
+    border: 0;
+    border-bottom: 1px solid #aaa18d;
+    border-radius: 0;
+  }
+  .cine-card-row[data-active='true'] .cine-card-stage { color: var(--forest); font-weight: 700; }
+  .cine-card-row[data-active='true'] { background: transparent; }
+  .cine-card { max-height: none; }
+}
