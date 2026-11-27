@@ -3,6 +3,7 @@ Not a claim of completed implementation. Current GitHub inspection: frontend Vit
 
 | ID | Status | Evidence / blocker |
 |---|---|---|
+| UX-06.3 | Aguardando revisão | Históricos e comprovantes do estudante. [Comparação visual e testes](evidence/ux-06-3/HANDOFF.md). |
 | SH-01 | integrated into baseline | initial kit snapshot; absorbed into main history — no dedicated PR |
 | DEV-01 | merged (PR #3) | NestJS/Fastify/Prisma/PG16 foundation; CI backend-quality green |
 | DEV-02 | merged (PR #8, `b17e862`) | auth register/login/refresh/logout, GET/PATCH /me, /institutions + /me/institutions; Argon2id, HS256 access JWT, refresh rotation w/ replay revocation, CSRF marker + origin allowlist, per-IP/identity rate limits; 43 unit + 55 e2e on disposable PG16, 4/4 CI checks green |

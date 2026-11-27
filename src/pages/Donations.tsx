@@ -27,6 +27,7 @@ import {
   type ManagedMaterial,
 } from '../data/operations';
 import { Field } from '../ui/Field';
+import { EmptyHistory } from '../components/EmptyHistory';
 import './donations.css';
 
 const photoTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -144,10 +145,12 @@ function DonationReceipt({ donation }: { donation: ManagedMaterial }) {
   }, []);
   return (
     <section className="donation-receipt">
-      <span className="donation-seal">
-        <Check aria-hidden="true" size={32} />
-      </span>
-      <p className="eyebrow">Doação cadastrada</p>
+      <div className="receipt-masthead">
+        <p className="eyebrow">Doação cadastrada</p>
+        <span className="donation-seal">
+          <Check aria-hidden="true" size={32} />
+        </span>
+      </div>
       <h1 ref={heading} tabIndex={-1}>
         Agora é hora da <em>entrega.</em>
       </h1>
@@ -155,10 +158,11 @@ function DonationReceipt({ donation }: { donation: ManagedMaterial }) {
         <Clock3 size={15} />
         {statusLabels[donation.status]}
       </span>
-      <p>
-        Leve <strong>{donation.title}</strong> ao ponto escolhido. A equipe vai
-        conferir o material antes de disponibilizá-lo no acervo.
-      </p>
+      <dl className="receipt-material">
+        <dt>Material cadastrado</dt>
+        <dd>{donation.title}</dd>
+      </dl>
+      <p>Leve o material ao ponto de entrega abaixo. Ele só poderá entrar no acervo após a conferência e a aprovação da equipe.</p>
       <DeliveryPoint institution={donation.institution} />
       <Link className="button primary" to="/minhas-doacoes">
         Ver minhas doações <ArrowRight size={16} />
@@ -556,9 +560,11 @@ export function DonationsPage() {
           </h1>
           <p>Acompanhe a entrega e o destino dos seus materiais.</p>
         </div>
-        <Link className="button primary" to="/doar">
-          <Plus size={17} /> Doar um material
-        </Link>
+        {Boolean(list?.items.length) && (
+          <Link className="button primary" to="/doar">
+            <Plus size={17} /> Doar um material
+          </Link>
+        )}
       </header>
       {notice && (
         <p className="donation-notice" role="status">
@@ -580,14 +586,10 @@ export function DonationsPage() {
           Carregando suas doações…
         </p>
       ) : list.items.length === 0 ? (
-        <section className="donation-empty">
-          <BookOpen size={32} aria-hidden="true" />
-          <h2>Você ainda não fez uma doação</h2>
-          <p>Os materiais que você cadastrar aparecerão aqui.</p>
-        </section>
+        <EmptyHistory kind="donation" />
       ) : (
         <>
-          <ul className="donation-history">
+          <ul className="donation-history donation-ledger">
             {list.items.map((item) => (
               <li key={item.id}>
                 <article className="donation-row">

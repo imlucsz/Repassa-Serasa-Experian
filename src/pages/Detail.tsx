@@ -165,7 +165,9 @@ function MaterialDetail({
                     : 'Reservado por você'
                   : unavailable || checkOnly
                     ? 'Consulte o acervo'
-                    : 'Disponível para reserva'}
+                    : isDemo
+                      ? 'Exemplar demonstrativo'
+                      : 'Disponível para reserva'}
               </dd>
             </div>
             <div>
@@ -187,7 +189,8 @@ function MaterialDetail({
           <p>{material.institution.publicAddress}</p>
           <p>{material.institution.pickupInstructions}</p>
         </section>
-        <div className="reservation-action" ref={reservationAction}>
+        <div className="reservation-action" data-confirmed={Boolean(confirmed && !expired)} ref={reservationAction}>
+          {confirmed && !expired && <h2>Retirada em {material.institution.name}</h2>}
           {confirmed ? (
             <Link
               ref={historyLink}
