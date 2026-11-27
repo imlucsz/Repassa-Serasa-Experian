@@ -140,13 +140,15 @@ export function Component() {
   return (
     <div className="frame catalog">
       <header className="page-intro">
-        <p className="eyebrow">
-          <BookOpen size={16} />{' '}
-          {isDemo ? 'Acervo demonstrativo' : 'Acervo público'}
-        </p>
-        <h1>
-          Acervo de <em>materiais</em>
-        </h1>
+        <div>
+          <p className="eyebrow">
+            <BookOpen size={16} aria-hidden="true" />{' '}
+            {isDemo ? 'Acervo demonstrativo' : 'Acervo público'}
+          </p>
+          <h1>
+            Acervo de <em>materiais</em>
+          </h1>
+        </div>
         <p>
           Encontre livros e materiais de estudo disponíveis para retirada nas
           instituições.
@@ -239,18 +241,20 @@ export function Component() {
                     <MaterialCover material={material} />
                   </div>
                 </div>
-                <p className="meta">
-                  {categoryLabels[material.category]} ·{' '}
-                  {conditionLabels[material.condition]}
-                </p>
-                <h2>
-                  {material.title}
-                  <ArrowUpRight size={18} />
-                </h2>
-                <span className="location">
-                  <MapPin size={14} />
-                  {material.institution.name}
-                </span>
+                <div className="catalog-record">
+                  <p className="meta">
+                    {categoryLabels[material.category]} ·{' '}
+                    {conditionLabels[material.condition]}
+                  </p>
+                  <h2>
+                    {material.title}
+                    <ArrowUpRight size={17} aria-hidden="true" />
+                  </h2>
+                  <span className="location">
+                    <MapPin size={14} aria-hidden="true" />
+                    {material.institution.name}
+                  </span>
+                </div>
               </Link>
             </li>
           ))}

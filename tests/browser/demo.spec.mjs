@@ -186,6 +186,47 @@ test.describe('mobile shelf gestures', () => {
       shelf.getByRole('heading', { name: 'Instrumentos de desenho' }),
     ).toBeVisible();
   });
+
+  test('tap on a non-active book selects it without navigating', async ({
+    page,
+  }) => {
+    await page.goto('/catalogo?vista=estante');
+    const shelf = page.getByRole('region', { name: 'Estante de materiais' });
+    await shelf
+      .locator('.book-stage')
+      .evaluate((element) => element.scrollIntoView({ block: 'center' }));
+    await expect(
+      shelf.getByRole('heading', { name: 'Botânica ilustrada' }),
+    ).toBeVisible();
+    // Find a point that hit-tests inside a non-active book's spine.
+    const target = await page.evaluate(() => {
+      const active = document.querySelector(
+        '.book-face[style*="material-cover"]',
+      ).parentElement;
+      for (const book of document.querySelectorAll('.shelf-book')) {
+        if (book === active) continue;
+        const rect = book
+          .querySelector('.book-spine')
+          .getBoundingClientRect();
+        for (const fraction of [0.5, 0.2, 0.8, 0.35, 0.65]) {
+          const x = rect.x + rect.width * fraction;
+          const y = rect.y + rect.height / 2;
+          const hit = document.elementFromPoint(x, y);
+          if (hit && book.contains(hit))
+            return {
+              x,
+              y,
+              title: book.querySelector('.book-spine b').textContent,
+            };
+        }
+      }
+      return null;
+    });
+    expect(target).not.toBeNull();
+    await page.touchscreen.tap(target.x, target.y);
+    await expect(page).toHaveURL(/\/catalogo/);
+    await expect(shelf.getByRole('heading', { name: target.title })).toBeVisible();
+  });
 });
 
 test('reduced motion wraps both ways with one named cover', async ({ page }) => {
@@ -240,4 +281,24 @@ test('horizontal wheel and mouse drag navigate the 3D shelf', async ({ page }) =
     type: 'mouseReleased', x: x - 60, y, button: 'left', clickCount: 1,
   });
   await expect(shelf.getByRole('heading', { name: 'Atlas celeste' })).toBeVisible();
+});
+
+test('clicking the active cover navigates exactly once', async ({ page }) => {
+  await page.goto('/catalogo?vista=estante');
+  const shelf = page.getByRole('region', { name: 'Estante de materiais' });
+  const cover = shelf.locator('.book-face[style*="material-cover"]');
+  await expect(
+    cover.getByText('Botânica ilustrada', { exact: true }),
+  ).toBeVisible();
+  await cover.click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+    'Botânica ilustrada',
+  );
+  // A duplicated activation would push the detail twice and strand the
+  // first Back on the same URL.
+  await page.goBack();
+  await expect(page).toHaveURL(/\/catalogo/);
+  await expect(
+    shelf.getByRole('heading', { name: 'Botânica ilustrada' }),
+  ).toBeVisible();
 });

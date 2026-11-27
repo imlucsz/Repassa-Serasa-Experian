@@ -1,5 +1,16 @@
-import { useLayoutEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react';
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  MapPin,
+} from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { categoryLabels, type Material } from '../data/catalog';
 import {
@@ -54,6 +65,67 @@ function CollectionShelf({ materials }: { materials: Material[] }) {
     if (size === 1) return;
     target.current = position;
     draw.current();
+  }
+
+  // Chromium can fail to hit-test the front cover inside preserve-3d at narrow
+  // widths, and a tap following a drag may synthesize no click at all. Resolve
+  // the intended book from the event target, falling back to the active
+  // cover's projected quad when the point misses every book.
+  const tapStamp = useRef(0);
+  function tappedIndex(event: {
+    target: EventTarget | null;
+    clientX: number;
+    clientY: number;
+  }) {
+    const book = (event.target as HTMLElement).closest?.('.shelf-book');
+    if (book) return elements.current.indexOf(book as HTMLDivElement);
+    const bounds = elements.current[active]
+      ?.querySelector('.book-face')
+      ?.getBoundingClientRect();
+    if (!bounds) return -1;
+    const { clientX, clientY } = event;
+    return clientX >= bounds.left &&
+      clientX <= bounds.right &&
+      clientY >= bounds.top &&
+      clientY <= bounds.bottom
+      ? active
+      : -1;
+  }
+  function openOrSelect(index: number) {
+    if (index === active) void navigate(destination, routeOptions);
+    else select(getShortestLoopTarget(target.current, index, count));
+  }
+  // A synthesized click after a handled touch/pen pointerup repeats the action.
+  function duplicateTap(event: MouseEvent<HTMLElement>) {
+    return (
+      (typeof PointerEvent !== 'undefined' &&
+        event.nativeEvent instanceof PointerEvent &&
+        event.nativeEvent.pointerType !== 'mouse') ||
+      (tapStamp.current > 0 && event.timeStamp - tapStamp.current < 400)
+    );
+  }
+  // Touch/pen activation resolves on pointerup because Chromium does not
+  // reliably synthesize click on this surface after a drag gesture.
+  function stageTap(event: ReactPointerEvent<HTMLDivElement>) {
+    if (
+      event.pointerType === 'mouse' ||
+      !event.isPrimary ||
+      event.button !== 0 ||
+      suppressClick.current
+    )
+      return;
+    const index = tappedIndex(event);
+    if (index < 0) return;
+    tapStamp.current = event.timeStamp;
+    openOrSelect(index);
+  }
+  // Mouse fallback for clicks that miss every book but land on the stage
+  // inside the active cover quad; in-book clicks are handled by the book.
+  function stageClick(event: MouseEvent<HTMLDivElement>) {
+    if (suppressClick.current || duplicateTap(event)) return;
+    if ((event.target as HTMLElement).closest?.('.shelf-book')) return;
+    const index = tappedIndex(event);
+    if (index >= 0) openOrSelect(index);
   }
 
   useLayoutEffect(() => {
@@ -261,7 +333,13 @@ function CollectionShelf({ materials }: { materials: Material[] }) {
         }
       }}
     >
-      <div className="book-stage" ref={stage} aria-hidden="true">
+      <div
+        className="book-stage"
+        ref={stage}
+        aria-hidden="true"
+        onClick={stageClick}
+        onPointerUp={stageTap}
+      >
         <div className="book-origin">
           {books.map((item, i) => (
             <div
@@ -271,11 +349,9 @@ function CollectionShelf({ materials }: { materials: Material[] }) {
               }}
               className="shelf-book"
               data-jacket={jacketVariant(item)}
-              onClick={() => {
-                if (suppressClick.current) return;
-                if (i === active) {
-                  void navigate(destination, routeOptions);
-                } else select(getShortestLoopTarget(target.current, i, count));
+              onClick={(event) => {
+                if (suppressClick.current || duplicateTap(event)) return;
+                openOrSelect(i);
               }}
             >
               <div className={item.imageUrl ? 'book-spine has-photo' : 'book-spine'}>
@@ -327,7 +403,13 @@ function CollectionShelf({ materials }: { materials: Material[] }) {
             {String(size).padStart(2, '0')} ·{' '}
             {categoryLabels[material.category]}
           </span>
-          <h2 key={material.id}>{material.title}</h2>
+          <h2 key={material.id} title={material.title}>
+            {material.title}
+          </h2>
+          <span className="location">
+            <MapPin size={14} aria-hidden="true" />
+            {material.institution.name}
+          </span>
         </div>
         <div className="shelf-actions">
           <Link
