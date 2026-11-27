@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+const home = '/';
 const preview = '/preview/home-cinematica';
 
 async function finishShortAnimations(page) {
@@ -18,11 +19,11 @@ for (const viewport of [
   { width: 1440, height: 900 },
   { width: 390, height: 844 },
 ]) {
-  test(`hero is contained, indexed as preview and has no horizontal overflow at ${viewport.width}px`, async ({
+  test(`hero is contained and indexable as the official home and has no horizontal overflow at ${viewport.width}px`, async ({
     page,
   }) => {
     await page.setViewportSize(viewport);
-    await page.goto(preview);
+    await page.goto(home);
     const h1 = page.getByRole('heading', { level: 1 });
     await expect(h1).toHaveText('Toda última página tem um recomeço.');
     await expect(page.getByRole('heading', { level: 2 }).last()).toContainText('Ele continua quando alguém repassa.');
@@ -37,10 +38,12 @@ for (const viewport of [
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
-    await expect(page.locator('head meta[name="robots"]')).toHaveAttribute(
-      'content',
-      'noindex',
+    await expect(page.locator('head meta[name="robots"]')).toHaveCount(0);
+    await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute(
+      'href',
+      'https://repassa-serasa-experian.vercel.app/',
     );
+    await expect(page).toHaveTitle('RePassa · Toda última página tem um recomeço');
   });
 
   test(`axe has no serious or critical violations at ${viewport.width}px`, async ({
@@ -48,7 +51,7 @@ for (const viewport of [
   }) => {
     test.setTimeout(90_000);
     await page.setViewportSize(viewport);
-    await page.goto(preview);
+    await page.goto(home);
     await finishShortAnimations(page);
     const result = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
@@ -65,23 +68,25 @@ for (const viewport of [
   });
 }
 
-test('production home remains unchanged after leaving the preview', async ({
+test('classic home remains available for rollback without replacing the official home', async ({
   page,
 }) => {
-  await page.goto(preview);
-  await page.getByRole('link', { name: 'Encontrar um material' }).click();
-  await page.getByRole('link', { name: 'RePassa, início' }).first().click();
+  await page.goto('/inicio-classico');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(
     /Conhecimento\s*merece circular\./,
   );
-  await expect(page.locator('head meta[name="robots"]')).toHaveCount(0);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
+  await page.goto(home);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+    'Toda última página tem um recomeço.',
+  );
 });
 
 test('scrolling chapters stamps the card forwards and backwards', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto(preview);
+  await page.goto(home);
   const card = page.locator('.cine-card');
   const chapters = page.locator('.cine-chapters li');
   await chapters.nth(3).evaluate((element) => {
@@ -103,7 +108,7 @@ test('scrolling chapters stamps the card forwards and backwards', async ({
 test('keyboard reaches the skip link first and then the primary action', async ({
   page,
 }) => {
-  await page.goto(preview);
+  await page.goto(home);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await page.keyboard.press('Tab');
   await expect(page.locator('.skip')).toBeFocused();
@@ -119,7 +124,7 @@ test('reduced motion renders final content without running animations', async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto(preview);
+  await page.goto(home);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   expect(
     await page.evaluate(
@@ -144,7 +149,7 @@ test('PERF-01 uses zero idle requestAnimationFrame callbacks', async ({ page }) 
       return original(callback);
     };
   });
-  await page.goto(preview);
+  await page.goto(home);
   await page.waitForTimeout(1500);
   await page.evaluate(() => {
     window.__cineRafCount = 0;
@@ -160,7 +165,7 @@ for (const width of [1440, 390]) {
     page.on('request', request => {
       if (request.resourceType() === 'media') mediaRequests.push(request.url());
     });
-    await page.goto(preview);
+    await page.goto(home);
     const play = page.getByRole('button', { name: 'Assistir ao filme' });
     await play.scrollIntoViewIfNeeded();
     expect(mediaRequests).toEqual([]);
@@ -179,7 +184,7 @@ for (const width of [1440, 390]) {
 
 test('unavailable film offers the approved alternative', async ({ page }) => {
   await page.route(/\.mp4(?:\?|$)/, route => route.request().resourceType() === 'media' ? route.abort() : route.continue());
-  await page.goto(preview);
+  await page.goto(home);
   await page.getByRole('button', { name: 'Assistir ao filme' }).click();
   await expect(page.getByRole('alert').getByRole('link')).toHaveAttribute('href', 'https://www.youtube.com/shorts/J7nbqsq0bmU');
 });
@@ -187,7 +192,7 @@ test('unavailable film offers the approved alternative', async ({ page }) => {
 test('retry returns keyboard control to the film after a failed request', async ({ page }) => {
   const media = /\.mp4(?:\?|$)/;
   await page.route(media, route => route.request().resourceType() === 'media' ? route.abort() : route.continue());
-  await page.goto(preview);
+  await page.goto(home);
   await page.getByRole('button', { name: 'Assistir ao filme' }).press('Enter');
   const retry = page.getByRole('button', { name: 'Tentar novamente' });
   await expect(retry).toBeFocused();
@@ -198,14 +203,51 @@ test('retry returns keyboard control to the film after a failed request', async 
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
-test('leaving the preview clears noindex and gives the missing page its own title', async ({ page }) => {
+test('the former preview URL deliberately redirects to the official home', async ({ page }) => {
   await page.goto(preview);
-  await expect(page).toHaveTitle(/prévia/);
+  await expect.poll(() => new URL(page.url()).pathname).toBe('/');
+  await expect(page.locator('.cine-page')).toHaveCount(1);
+  await expect(page).toHaveTitle('RePassa · Toda última página tem um recomeço');
+  await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
+});
+
+test('leaving the official home restores prior metadata and gives the missing page its own title', async ({ page }) => {
+  await page.goto(home);
+  await expect(page).toHaveTitle('RePassa · Toda última página tem um recomeço');
   await page.evaluate(() => {
     history.pushState({}, '', '/pagina-ausente');
     dispatchEvent(new PopStateEvent('popstate'));
   });
   await expect(page.locator('.cine-page')).toHaveCount(0);
   await expect(page).toHaveTitle('Página indisponível · RePassa');
-  await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
+  await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
+});
+
+test('navigation anchors move scroll and keyboard focus to existing sections', async ({ page }) => {
+  await page.goto('/#como-funciona');
+  await expect(page.locator('#como-funciona')).toBeFocused();
+  await expect(page.locator('#como-funciona')).toBeInViewport();
+  await page.goto('/#doar');
+  await expect(page.locator('#doar')).toBeFocused();
+  await expect(page.locator('#doar')).toBeInViewport();
+
+  await page.goto(home);
+  await expect(page.locator('a[href="#filme"]')).toBeVisible();
+  await expect(page.locator('a[href="#ficha"]').first()).toBeVisible();
+  await expect(page.locator('a[href="#doar"]')).toBeVisible();
+  await expect(page.locator('#repassar')).toHaveCount(1);
+  await page.getByRole('link', { name: 'O filme' }).click();
+  await expect(page.locator('#filme')).toBeFocused();
+  await expect(page.locator('#filme')).toBeInViewport();
+  await page.getByRole('link', { name: 'A ficha de circulação' }).click();
+  await expect(page.locator('#ficha')).toBeFocused();
+  await expect(page.locator('#ficha')).toBeInViewport();
+  await page.getByRole('link', { name: 'Quero doar' }).click();
+  await expect(page.locator('#doar')).toBeFocused();
+  await expect(page.locator('#doar')).toBeInViewport();
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.getByRole('link', { name: 'Como funciona' }).first().click();
+  await expect(page.locator('#como-funciona')).toBeFocused();
+  await expect(page.locator('#como-funciona')).toBeInViewport();
 });

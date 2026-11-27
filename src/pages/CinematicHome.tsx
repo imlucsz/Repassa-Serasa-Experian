@@ -13,49 +13,56 @@ export function CinematicHome() {
   const chapterRefs = useRef<(HTMLLIElement | null)[]>([]);
   const passedChapters = useRef<boolean[]>(chapters.map(() => false));
   const cardRef = useRef<HTMLDivElement>(null);
-  const heroRef = useRef<HTMLElement>(null);
-  const closeRef = useRef<HTMLElement>(null);
   const previousStamped = useRef(0);
   const stampedCount = active + 1;
 
   useEffect(() => {
     const previousTitle = document.title;
-    document.title = 'RePassa · O conhecimento continua (prévia)';
-    const robots = document.createElement('meta');
-    robots.name = 'robots';
-    robots.content = 'noindex';
-    document.head.appendChild(robots);
+    document.title = 'RePassa · Toda última página tem um recomeço';
+    const existingCanonical = document.querySelector<HTMLLinkElement>(
+      'link[rel="canonical"]',
+    );
+    const canonical = existingCanonical ?? document.createElement('link');
+    if (!existingCanonical) document.head.appendChild(canonical);
+    const previousCanonical = canonical.getAttribute('href');
+    canonical.rel = 'canonical';
+    canonical.href = 'https://repassa-serasa-experian.vercel.app/';
+    const description = document.querySelector<HTMLMetaElement>(
+      'meta[name="description"]',
+    );
+    const previousDescription = description?.content;
+    description?.setAttribute(
+      'content',
+      'Doe materiais de estudo, encontre novos materiais e retire gratuitamente em instituições parceiras.',
+    );
     return () => {
-      robots.remove();
       document.title = previousTitle;
+      if (!existingCanonical) canonical.remove();
+      else if (previousCanonical) canonical.href = previousCanonical;
+      else canonical.removeAttribute('href');
+      if (description && previousDescription !== undefined)
+        description.content = previousDescription ?? '';
     };
   }, []);
 
   useEffect(() => {
-    const items = chapterRefs.current.filter(
-      (item): item is HTMLLIElement => item !== null,
-    );
-    if (!('IntersectionObserver' in window)) {
-      setActive(chapters.length - 1);
-      return;
+    function updateChapters() {
+      const midline = window.innerHeight / 2;
+      chapterRefs.current.forEach((item, index) => {
+        if (item)
+          passedChapters.current[index] =
+            item.getBoundingClientRect().top < midline;
+      });
+      const next = activeChapter(passedChapters.current);
+      setActive((current) => (current === next ? current : next));
     }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const midline = entries[0]?.rootBounds?.top ?? window.innerHeight / 2;
-        chapterRefs.current.forEach((item, index) => {
-          if (item)
-            passedChapters.current[index] =
-              item.getBoundingClientRect().top < midline;
-        });
-        const next = activeChapter(passedChapters.current);
-        setActive((current) => (current === next ? current : next));
-      },
-      { rootMargin: '-50% 0px -50% 0px' },
-    );
-    for (const item of items) observer.observe(item);
-    if (heroRef.current) observer.observe(heroRef.current);
-    if (closeRef.current) observer.observe(closeRef.current);
-    return () => observer.disconnect();
+    updateChapters();
+    window.addEventListener('scroll', updateChapters, { passive: true });
+    window.addEventListener('resize', updateChapters);
+    return () => {
+      window.removeEventListener('scroll', updateChapters);
+      window.removeEventListener('resize', updateChapters);
+    };
   }, []);
 
   useEffect(() => {
@@ -77,7 +84,7 @@ export function CinematicHome() {
 
   return (
     <div className="cine-page">
-      <section className="cine-hero frame" aria-labelledby="cine-title" ref={heroRef}>
+      <section className="cine-hero frame" aria-labelledby="cine-title">
         <div className="cine-hero-copy">
           <p className="cine-kicker"><span className="cine-dot" /> Biblioteca de materiais de estudo</p>
           <h1 id="cine-title">
@@ -89,7 +96,7 @@ export function CinematicHome() {
             <p className="cine-lead">Doe o que já estudou. Encontre o que vem a seguir. Os materiais circulam gratuitamente pelas instituições parceiras.</p>
             <div className="cine-actions">
               <Link to="/catalogo" className="cine-button cine-button-dark">Encontrar um material <ArrowUpRight size={18} aria-hidden="true" /></Link>
-              <a href="#repassar" className="cine-text-link">Quero doar <ArrowDown size={15} aria-hidden="true" /></a>
+              <a href="#doar" className="cine-text-link">Quero doar <ArrowDown size={15} aria-hidden="true" /></a>
             </div>
           </div>
         </div>
@@ -113,8 +120,8 @@ export function CinematicHome() {
       </section>
       <CinematicFilm />
 
-      <section className="cine-story" id="ficha" tabIndex={-1}>
-        <div className="frame">
+      <section className="cine-story" id="como-funciona" tabIndex={-1}>
+        <div className="frame" id="ficha" tabIndex={-1}>
           <div className="cine-story-intro">
             <h2>A ficha de circulação.</h2>
             <p>
@@ -187,8 +194,8 @@ export function CinematicHome() {
         </div>
       </section>
 
-      <section className="cine-close" id="repassar" tabIndex={-1} ref={closeRef}>
-        <div className="frame cine-close-inner">
+      <section className="cine-close" id="repassar" tabIndex={-1}>
+        <div className="frame cine-close-inner" id="doar" tabIndex={-1}>
           <div className="cine-close-copy">
             <span className="cine-close-rule" aria-hidden="true" />
             <h2>O conhecimento não termina em quem aprende. <em>Ele continua quando alguém repassa.</em></h2>
