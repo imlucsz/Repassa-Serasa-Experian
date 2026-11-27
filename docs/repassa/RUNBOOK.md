@@ -47,7 +47,7 @@ PowerShell on Windows (recommended terminal so hidden input is a real TTY):
 
 ```powershell
 cd backend
-$env:DATABASE_URL="<existing target DATABASE_URL>"
+$env:DATABASE_URL = [System.Net.NetworkCredential]::new('', (Read-Host 'DATABASE_URL' -AsSecureString)).Password
 npx tsx scripts/reset-password.ts
 Remove-Item Env:DATABASE_URL
 ```
@@ -56,7 +56,10 @@ POSIX shell:
 
 ```bash
 cd backend
-DATABASE_URL="<existing target DATABASE_URL>" npx tsx scripts/reset-password.ts
+read -s -p 'DATABASE_URL: ' DATABASE_URL; printf '\n'
+export DATABASE_URL
+npx tsx scripts/reset-password.ts
+unset DATABASE_URL
 ```
 
 The script prompts for the account email twice, requires typing `REDEFINIR` for a non-local database, reads the new password twice without echoing it, updates only `passwordHash`, revokes all live refresh sessions in the same transaction, verifies that zero unrevoked sessions remain and writes `admin.password_reset` audit metadata (no password/hash/token). Never paste the connection string into chat, tickets or PRs. When the target is Supabase production, use the existing secret value from the approved secret store/dashboard; do not create a new database or run seed.
