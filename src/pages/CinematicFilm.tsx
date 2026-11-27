@@ -28,12 +28,13 @@ export function CinematicFilm() {
           <a className="cine-text-link cine-text-link-light" href="#ficha">Seguir para a ficha ↓</a>
         </div>
         <div className="cine-projection">
+          <div className="cine-filmstrip" aria-hidden="true" />
           <div className="cine-screen">
             <video ref={player} hidden={!opened} controls playsInline preload="none" tabIndex={0}
               aria-label="Curta RePassa — Um livro, outra vida" onError={() => setFailed(true)}>
               {opened && <track kind="captions" src="/brand/filme-pt.vtt" srcLang="pt-BR" label="Português" default />}
             </video>
-            {!opened && <button type="button" className="cine-film-play" onClick={playFilm} aria-label="Reproduzir o curta RePassa">
+            {!opened && <button type="button" className="cine-film-play" onClick={playFilm}>
               <img src="/brand/filme-poster.webp" width="540" height="960" loading="lazy" alt="" />
               <span><Play size={15} fill="currentColor" aria-hidden="true" /> Assistir ao filme</span>
             </button>}

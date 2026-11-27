@@ -152,3 +152,34 @@ test('PERF-01 uses zero idle requestAnimationFrame callbacks', async ({ page }) 
   await page.waitForTimeout(1000);
   expect(await page.evaluate(() => window.__cineRafCount)).toBe(0);
 });
+
+for (const width of [1440, 390]) {
+  test(`film waits for activation and plays inline with Portuguese captions at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+    const mediaRequests = [];
+    page.on('request', request => {
+      if (request.resourceType() === 'media') mediaRequests.push(request.url());
+    });
+    await page.goto(preview);
+    const play = page.getByRole('button', { name: 'Assistir ao filme' });
+    await play.scrollIntoViewIfNeeded();
+    expect(mediaRequests).toEqual([]);
+    await play.focus();
+    await page.keyboard.press('Enter');
+    const video = page.locator('video');
+    await expect(video).toBeFocused();
+    await expect.poll(() => video.evaluate(el => el.currentTime)).toBeGreaterThan(0);
+    await expect.poll(() => video.evaluate(el => el.textTracks[0]?.cues?.length)).toBe(7);
+    expect(await video.evaluate(el => [el.videoWidth, el.videoHeight, el.duration, el.controls, el.playsInline]))
+      .toEqual([1080, 1920, 22, true, true]);
+    await page.keyboard.press('Space');
+    await expect.poll(() => video.evaluate(el => el.paused)).toBe(true);
+  });
+}
+
+test('unavailable film offers the approved alternative', async ({ page }) => {
+  await page.route(/\.mp4(?:\?|$)/, route => route.request().resourceType() === 'media' ? route.abort() : route.continue());
+  await page.goto(preview);
+  await page.getByRole('button', { name: 'Assistir ao filme' }).click();
+  await expect(page.getByRole('alert').getByRole('link')).toHaveAttribute('href', 'https://www.youtube.com/shorts/J7nbqsq0bmU');
+});

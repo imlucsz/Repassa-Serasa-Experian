@@ -14,9 +14,9 @@
 .cine-kicker { display: flex; align-items: center; gap: 10px; }
 .cine-dot { width: 10px; height: 10px; border-radius: 100%; background: #af5036; }
 .cine-hero h1 {
-  max-width: 11ch;
+  max-width: none;
   margin-top: 32px;
-  font-size: clamp(4.3rem, 7.7vw, 8rem);
+  font-size: clamp(4.3rem, 7.05vw, 7.6rem);
   font-weight: 390;
   line-height: .92;
   letter-spacing: -.045em;
@@ -77,8 +77,27 @@
 .cine-film-copy > p:not(.cine-kicker) { max-width: 39ch; color: #dee4d6; line-height: 1.65; }
 .cine-film-copy > a { margin-top: 16px; }
 .cine-projection { position: relative; display: grid; place-items: center; isolation: isolate; }
-.cine-projection::before, .cine-projection::after { content: ''; position: absolute; z-index: -1; width: 61%; height: 76%; border: 1px solid #648372; transform: rotate(-10deg); }
-.cine-projection::after { transform: rotate(9deg); border-color: #849279; }
+.cine-filmstrip {
+  position: absolute;
+  z-index: -1;
+  width: 100%;
+  aspect-ratio: 3.7;
+  transform: rotate(-9deg);
+  background: #10271f url('/brand/filme-fotogramas.webp') center / 100% 100% no-repeat;
+  border-block: 12px solid #0d231a;
+  box-shadow: 1px 9px 16px #071e1438;
+}
+.cine-filmstrip::before, .cine-filmstrip::after {
+  content: '';
+  position: absolute;
+  left: 2%;
+  right: 2%;
+  height: 4px;
+  background: repeating-linear-gradient(90deg,#91a18b 0 7px, transparent 7px 16px);
+}
+.cine-filmstrip::before { top: -8px; }
+.cine-filmstrip::after { bottom: -8px; }
+
 .cine-screen { width: min(66%, 266px); aspect-ratio: 9/16; position: relative; background: #101c17; box-shadow: 10px 17px 29px #0a1c174d; }
 .cine-screen video, .cine-film-play, .cine-film-play img { width: 100%; height: 100%; }
 .cine-screen video { object-fit: contain; }
@@ -112,7 +131,9 @@
   .cine-hero h1 { max-width: 100%; font-size: clamp(2.9rem,12.8vw,5.25rem); margin-top: 19px; }
   .cine-hero-intro { margin-top: 18px; }
   .cine-lead { font-size: .98rem; }
-  .cine-actions { margin-top: 18px; }
+  .cine-actions { margin-top: 18px; gap: 8px 14px; }
+  .cine-hero .cine-button { padding-inline: 13px; gap: 7px; }
+  .cine-hero .cine-text-link { gap: 5px; }
   .cine-art { width: min(91%,370px); padding: 14px 13% 24px 10%; }
   .cine-cover-title { font-size: clamp(2.5rem,10vw,3.65rem); }
   .cine-slip { padding: 9px 13px; gap: 7px; bottom: 12%; }

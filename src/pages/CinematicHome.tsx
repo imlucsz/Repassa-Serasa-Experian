@@ -79,8 +79,9 @@ export function CinematicHome() {
         <div className="cine-hero-copy">
           <p className="cine-kicker"><span className="cine-dot" /> Biblioteca de materiais de estudo</p>
           <h1 id="cine-title">
-            <span className="cine-title-line cine-title-line-one">Toda última página</span>{' '}
-            <span className="cine-title-line cine-title-line-two">tem um <em>recomeço.</em></span>
+            <span className="cine-title-line cine-title-line-one">Toda última</span>{' '}
+            <span className="cine-title-line cine-title-line-two">página tem</span>{' '}
+            <span className="cine-title-line cine-title-line-two">um <em>recomeço.</em></span>
           </h1>
           <div className="cine-hero-intro">
             <p className="cine-lead">Doe o que já estudou. Encontre o que vem a seguir. Os materiais circulam gratuitamente pelas instituições parceiras.</p>
