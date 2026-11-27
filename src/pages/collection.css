@@ -58,6 +58,19 @@
   font-family: var(--serif);
 }
 
+.catalog .shelf-caption .location {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+}
+
+.catalog .shelf-caption .location svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
 @media (min-width: 1000px) {
   .catalog .page-intro,
   .catalog .book-shelf {
@@ -100,6 +113,10 @@
     margin-top: 16px;
     font-size: clamp(2.25rem, 3.5vw, 4rem);
     line-height: 1.04;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
   }
 
   .catalog .shelf-actions {
