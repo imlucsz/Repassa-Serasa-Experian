@@ -69,26 +69,25 @@ Immediate invalidation of already issued access tokens requires the API to run t
 ## 4. Disposable validation stack (local, never production)
 
 ```
-# 1) disposable PG16 (bundled binaries, temp cluster) — prints READY <databaseUrl>
-cd backend && node test/helpers/pg-daemon.mjs 55434 &
-# 2) schema + provision (NO seed — production path); use the printed URL
-DATABASE_URL=<disposable-url> npm run db:migrate:deploy
-DATABASE_URL=<disposable-url> \
-  npx tsx scripts/provision-admin.ts --generate --email admin-jornada@example.com --name "Admin"
-# 3) backend + frontend (api mode)
-# ALLOWED_ORIGINS is REQUIRED: the dev fallback only allows
-# http://localhost:3000 — any other vite port gets 403 on mutations.
-PORT=3001 DATABASE_URL=<disposable-url> \
-  ALLOWED_ORIGINS=http://127.0.0.1:4272 \
-  node dist/main.js            # :3001 — build first: npm run build
-VITE_DATA_MODE=api npm run dev -- --port 4272   # repo root
-# 4) journeys — separate browser contexts per role
-REPASSA_ADMIN_PASSWORD=<one-time> node tests/live/sh02-journey.mjs
-JOURNEY_DB_URL=<disposable-url> \
-  REPASSA_ADMIN_PASSWORD=<one-time> node tests/live/sh02-security.mjs
-# 5) restart backend, then:
+# 1) controlled disposable stack — one launcher owns PG16, migrations,
+# admin provisioning, the local backend, local temp-disk object storage and the
+# Vite proxy. It prints a one-time admin password and a manifest path.
+node tests/live/start-disposable-stack.mjs
+
+# 2) journeys — in a second shell, use the printed values. The mutating
+# harnesses fail closed unless the launcher manifest and the live backend-login
+# audit proof match the same disposable database.
+export JOURNEY_STACK_MANIFEST=<printed-manifest>
+export REPASSA_ADMIN_PASSWORD=<one-time>
+node tests/live/sh02-journey.mjs
+export JOURNEY_DB_URL=<disposable-url>
+node tests/live/sh02-security.mjs
+
+# 3) restart the backend controlled by the launcher, then:
 ... same env ... node tests/live/sh02-security.mjs --recovery
 ```
+
+When overriding launcher ports, set the matching `JOURNEY_BASE`, `JOURNEY_API` and `JOURNEY_DB_URL` explicitly. A manually arranged lookalike stack is intentionally insufficient: the harness requires the controlled launcher manifest, loopback endpoints, local object-storage attestation, a non-redirecting frontend proxy and proof that the backend login mutation reached the disposable database. Each execution also performs one verification admin login and requires the disposable database audit count for that identity to increase by exactly one before any journey mutation.
 
 `SEED_DEMO_PASSWORD` + `npx prisma db seed` only for demo environments with owner consent — **never** on the production DATABASE_URL.
 

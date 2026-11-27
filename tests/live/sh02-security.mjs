@@ -1,16 +1,15 @@
 // SH-02 security & integration checks — real API on disposable Postgres.
 // Phase 1 (default): RBAC, tenant isolation, concurrency, expiry, rate limits.
 // Phase 2 (--recovery): run after restarting the backend — session survival.
-// Optional live-API harness (not part of CI); never point at production.
-//   JOURNEY_API=http://127.0.0.1:3001/api/v1 \
-//   JOURNEY_DB_URL=postgresql://postgres:postgres@127.0.0.1:55434/repassa_test \
-//   REPASSA_ADMIN_EMAIL=admin@x REPASSA_ADMIN_PASSWORD=<one-time> \
+// Optional live-API harness (not part of CI). Start the controlled disposable
+// stack first and use its printed manifest/password; never point at production.
+//   node tests/live/start-disposable-stack.mjs
+//   export JOURNEY_STACK_MANIFEST=<printed-manifest>
+//   export JOURNEY_DB_URL=<disposable-url>
+//   export REPASSA_ADMIN_PASSWORD=<one-time>
 //   node tests/live/sh02-security.mjs [--recovery]
-import { execFileSync } from 'node:child_process';
-import { assertSafeHarnessEnvironment } from './harness-guard.mjs';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { expireReservationForHarness } from './expire-reservation.mjs';
+import { assertControlledHarnessEnvironment } from './harness-guard.mjs';
 
 const api = process.env.JOURNEY_API ?? 'http://127.0.0.1:3001/api/v1';
 const DB_URL = process.env.JOURNEY_DB_URL;
@@ -27,10 +26,15 @@ if (!ADMIN.password) {
   console.error('REPASSA_ADMIN_PASSWORD required (output of provision-admin --generate)');
   process.exit(2);
 }
-assertSafeHarnessEnvironment({
+const base = process.env.JOURNEY_BASE ?? 'http://127.0.0.1:4272';
+await assertControlledHarnessEnvironment({
+  base,
   api,
   dbUrl: DB_URL,
-  requireDatabase: true,
+  manifestPath: process.env.JOURNEY_STACK_MANIFEST,
+  adminEmail: ADMIN.email,
+  adminPassword: ADMIN.password,
+  requireFrontend: true,
 });
 const DOADORA = { email: 'doadora.ana@example.com', password: pw };
 const EQUIPE = { email: 'equipe.carla@example.com', password: pw };
@@ -207,23 +211,10 @@ check(
   still.items.some((r) => r.id === active.id && r.status === 'ACTIVE'),
 );
 
-// 6. Forced expiry — past expiresAt reconciles lazily on next availability read
-const expireDir = mkdtempSync(join(tmpdir(), 'repassa-expire-'));
-const expireScript = join(expireDir, 'repassa-expire.local.cjs');
-writeFileSync(
-  expireScript,
-  "const { PrismaClient } = require('@prisma/client');\n" +
-    'const p = new PrismaClient();\n' +
-    "p.$executeRawUnsafe(\"UPDATE reservations SET created_at = now() - interval '73 hours', expires_at = now() - interval '1 hour' WHERE id = '" +
-    active.id +
-    "'\").then((n) => console.log('expired', n)).finally(() => p.$disconnect());\n",
-);
-execFileSync(process.execPath, [expireScript], {
-  cwd: 'backend',
-  env: { ...process.env, DATABASE_URL: DB_URL },
-  stdio: 'pipe',
-});
-rmSync(expireDir, { recursive: true, force: true });
+// 6. Forced expiry — past expiresAt reconciles lazily on next availability read.
+// The parameterized repository-anchored helper owns Prisma cleanup on success and failure.
+const expiredCount = await expireReservationForHarness({ databaseUrl: DB_URL, reservationId: active.id });
+check('helper parametrizado expirou exatamente uma reserva', expiredCount === 1, 'updated=' + expiredCount);
 const matsAfter = (await call('GET', '/materials?pageSize=50')).data;
 check(
   'material expirado volta a AVAILABLE',
