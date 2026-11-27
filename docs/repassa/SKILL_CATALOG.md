@@ -56,4 +56,6 @@ Other source resources inspected include `AGENTS.md`, `PROJECT_EXCLUSIONS.md`, `
 
 ## Optional design packs
 
-See [installation and invocation](DESIGN_TOOLS.md) for Ink Studio, Taste, Impeccable, UI UX Pro Max and Emil Kowalski's skills.
+See [installation and invocation](DESIGN_TOOLS.md) for Ink Studio, Taste, Impeccable, UI UX Pro Max, Emil Kowalski's skills and Cantos Apple. `npm run design:setup` restores all of them into the gitignored `.agents/skills/` dirs (discovered live by Devin and Codex); Impeccable also manages a user-level install and a checksum-verified engine binary under `~/.impeccable/`. Ink Studio is a CLI, not a skill — `npm exec -- ink-studio help`.
+
+Every pack was scanned with SkillSpector 2.13.7 (`--no-llm`) and reviewed by hand; dispositions are recorded in [evidence/dev-tools-03](evidence/dev-tools-03/). High scores were static-heuristic noise (anti-injection boilerplate, HTML comment scaffolding, quoted strings in CSV data); no exfiltration, credential access or unexpected network destinations were found. Scripts inside `design-taste-frontend` launch headless Chrome and fetch fonts/icons/licensed photos — run them only inside the skill's documented flow.

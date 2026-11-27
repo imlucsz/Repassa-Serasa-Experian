@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { cpSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -30,7 +30,12 @@ function install(name, source, license) {
     console.log('Already present: ' + name);
     return;
   }
-  cpSync(source, target, { recursive: true, force: false, errorOnExist: true });
+  cpSync(source, target, {
+    recursive: true,
+    force: false,
+    errorOnExist: true,
+    filter: (src) => !src.split(/[\\/]/).includes('.git'),
+  });
   if (license && !existsSync(join(target, 'LICENSE'))) copyFileSync(license, join(target, 'LICENSE'));
   console.log('Installed: ' + name);
 }
@@ -54,8 +59,19 @@ try {
   cli('ui-ux-pro-max-cli', 'dist/index.js', ['init', '--ai', 'codex', '--offline']);
   const ui = checkout('nextlevelbuilder/ui-ux-pro-max-skill', '2de1134dc4d1cfe112934611ae5803ae17a1bd7e');
   install('ui-ux-pro-max', join(generated, 'ui-ux-pro-max'), join(ui, 'LICENSE'));
-  cli('impeccable', 'cli/bin/cli.js', ['install', '--providers=codex', '--scope=project', '--no-hooks', '-y']);
-  install('impeccable', join(generated, 'impeccable'), join(root, 'node_modules', 'impeccable', 'LICENSE'));
+
+  // The impeccable engine resolves the project root itself; run it at the repo
+  // root so it writes .agents/skills/impeccable directly. It skips regeneration
+  // when an existing install is already current and manages its own upgrades.
+  run(process.execPath, [join(root, 'node_modules', 'impeccable', 'cli', 'bin', 'cli.js'),
+    'install', '--providers=codex', '--project', '--no-hooks', '-y'], root);
+  if (!existsSync(join(destination, 'impeccable', 'SKILL.md'))
+    && !existsSync(join(homedir(), '.agents', 'skills', 'impeccable', 'SKILL.md'))) {
+    throw new Error('Impeccable install produced no discovered skill');
+  }
+
+  const cantos = checkout('feBittar/cantos-apple', '4c15b5309c22ade4b0e8cdbdd4c4cc33d5ce19cd');
+  install('cantos-apple', cantos, join(cantos, 'LICENSE'));
 } finally {
   // Only remove the staging directory created by mkdtempSync for this invocation.
   rmSync(staging, { recursive: true, force: true });

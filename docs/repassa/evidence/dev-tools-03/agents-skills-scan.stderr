@@ -1,0 +1,141 @@
+Multi-skill directory detected: 33 skills found
+
+  [1/33] Scanning animate (animate/)
+         Score: 0/100 (LOW)
+
+  [2/33] Scanning animate-expo (animate-expo/)
+         Score: 12/100 (LOW)
+
+  [3/33] Scanning animation-performance (animation-performance/)
+         Score: 0/100 (LOW)
+
+  [4/33] Scanning animation-vocabulary (animation-vocabulary/)
+         Score: 0/100 (LOW)
+
+  [5/33] Scanning apple-design (apple-design/)
+         Score: 0/100 (LOW)
+
+  [6/33] Scanning ask-emil (ask-emil/)
+         Score: 0/100 (LOW)
+
+  [7/33] Scanning ask-sonner (ask-sonner/)
+         Score: 0/100 (LOW)
+
+  [8/33] Scanning break-ui (break-ui/)
+         Score: 20/100 (LOW)
+
+  [9/33] Scanning choreograph (choreograph/)
+         Score: 85/100 (CRITICAL)
+
+  [10/33] Scanning design-taste-frontend (design-taste-frontend/)
+         Score: 100/100 (CRITICAL)
+
+  [11/33] Scanning emil-design-eng (emil-design-eng/)
+         Score: 0/100 (LOW)
+
+  [12/33] Scanning find-animation-opportunities (find-animation-opportunities/)
+         Score: 20/100 (LOW)
+
+  [13/33] Scanning gestures (gestures/)
+         Score: 0/100 (LOW)
+
+  [14/33] Scanning improve-animations (improve-animations/)
+         Score: 66/100 (HIGH)
+
+  [15/33] Scanning learn-taste (learn-taste/)
+         Score: 7/100 (LOW)
+
+  [16/33] Scanning mobile-native (mobile-native/)
+         Score: 0/100 (LOW)
+
+  [17/33] Scanning pick-ui-library (pick-ui-library/)
+         Score: 0/100 (LOW)
+
+  [18/33] Scanning prototype (prototype/)
+         Score: 21/100 (MEDIUM)
+
+  [19/33] Scanning remove-animations (remove-animations/)
+         Score: 20/100 (LOW)
+
+  [20/33] Scanning repassa-auth-security (repassa-auth-security/)
+         Score: 0/100 (LOW)
+
+  [21/33] Scanning repassa-backend (repassa-backend/)
+         Score: 0/100 (LOW)
+
+  [22/33] Scanning repassa-browser-qa (repassa-browser-qa/)
+         Score: 0/100 (LOW)
+
+  [23/33] Scanning repassa-context (repassa-context/)
+         Score: 0/100 (LOW)
+
+  [24/33] Scanning repassa-context-efficiency (repassa-context-efficiency/)
+         Score: 0/100 (LOW)
+
+  [25/33] Scanning repassa-database (repassa-database/)
+         Score: 0/100 (LOW)
+
+  [26/33] Scanning repassa-design (repassa-design/)
+         Score: 0/100 (LOW)
+
+  [27/33] Scanning repassa-implement (repassa-implement/)
+         Score: 0/100 (LOW)
+
+  [28/33] Scanning repassa-motion (repassa-motion/)
+         Score: 0/100 (LOW)
+
+  [29/33] Scanning repassa-review (repassa-review/)
+         Score: 0/100 (LOW)
+
+  [30/33] Scanning repassa-verification (repassa-verification/)
+         Score: 0/100 (LOW)
+
+  [31/33] Scanning review-animations (review-animations/)
+         Score: 43/100 (MEDIUM)
+
+  [32/33] Scanning ui-ux-pro-max (ui-ux-pro-max/)
+         Score: 100/100 (CRITICAL)
+
+Recursive skill count budget 32 reached. Use --recursive --max-skills N with a
+larger positive N, or scan sub-skills separately. Other aggregate safety limits
+still apply.
+
+═══ Multi-Skill Summary ═══
+
+  Skill                          Score    Severity     Findings   Execution
+  ────────────────────────────── ──────── ──────────── ────────── ──────────
+  animate                        0        LOW          0          successful
+  animate-expo                   12       LOW          1          successful
+  animation-performance          0        LOW          0          successful
+  animation-vocabulary           0        LOW          0          successful
+  apple-design                   0        LOW          0          successful
+  ask-emil                       0        LOW          0          successful
+  ask-sonner                     0        LOW          0          successful
+  break-ui                       20       LOW          1          successful
+  choreograph                    85       CRITICAL     4          successful
+  design-taste-frontend          100      CRITICAL     31         successful
+  emil-design-eng                0        LOW          0          successful
+  find-animation-opportunities   20       LOW          1          successful
+  gestures                       0        LOW          0          successful
+  improve-animations             66       HIGH         3          successful
+  learn-taste                    7        LOW          1          successful
+  mobile-native                  0        LOW          0          successful
+  pick-ui-library                0        LOW          0          successful
+  prototype                      21       MEDIUM       1          successful
+  remove-animations              20       LOW          1          successful
+  repassa-auth-security          0        LOW          0          successful
+  repassa-backend                0        LOW          0          successful
+  repassa-browser-qa             0        LOW          0          successful
+  repassa-context                0        LOW          0          successful
+  repassa-context-efficiency     0        LOW          0          successful
+  repassa-database               0        LOW          0          successful
+  repassa-design                 0        LOW          0          successful
+  repassa-implement              0        LOW          0          successful
+  repassa-motion                 0        LOW          0          successful
+  repassa-review                 0        LOW          0          successful
+  repassa-verification           0        LOW          0          successful
+  review-animations              43       MEDIUM       1          successful
+  ui-ux-pro-max                  100      CRITICAL     25         successful
+  <unscanned>                    —        —            1          partial
+Recursive scan incomplete: one or more skills were omitted after an aggregate
+safety limit or skipped as symlinks.

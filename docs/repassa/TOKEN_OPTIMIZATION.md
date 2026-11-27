@@ -71,6 +71,15 @@ host (RTK filters are deterministic for `git`, `ls`, `npm`, `tsc`, `jest` and fr
 - `codex` is not on PATH; the installer detects the CLI via
   `Get-AppxPackage OpenAI.Codex` → `InstallLocation\app\resources\codex.exe`.
 
+## Devin host (27/11/2026)
+
+This Devin Desktop session runs on the same Windows machine as the Codex host above. What applies to Devin specifically:
+
+- **RTK 1.2.1 works** (`rtk` on PATH; exit codes verified preserved, `rtk proxy` passthrough, `rtk gain` reporting) but there is **no official Devin hook target** in this version — `rtk init`/`rtk hook` support claude, codex, windsurf and others, not devin, and `rtk hook codex` does not emit Devin's `updatedInput` format. Use RTK explicitly (`rtk git`, `rtk rg`, `rtk test`, `rtk proxy <cmd>`) per the efficient-session policy; an unreviewed adapter hook is not wired.
+- **ccusage 20.1.1 reads Codex logs only** on this host — it is not a Devin meter. For Devin usage use the native session usage and the `/fusion` model breakdowns. Distinguish observed usage, estimated compression (`bytes/4`), cached input, per-model usage, remaining quota and real cost; never present estimates as quota or invent percentages.
+- **SkillSpector 2.13.7** (uv tool) gates new skills: `skillspector scan <path> --no-llm`, stdout redirected to a file (file `--output` unsupported on Windows).
+- **Graphify** runs AST-only on demand; see [the toolchain](AGENT_TOOLCHAIN.md#devin-desktopcli-on-windows) for the current graph location and refresh policy.
+
 ## Usage rules (kept from repassa-context-efficiency)
 
 - Prefer targeted reads/searches over wide dumps; RTK compresses output, not input.

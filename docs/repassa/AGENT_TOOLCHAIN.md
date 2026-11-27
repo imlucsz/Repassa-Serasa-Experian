@@ -16,6 +16,25 @@ The [Agent Kit](INDEX.md), root agreement and scoped agreements still govern the
 
 ECC install and update instructions are in the [official Codex plugin guide](https://github.com/affaan-m/ECC/blob/4adeee6732a12d1540f49a4d50a38ce8c97f9a53/.codex-plugin/README.md). Prefer the native marketplace installation on hosts that lack ECC. Inspect the cached manifest, scripts and integrations before trusting a hook. Avoid legacy sync alongside the native plugin.
 
+## Devin Desktop/CLI on Windows
+
+Audited host (27/11/2026): Devin Desktop session on Windows, project checkout `Repassa-Serasa-Experian`. Node `v24.14.0`, npm `11.9.0`, Python `3.13.15`, Git `2.53.0`. Bundled Devin CLI docs under `%LOCALAPPDATA%\Programs\Devin\resources\app\extensions\windsurf\devin\share\devin\docs`. `devin` is not on this session's PATH.
+
+| Resource | Status and use |
+| --- | --- |
+| Skills | Devin discovers `SKILL.md` in project `.agents/skills/`, `.devin/skills/`, `.windsurf/skills/`, `.kiro/skills/` and user-level `~/.agents/skills/` / `%APPDATA%\devin\skills/`; it also reads `.claude/skills/` and `.codex/skills/`. Verified live: `.agents/skills/` additions appear in the session skill list immediately. Invoke via the skill tool or by name. |
+| Hooks | `.devin/hooks.v1.json` (whole file is the hooks object) or `"hooks"` in `.devin/config*.json`; `PreToolUse` command hooks can return `hookSpecificOutput.updatedInput` to rewrite a tool call. Verified format in bundled docs. No remote hooks; review before enabling. |
+| MCP | `.devin/mcp_config.json` (project), `.devin/mcp_config.local.json` (gitignored), `%APPDATA%\devin\mcp_config.json` (user). The RePassa orchestrator is registered in `mcp_config.local.json` (stdio, machine-local paths; `OMNIROUTE_API_KEY` passes through from env). |
+| RTK | `rtk` 1.2.1 at `%LOCALAPPDATA%\Programs\rtk\rtk.exe`; verified exit-code preservation (`rtk git rev-parse --verify` -> 128), `rtk proxy` passthrough and `rtk gain`. RTK 1.2.1 has **no Devin hook target** (`rtk init`/`rtk hook` cover claude, codex, windsurf and others, not devin; `rtk hook codex` emits nothing usable for Devin's payload). Use `rtk <cmd>`/`rtk proxy <cmd>` explicitly per the efficient-session policy; do not wire an unreviewed adapter hook. |
+| Graphify | `graphify` (`graphifyy` 0.9.121) via `uv tool install`; the CLI lives in `~/.local/bin/` (not on PATH — call it by full path). Fresh AST graph at `graphify-out/graph.json` (2,460 nodes, HEAD `fc9eee0`); a stale `.graphify/graph.json` from a newer 0.10.x run also exists. `graphify install --platform devin` exists but would downgrade the newer user-level skill — not run. The user-level `graphify` skill is already discovered. |
+| SkillSpector | `skillspector` 2.13.7 via `uv tool install` (Python 3.13, pinned PyPI release). Static scans only: `skillspector scan <path> --no-llm`. On Windows `--output` to a file is unsupported — redirect stdout to a new file outside the scan target. |
+| ccusage | `ccusage` 20.1.1 via npm global. Reads local **Codex** logs on this host (verified; ~78.7M tokens recorded, model-level breakdown). It cannot read Devin usage — use the native Devin session usage/Fusion model breakdowns. Byte/4 estimates are not quota. |
+| OmniRoute | `omniroute` 3.8.54 via npm global; data dir `~/.omniroute` (DB exists). Gateway **not running** — `http://127.0.0.1:20128` unreachable at audit. Start on demand with `omniroute serve` when the owner wants delegation; orchestrator health then reports reachability. |
+| Devin MCP tools | This session exposes `canva`, `figma-remote` and `firecrawl` MCP servers plus native browser preview. Prefer them over adding new connectors. |
+| Models | `/model`, `/fusion` pickers (lead + effort + sidekick); short names (`opus`, `swe`, `gpt`, `gemini`, `codex`) resolve to latest. Free/paid status is account-specific — read it from the picker, never assume. See [Fusion protocol](AGENT_ROUTING.md#fusion-operating-protocol). |
+
+The Codex-oriented sections below describe the other audited host; both agents use the same portable `.agents/skills/` and `rtk`/`rg`/Git workflow.
+
 ## Hook inventory
 
 | Source | Definition and status |

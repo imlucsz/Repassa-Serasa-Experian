@@ -9,6 +9,15 @@ Read `docs/repassa/INDEX.md`, `PRD.md`, `BUSINESS_RULES.md`, `API.md` and `contr
 ## Agent tooling
 Use the [toolchain guide](docs/repassa/AGENT_TOOLCHAIN.md), [skill catalog](docs/repassa/SKILL_CATALOG.md) and [role routing](docs/repassa/AGENT_ROUTING.md). Begin with `repassa-context`. Design requires `repassa-design`. Use `repassa-motion` for animation and `repassa-browser-qa` for rendered changes. Implementation requires `repassa-implement` and `repassa-verification`. Add the domain skill for affected backend, database or auth behavior. Review requires `repassa-review` plus the applicable topic skill. The Agent Kit, approved scope, contract and security rules take precedence over generic skills.
 
+## Efficient-session policy
+1. Verify the current branch, task scope and baseline before work; use the smallest context that answers the question.
+2. Consult a current local graph (`graphify-out/graph.json` or `.graphify/graph.json`, see [toolchain](docs/repassa/AGENT_TOOLCHAIN.md)) before broad exploration; verify graph claims against source.
+3. Use RTK for noisy Git/search/test output where installed; use `rtk proxy` or raw output whenever exact diagnostics, exit codes or failures matter — never hide failures through compression.
+4. Load only task-relevant skills; never load every pack at once.
+5. Use the cheapest capable authorized model; preserve paid/free boundaries — a paid lead or provider requires explicit owner selection. See [Fusion protocol](docs/repassa/AGENT_ROUTING.md#fusion-operating-protocol).
+6. Run targeted tests only; report real evidence and observable usage — never invent savings or token counts.
+7. Stop when acceptance criteria are met; record actual limitations and owner actions needed.
+
 ## Who owns what
 Devin: `backend/`, API/DB changes, backend CI with coordination. Codex: `src/`, frontend `public/`, root frontend configs and tests. `docs/repassa/contracts/openapi.yaml` is shared: change only in a contract-focused PR coordinated with the other agent. Shared tooling, root config affecting both, security guards and data model require cross-review. Never edit `video/` without explicit owner request; approved MP4 and references are not app dependencies. Preserve the existing 3D shelf behavior, adapt it to materials, keep it testable. No wholesale rewrite, no unnecessary framework change.
 

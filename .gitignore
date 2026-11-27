@@ -10,6 +10,7 @@ test-results/
 !.env.example
 
 # Design skills restored by npm run design:setup
+/.agents/skills/cantos-apple/
 /.agents/skills/design-taste-frontend/
 /.agents/skills/ui-ux-pro-max/
 /.agents/skills/impeccable/
@@ -36,3 +37,7 @@ test-results/
 
 # Local Netlify folder
 .netlify
+
+# Local Graphify knowledge-graph output (regenerate on demand)
+/.graphify/
+/graphify-out/
