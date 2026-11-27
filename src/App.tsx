@@ -25,6 +25,12 @@ const router = createBrowserRouter([
     children: [
       { index: true, Component: Home },
       {
+        path: 'preview/home-cinematica',
+        lazy: async () => ({
+          Component: (await import('./pages/CinematicHome')).CinematicHome,
+        }),
+      },
+      {
         path: 'entrar',
         lazy: async () => ({
           Component: (await import('./pages/Auth')).LoginPage,
