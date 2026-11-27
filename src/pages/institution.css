@@ -105,6 +105,34 @@
   border-bottom: 1px solid var(--line);
   padding-block: 22px;
 }
+
+.protected-material-image {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  box-shadow: 0 8px 20px -16px #18251f;
+}
+.protected-material-image > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.inst-review-image {
+  flex: 0 0 clamp(88px, 10vw, 126px);
+  aspect-ratio: 2 / 3;
+  margin-top: 4px;
+}
+.inst-dialog-image {
+  height: min(240px, 42dvh);
+}
+.inst-dialog-image > img {
+  object-fit: contain;
+  background: #18251f14;
+}
+
 .inst-material {
   min-width: 0;
   max-width: 72ch;
@@ -230,6 +258,10 @@
   .inst-list li {
     flex-direction: column;
     gap: 12px;
+  }
+  .inst-review-image {
+    flex-basis: auto;
+    width: min(100%, 180px);
   }
   .inst-unit,
   .inst-unit .field {

@@ -28,9 +28,8 @@ export async function staffSession(page, handler) {
         json: { user, accessToken: 'synthetic-staff', expiresIn: 900 },
       });
     }
-    expect(route.request().headers().authorization).toBe(
-      'Bearer synthetic-staff',
-    );
+    if (route.request().headers().authorization !== 'Bearer synthetic-staff')
+      throw new Error('missing staff authorization for ' + path);
     if (path === '/me/institutions') {
       return route.fulfill({
         json: { items: [north, south], page: 1, pageSize: 50, total: 2 },

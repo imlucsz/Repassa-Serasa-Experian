@@ -247,7 +247,20 @@ function CollectionShelf({ materials }: { materials: Material[] }) {
                 } else select(getShortestLoopTarget(target.current, i, count));
               }}
             >
-              <div className="book-spine">
+              <div className={item.imageUrl ? 'book-spine has-photo' : 'book-spine'}>
+                {item.imageUrl && (
+                  <img
+                    className="spine-photo"
+                    src={item.imageUrl}
+                    alt=""
+                    draggable={false}
+                    decoding="async"
+                    loading="lazy"
+                    onError={(event) => {
+                      event.currentTarget.hidden = true;
+                    }}
+                  />
+                )}
                 <div className="spine-print jacket-art">
                   <i />
                   <i />
