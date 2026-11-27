@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 
 const institution = {
   id: '84f38c09-2ceb-4fa4-8c38-d513bf8bad10',
@@ -181,3 +182,65 @@ test('donation history recovers from a failed read and shows the reason for reje
     page.getByRole('button', { name: 'Cancelar doação' }),
   ).toHaveCount(0);
 });
+
+test('only a resolved empty history invites the first donation', async ({ page }) => {
+  let release;
+  const ready = new Promise(resolve => { release = resolve; });
+  await page.route('**/api/v1/me/donations?*', async route => {
+    await ready;
+    await route.fulfill({ json: { items: [], total: 0, page: 1, pageSize: 10 } });
+  });
+  await page.goto('/minhas-doacoes');
+  await expect(page.getByText('Carregando suas doações…')).toBeVisible();
+  const empty = page.getByRole('heading', { name: 'Você ainda não fez uma doação' });
+  await expect(empty).toHaveCount(0);
+  release();
+  await expect(empty).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Doar um material' })).toHaveAttribute('href', '/doar');
+});
+
+test('a lost donation response keeps the form and offers history before another submission', async ({ page }) => {
+  let posts = 0;
+  await page.route('**/api/v1/institutions?*', route =>
+    route.fulfill({ json: { items: [institution], total: 1, page: 1, pageSize: 50 } }));
+  await page.route('**/api/v1/donations', route => {
+    posts++;
+    return route.abort('connectionreset');
+  });
+  await page.goto('/doar');
+  await page.getByLabel('Título do material').fill(material.title);
+  await page.getByLabel('Descrição', { exact: true }).fill(material.description);
+  await page.getByLabel('Categoria', { exact: true }).selectOption('BOOK');
+  await page.getByLabel('Condição', { exact: true }).selectOption('GOOD');
+  await page.getByLabel('Instituição', { exact: true }).selectOption(institution.id);
+  await page.getByRole('button', { name: 'Cadastrar doação' }).click();
+  await expect(page.getByRole('alert')).toContainText('Não foi possível confirmar');
+  await expect(page.getByRole('link', { name: 'Conferir histórico em outra aba' })).toHaveAttribute('href', '/minhas-doacoes');
+  await expect(page.getByText('Doação cadastrada', { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('Título do material')).toHaveValue(material.title);
+  expect(posts).toBe(1);
+});
+
+
+for (const width of [320, 390, 768, 1440]) {
+  test('long donation records wrap at ' + width + 'px', async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const suffix = 'x'.repeat(65);
+    const record = {
+      ...material,
+      title: 'Atlas ' + suffix,
+      institution: { ...institution, name: 'Instituto ' + suffix, publicAddress: 'Alameda ' + suffix },
+      status: 'REJECTED',
+      rejectReason: 'Faltam páginas do capítulo ' + suffix,
+    };
+    await page.route('**/api/v1/me/donations?*', route =>
+      route.fulfill({ json: { items: [record], total: 1, page: 1, pageSize: 10 } }));
+    await page.goto('/minhas-doacoes');
+    await expect(page.getByText(record.rejectReason, { exact: false })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Cancelar doação' })).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const audit = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+    expect(audit.violations.map(violation => violation.id)).toEqual([]);
+  });
+}

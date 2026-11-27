@@ -365,3 +365,12 @@
     transition: none;
   }
 }
+
+.detail .reservation-action[data-confirmed='true'] {
+  border-top: 3px solid var(--forest);
+  border-bottom: 1px dashed var(--forest);
+  background: var(--paper);
+  padding: clamp(16px, 2vw, 26px);
+  overflow-wrap: anywhere;
+}
+.detail .reservation-action h2 { font: 450 1.8rem/1.1 var(--serif); }

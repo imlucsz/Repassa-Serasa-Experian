@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
-  BookOpen,
   Clock3,
   Copy,
   MapPin,
@@ -18,6 +17,7 @@ import {
 } from '../data/myReservations';
 import { OperationError } from '../data/operations';
 import { MaterialCover } from '../components/MaterialCover';
+import { EmptyHistory } from '../components/EmptyHistory';
 import './donations.css';
 import './reservations.css';
 
@@ -128,7 +128,7 @@ function ReservationRow({
 
   return (
     <li>
-      <article className="reservation-row" aria-labelledby={'title-' + item.id}>
+      <article data-status={status} className="reservation-row" aria-labelledby={'title-' + item.id}>
         <div className="reservation-material">
           <div className="reservation-jacket">
             <MaterialCover material={material} showPhoto={false} />
@@ -166,8 +166,12 @@ function ReservationRow({
             {active && <p>{institution.pickupInstructions}</p>}
           </div>
         </div>
+        {status === 'EXPIRED' && (
+          <p className="reservation-closed">O prazo terminou em {spDate.format(new Date(expires))}. Consulte o acervo para uma nova reserva.</p>
+        )}
         {active && (
           <div className="reservation-ticket">
+            <p className="eyebrow">Ficha de retirada</p>
             <p className="reservation-deadline">
               <Clock3 size={16} aria-hidden="true" /> {timeRemaining(remaining)}
             </p>
@@ -425,14 +429,9 @@ export function ReservationsPage() {
           <h1 ref={heading} tabIndex={-1}>
             Minhas <em>reservas.</em>
           </h1>
-          <p>
-            Consulte o prazo e apresente o código na instituição para retirar
-            seu material.
-          </p>
+          {Boolean(list?.items.length) && <p>Consulte os pontos de retirada e acompanhe seus prazos.</p>}
         </div>
-        <Link className="button" to="/catalogo">
-          Explorar o acervo <ArrowRight size={16} />
-        </Link>
+
       </header>
       {notice && (
         <p className="donation-notice" role="status">
@@ -451,14 +450,7 @@ export function ReservationsPage() {
           Carregando suas reservas…
         </p>
       ) : list.items.length === 0 ? (
-        <section className="donation-empty">
-          <BookOpen size={32} aria-hidden="true" />
-          <h2>Você ainda não fez uma reserva</h2>
-          <p>
-            Escolha um material disponível no acervo para combinar a retirada na
-            instituição.
-          </p>
-        </section>
+        <EmptyHistory kind="reservation" />
       ) : (
         <>
           <div className="reservation-tools">
@@ -507,6 +499,9 @@ export function ReservationsPage() {
               </button>
             </nav>
           )}
+          <Link className="button reservation-catalog" to="/catalogo">
+            Explorar o acervo <ArrowRight size={16} />
+          </Link>
         </>
       )}
     </div>

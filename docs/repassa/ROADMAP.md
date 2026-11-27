@@ -14,6 +14,7 @@
 | DEV-04 | Devin | reserve/cancel/expiry/pickup/dashboard | DEV-03; real Postgres concurrency/security tests |
 | UX-04 | Codex | reservations, pickup and staff dashboard | UX-03; integrate DEV-04, no fake state |
 | SH-02 | both | integrated E2E + deployment | DEV-04/UX-04; full demo flow, smoke test and error handling — **verified 25/11**: journey 17/17, security 23/23, recovery 3/3 (`tests/live/`, `RUNBOOK.md`, `evidence/sh-02/`); merged PR #25; deploy blockers list owner actions |
+| UX-06.3 | Codex | Históricos, retirada e comprovantes do estudante | UX-06.2 integrada. [Evidência para aprovação](evidence/ux-06-3/HANDOFF.md). |
 | SH-03 | owner/both | polish, freeze, rehearsal | SH-02; admin refinement merged PR #24 — freeze + rehearsal + backup video remain owner steps |
 | RC-01 | Devin | release candidate + ops readiness | SH-02/SH-03 merged; hosted audit vs main, harness rerun on integrated rev, demo provisioning path, GO/NO-GO — `evidence/rc-01/` |
 

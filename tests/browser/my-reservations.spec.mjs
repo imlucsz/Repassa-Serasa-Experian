@@ -258,8 +258,10 @@ test('loading, error and empty states give the student a retry and catalog path'
   });
   await page.goto('/minhas-reservas');
   await expect(page.getByText('Carregando suas reservas…')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Explorar o acervo' })).toHaveCount(0);
   resolve();
   await expect(page.getByRole('alert')).toContainText('indisponível');
+  await expect(page.getByRole('link', { name: 'Explorar o acervo' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Tentar novamente' }).click();
   await expect(
     page.getByRole('heading', { name: 'Você ainda não fez uma reserva' }),
@@ -269,7 +271,7 @@ test('loading, error and empty states give the student a retry and catalog path'
   ).toHaveAttribute('href', '/catalogo');
 });
 
-for (const width of [390, 768, 1440]) {
+for (const width of [320, 390, 768, 1440]) {
   test(
     'history is accessible at ' + width + 'px with reduced motion',
     async ({ page }) => {
@@ -293,3 +295,27 @@ for (const width of [390, 768, 1440]) {
     },
   );
 }
+
+test('leaving the tab conceals the ticket and returning reconciles a completed pickup', async ({ page }) => {
+  let completed = false;
+  await serve(page, {
+    list: route => route.fulfill({ json: pageOf([completed
+      ? { ...active, material: { ...material, status: 'DELIVERED' }, status: 'COMPLETED', completedAt: new Date().toISOString(), pickupCode: null }
+      : active]) }),
+  });
+  await page.goto('/minhas-reservas');
+  await page.getByRole('button', { name: 'Mostrar código' }).click();
+  await expect(page.getByText(active.pickupCode)).toBeVisible();
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await expect(page.getByText(active.pickupCode)).toHaveCount(0);
+  completed = true;
+  await page.evaluate(() => {
+    delete document.hidden;
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await expect(page.getByText('Retirada concluída')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Mostrar código' })).toHaveCount(0);
+});

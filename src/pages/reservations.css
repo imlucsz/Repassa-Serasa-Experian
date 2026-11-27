@@ -106,3 +106,23 @@
     gap: 18px;
   }
 }
+
+.reservation-ticket {
+  border-left: 0;
+  border-top: 3px solid var(--forest);
+  border-bottom: 1px dashed var(--forest);
+  padding: clamp(16px, 2vw, 28px);
+}
+.reservation-ticket > .eyebrow { border-bottom: 1px solid var(--line); padding-bottom: 10px; width: 100%; }
+.reservation-deadline { font: 500 clamp(1.4rem, 2vw, 1.85rem)/1.1 var(--serif); }
+.reservation-status[data-status='EXPIRED'] { background: #f2e1c8; color: #62452c; }
+.reservation-status[data-status='COMPLETED'] { background: var(--forest); color: var(--paper); }
+.reservation-status[data-status='CANCELED'] { background: transparent; border: 1px solid var(--line); }
+.reservation-closed { color: var(--muted); padding-top: 10px; border-top: 1px dashed var(--line); line-height: 1.55; }
+@media (max-width: 600px) {
+  .reservation-point { border-top: 1px solid var(--line); padding-top: 16px; }
+  .reservation-ticket .button { min-height: 44px; }
+}
+
+
+.reservation-catalog { margin-top: 20px; }

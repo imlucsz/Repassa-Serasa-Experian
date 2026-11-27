@@ -311,7 +311,7 @@ test('mobile record shows identity, pickup and reservation together', async ({ p
   await page.evaluate(() => document.fonts.ready);
   for (const item of [
     page.getByRole('heading', { name: 'Botânica ilustrada' }),
-    page.getByText('Disponível para reserva'),
+    page.getByText('Exemplar demonstrativo'),
     page.getByRole('heading', { name: 'Instituto Folha Nova' }),
     page.getByRole('button', { name: 'Reserva indisponível' }),
   ]) await expect(item).toBeInViewport({ ratio: 1 });
