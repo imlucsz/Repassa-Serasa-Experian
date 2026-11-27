@@ -4,7 +4,11 @@ import type { EnvConfig } from '../../src/config/env.validation';
 import { InvalidAccessTokenError, TokenService } from '../../src/auth/token.service';
 
 const SECRET = 'unit-test-secret-key-that-is-32+chars-long!';
-const USER = { id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479', role: 'STUDENT' };
+const USER = {
+  id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+  role: 'STUDENT',
+  passwordHash: '$argon2id$unit-test-hash',
+};
 
 function makeService(secret?: string): TokenService {
   const config = {
@@ -21,6 +25,22 @@ describe('TokenService', () => {
     const claims = await service.verifyAccessToken(token);
     expect(claims.sub).toBe(USER.id);
     expect(claims.role).toBe('STUDENT');
+    expect(claims.credentialVersion).toEqual(expect.any(String));
+    expect(service.matchesPasswordCredential(claims.credentialVersion, USER.passwordHash)).toBe(true);
+    expect(service.matchesPasswordCredential(claims.credentialVersion, '$argon2id$changed-hash')).toBe(false);
+  });
+
+  it('rejects access tokens without the credential-version claim', async () => {
+    const service = makeService(SECRET);
+    const legacy = await new SignJWT({ role: USER.role })
+      .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+      .setSubject(USER.id)
+      .setIssuer('repassa-api')
+      .setAudience('repassa-web')
+      .setIssuedAt()
+      .setExpirationTime(Math.floor(Date.now() / 1000) + 900)
+      .sign(new TextEncoder().encode(SECRET));
+    await expect(service.verifyAccessToken(legacy)).rejects.toBeInstanceOf(InvalidAccessTokenError);
   });
 
   it('rejects expired tokens', async () => {

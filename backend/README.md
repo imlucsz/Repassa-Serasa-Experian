@@ -33,8 +33,9 @@ Tests run in Jest ESM mode (`node --experimental-vm-modules`) because `@nestjs/*
 
 ## Auth model (DEV-02)
 
-- Access: short-lived HS256 JWT (default 900 s), issuer `repassa-api`, audience `repassa-web`. `JWT_ACCESS_SECRET` (>=32 chars) is **required in production**; dev/test generates an ephemeral per-process key and logs a warning.
+- Access: short-lived HS256 JWT (default 900 s), issuer `repassa-api`, audience `repassa-web`. `JWT_ACCESS_SECRET` (>=32 chars) is **required in production**; dev/test generates an ephemeral per-process key and logs a warning. Each token carries a keyed credential fingerprint (`pcv`); changing the password hash invalidates previously issued access tokens immediately on the credential check.
 - Refresh: opaque 256-bit token in the `repassa_refresh` cookie — `HttpOnly`, `SameSite=Lax`, `Path=/api/v1/auth`, `Max-Age` = `REFRESH_TOKEN_TTL_DAYS` (default 7). Only a SHA-256 digest is stored. Rotation is atomic (`SELECT ... FOR UPDATE`); re-presenting a rotated/revoked token revokes the whole session family and writes an `auth.refresh_reuse` audit event — clients must single-flight refresh.
+- Login verifies Argon2 outside the row lock, then re-reads the credential and creates the refresh session under `FOR UPDATE`; this serializes with administrative password reset without holding a user row locked during hashing.
 - CSRF: all `/auth/*` POSTs require `X-Repassa-Request: 1`; a present `Origin` must be in `ALLOWED_ORIGINS`; JSON content-type enforced by Fastify. Private responses carry `Cache-Control: no-store`.
 - Rate limits (in-memory fixed window, single replica): login 5/min per IP+email and 30/min per IP; register 5/min per IP+email and 10/min per IP; refresh/logout 60/min per IP. IPv6 collapses to /64.
 - Roles are read from the database on every request — never trusted from the JWT. Public registration always creates `STUDENT`; staff/membership is seed/provisioning-only.
@@ -68,3 +69,6 @@ Release step: `npm run db:migrate:deploy` (roll-forward only; never `db push`/`m
 | `npm run db:migrate:deploy` | apply committed migrations (CI/prod-safe, roll-forward only) |
 | `npm run db:seed` | idempotent synthetic seed; `SEED_DEMO_PASSWORD` opt-in demo credentials |
 | `npm run db:up` / `db:down` | docker compose Postgres 16 |
+| `DATABASE_URL=... npx tsx scripts/reset-password.ts` | interactive out-of-band password reset for an existing account; hidden password entry, remote-target confirmation, session revocation verification and `admin.password_reset` audit. Never pipe the password or commit real connection strings |
+
+Operational note: the immediate access-token invalidation guarantee applies once the API is running a build that includes the credential-fingerprint check. If the reset is executed against a database serving an older API revision, refresh sessions are still revoked, but already issued access tokens remain valid until their normal expiry (default at most 15 minutes).

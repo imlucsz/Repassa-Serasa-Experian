@@ -60,10 +60,10 @@ export class AuthService {
     this.rateLimit.assertAllowed(`register:ip:${clientIp}`, REGISTER_PER_IP.limit, REGISTER_PER_IP.windowMs);
 
     const passwordHash = await hashPassword(dto.password);
-    let user: User;
+    let registered: { user: User; refreshToken: string };
     try {
-      user = await this.prisma.$transaction(async (tx) => {
-        const created = await tx.user.create({
+      registered = await this.prisma.$transaction(async (tx) => {
+        const user = await tx.user.create({
           data: {
             email,
             displayName: dto.displayName.trim(),
@@ -72,9 +72,10 @@ export class AuthService {
           },
         });
         await tx.auditEvent.create({
-          data: { actorId: created.id, action: 'auth.register' },
+          data: { actorId: user.id, action: 'auth.register' },
         });
-        return created;
+        const refreshToken = await this.sessions.createSession(user.id, tx);
+        return { user, refreshToken };
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -82,7 +83,7 @@ export class AuthService {
       }
       throw error;
     }
-    return this.issue(user);
+    return this.issue(registered.user, registered.refreshToken);
   }
 
   /** All active roles. Generic failure for unknown/disabled/bad password. */
@@ -91,20 +92,41 @@ export class AuthService {
     this.rateLimit.assertAllowed(`login:id:${clientIp}:${email}`, LOGIN_PER_IDENTITY.limit, LOGIN_PER_IDENTITY.windowMs);
     this.rateLimit.assertAllowed(`login:ip:${clientIp}`, LOGIN_PER_IP.limit, LOGIN_PER_IP.windowMs);
 
-    const user = await this.prisma.user.findUnique({ where: { email } });
     // Constant-work path for unknown accounts: same Argon2 verify cost either
     // way, and disabled accounts still pay it — no enumeration via timing.
-    const passwordOk = user
-      ? await verifyPassword(user.passwordHash, dto.password)
+    // Verification runs outside the row lock; the locked re-read below serializes
+    // session creation with administrative password reset.
+    const existing = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true, passwordHash: true },
+    });
+    const passwordOk = existing
+      ? await verifyPassword(existing.passwordHash, dto.password)
       : (await verifyAgainstDummyHash(dto.password), false);
-
-    if (!user || !passwordOk || !user.isActive) {
+    if (!existing || !passwordOk) {
       throw new UnauthorizedException(INVALID_CREDENTIALS);
     }
-    await this.prisma.auditEvent.create({
-      data: { actorId: user.id, action: 'auth.login' },
+
+    const authenticated = await this.prisma.$transaction(async (tx) => {
+      const rows = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT id
+          FROM "users"
+         WHERE email = ${email}
+         FOR UPDATE`;
+      if (!rows[0]) throw new UnauthorizedException(INVALID_CREDENTIALS);
+
+      const user = await tx.user.findUniqueOrThrow({ where: { id: rows[0].id } });
+      if (user.passwordHash !== existing.passwordHash || !user.isActive) {
+        throw new UnauthorizedException(INVALID_CREDENTIALS);
+      }
+
+      const refreshToken = await this.sessions.createSession(user.id, tx);
+      await tx.auditEvent.create({
+        data: { actorId: user.id, action: 'auth.login' },
+      });
+      return { user, refreshToken };
     });
-    return this.issue(user);
+    return this.issue(authenticated.user, authenticated.refreshToken);
   }
 
   /** Rotates the refresh session; re-validates the account server-side. */
@@ -133,13 +155,10 @@ export class AuthService {
     }
   }
 
-  private async issue(user: User, refreshToken?: string): Promise<IssuedAuth> {
+  private async issue(user: User, refreshToken: string): Promise<IssuedAuth> {
     const ttlSeconds = this.config.get('accessTokenTtlSeconds', { infer: true });
-    const [accessToken, refresh] = await Promise.all([
-      this.tokens.signAccessToken(user, ttlSeconds),
-      refreshToken ? Promise.resolve(refreshToken) : this.sessions.createSession(user.id),
-    ]);
-    return { user, accessToken, refreshToken: refresh, expiresIn: ttlSeconds };
+    const accessToken = await this.tokens.signAccessToken(user, ttlSeconds);
+    return { user, accessToken, refreshToken, expiresIn: ttlSeconds };
   }
 }
 
