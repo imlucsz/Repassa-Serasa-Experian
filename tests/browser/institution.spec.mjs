@@ -31,10 +31,20 @@ test('staff confirm physical receipt and give a reason before rejecting a donati
     '0bf41fdb-feb3-49d4-9129-190bf1afd24d',
     'Notas de campo',
   );
+  atlas.imageUrl = '/api/v1/uploads/4912e501-d578-47c0-bf62-009bc1109d57.png';
   const items = [atlas, notes];
   const posts = [];
   const base = '/institutions/' + north.id + '/materials';
   await staffSession(page, async (route, path, params) => {
+    if (path.startsWith('/uploads/')) {
+      return route.fulfill({
+        contentType: 'image/png',
+        body: Buffer.from(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+          'base64',
+        ),
+      });
+    }
     if (route.request().method() === 'GET') {
       expect(path).toBe(base);
       expect(params.get('status')).toBe('PENDING_RECEIPT');
@@ -66,12 +76,15 @@ test('staff confirm physical receipt and give a reason before rejecting a donati
     return route.fulfill({ json: notes });
   });
   await page.goto('/instituicao/recebimentos');
+  const photo = page.getByRole('img', { name: 'Foto de ' + atlas.title });
+  await expect(photo).toHaveCount(1);
   const receive = page
     .getByRole('listitem')
     .filter({ hasText: atlas.title })
     .getByRole('button', { name: 'Receber' });
   await receive.click();
   let dialog = page.getByRole('dialog');
+  await expect(photo).toHaveCount(2);
   await dialog.getByRole('button', { name: 'Confirmar recebimento' }).click();
   await expect(dialog).toBeVisible();
   expect(posts).toHaveLength(0);

@@ -31,6 +31,7 @@ import {
   type ManagedMaterial,
   type MaterialStatus,
 } from '../data/operations';
+import { ProtectedMaterialImage } from '../components/ProtectedMaterialImage';
 import { Field } from '../ui/Field';
 import { PickupDesk } from './PickupDesk';
 import './institution.css';
@@ -367,6 +368,10 @@ function DecisionDialog({
           <br />
           {material.institution.name}
         </p>
+        <ProtectedMaterialImage
+          material={material}
+          className="inst-dialog-image"
+        />
         {receiving ? (
           <label className="inst-check">
             <input type="checkbox" required />
@@ -535,6 +540,12 @@ function MaterialList({
                 <ul className="inst-list">
                   {page.items.map((item) => (
                     <li key={item.id}>
+                      {receipts && (
+                        <ProtectedMaterialImage
+                          material={item}
+                          className="inst-review-image"
+                        />
+                      )}
                       <div className="inst-material">
                         <p className="meta">{categoryLabels[item.category]}</p>
                         <h2>{item.title}</h2>
