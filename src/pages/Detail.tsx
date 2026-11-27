@@ -147,25 +147,15 @@ function MaterialDetail({
       >
         <ArrowLeft size={17} /> Voltar ao acervo
       </Link>
-      <div className="detail-layout detail-editorial">
-        <div className="detail-board">
-          <div className="detail-cover">
-            <MaterialCover material={material} />
-          </div>
-        </div>
-        <div className="detail-content">
+      <div className="detail-editorial">
+        <header className="record-heading">
           <p className="eyebrow">
             <span className="ink-rule" />{' '}
             {isDemo ? 'Acervo demonstrativo' : 'Acervo público'} /{' '}
             {categoryLabels[material.category]}
           </p>
           <h1>{material.title}</h1>
-          <p className="detail-description">{material.description}</p>
-          <dl>
-            <div>
-              <dt>Condição</dt>
-              <dd>{conditionLabels[material.condition]}</dd>
-            </div>
+          <dl className="record-facts">
             <div>
               <dt>Disponibilidade</dt>
               <dd>
@@ -178,53 +168,66 @@ function MaterialDetail({
                     : 'Disponível para reserva'}
               </dd>
             </div>
+            <div>
+              <dt>Condição</dt>
+              <dd>{conditionLabels[material.condition]}</dd>
+            </div>
           </dl>
-          <section className="pickup">
-            <h2>
-              <MapPin size={20} /> Ponto de retirada
-            </h2>
-            <h3>{material.institution.name}</h3>
-            <p>{material.institution.publicAddress}</p>
-            <p>{material.institution.pickupInstructions}</p>
-          </section>
-          <div className="reservation-action" ref={reservationAction}>
-            {confirmed ? (
-              <Link
-                ref={historyLink}
-                className="button primary"
-                to="/minhas-reservas"
-              >
-                Ver minhas reservas{' '}
-                <ArrowUpRight size={18} aria-hidden="true" />
-              </Link>
-            ) : (
-              <button
-                className="button primary"
-                type="button"
-                onClick={() => void reserve()}
-                disabled={!canReserve || pending || unavailable}
-              >
-                {action} <ArrowUpRight size={18} aria-hidden="true" />
-              </button>
-            )}
-            <p role="status">{message}</p>
-            {confirmed && !expired && (
-              <p>
-                Retire até{' '}
-                <time dateTime={confirmed.expiresAt}>
-                  {deadline.format(new Date(confirmed.expiresAt))}
-                </time>{' '}
-                (horário de São Paulo).
-              </p>
-            )}
-            {(unavailable || checkOnly) && user?.role === 'STUDENT' && (
-              <Link ref={historyLink} className="back" to="/minhas-reservas">
-                Ver minhas reservas{' '}
-                <ArrowUpRight size={16} aria-hidden="true" />
-              </Link>
-            )}
+        </header>
+        <div className="detail-board">
+          <div className="detail-cover">
+            <MaterialCover material={material} />
           </div>
         </div>
+        <section className="pickup">
+          <h2>
+            <MapPin size={16} aria-hidden="true" /> Ponto de retirada
+          </h2>
+          <h3>{material.institution.name}</h3>
+          <p>{material.institution.publicAddress}</p>
+          <p>{material.institution.pickupInstructions}</p>
+        </section>
+        <div className="reservation-action" ref={reservationAction}>
+          {confirmed ? (
+            <Link
+              ref={historyLink}
+              className="button primary"
+              to="/minhas-reservas"
+            >
+              Ver minhas reservas{' '}
+              <ArrowUpRight size={18} aria-hidden="true" />
+            </Link>
+          ) : (
+            <button
+              className="button primary"
+              type="button"
+              onClick={() => void reserve()}
+              disabled={!canReserve || pending || unavailable}
+            >
+              {action} <ArrowUpRight size={18} aria-hidden="true" />
+            </button>
+          )}
+          <p role="status">{message}</p>
+          {confirmed && !expired && (
+            <p>
+              Retire até{' '}
+              <time dateTime={confirmed.expiresAt}>
+                {deadline.format(new Date(confirmed.expiresAt))}
+              </time>{' '}
+              (horário de São Paulo).
+            </p>
+          )}
+          {(unavailable || checkOnly) && user?.role === 'STUDENT' && (
+            <Link ref={historyLink} className="back" to="/minhas-reservas">
+              Ver minhas reservas{' '}
+              <ArrowUpRight size={16} aria-hidden="true" />
+            </Link>
+          )}
+        </div>
+        <section className="record-notes">
+          <h2>Sobre o material</h2>
+          <p className="detail-description">{material.description}</p>
+        </section>
       </div>
     </article>
   );

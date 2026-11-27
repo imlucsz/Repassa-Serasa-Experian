@@ -302,3 +302,18 @@ test('clicking the active cover navigates exactly once', async ({ page }) => {
     shelf.getByRole('heading', { name: 'Botânica ilustrada' }),
   ).toBeVisible();
 });
+
+test('mobile record shows identity, pickup and reservation together', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(detail);
+  await page.locator('.detail-cover').waitFor();
+  await page.evaluate(() => document.fonts.ready);
+  for (const item of [
+    page.getByRole('heading', { name: 'Botânica ilustrada' }),
+    page.getByText('Disponível para reserva'),
+    page.getByRole('heading', { name: 'Instituto Folha Nova' }),
+    page.getByRole('button', { name: 'Reserva indisponível' }),
+  ]) await expect(item).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole('button', { name: 'Reserva indisponível' })).toBeDisabled();
+});
