@@ -249,3 +249,118 @@ test('solicitação sem resposta permite consultar novamente sem repetir o POST'
   await expect(page.getByText(reservation.pickupCode)).toHaveCount(0);
   expect({ posts, reads }).toEqual({ posts: 1, reads: 2 });
 });
+
+for (const role of ['STAFF', 'ADMIN']) {
+  test(role + ' pode consultar o material sem reservá-lo', async ({ page }) => {
+    await page.route('**/api/v1/auth/refresh', (route) => route.fulfill({
+      json: { user: { ...user, role }, accessToken: 'test_session', expiresIn: 900 },
+    }));
+    await page.route('**/materials/' + id, (route) => route.fulfill({ json: material }));
+    await page.goto(detail);
+    await expect(page.getByRole('button', { name: 'Reserva indisponível' })).toBeDisabled();
+    await expect(page.getByText('Somente estudantes podem reservar materiais.')).toBeVisible();
+  });
+}
+
+test('keyboard reservation keeps one request, transfers focus and expires in place', async ({ page }) => {
+  const now = new Date('2026-11-27T14:00:00Z');
+  const expiresAt = '2026-11-27T14:05:00Z';
+  await page.clock.install({ time: now });
+  await page.route('**/api/v1/auth/refresh', (route) => route.fulfill({
+    json: { user, accessToken: 'test_session', expiresIn: 900 },
+  }));
+  await page.route('**/materials/' + id, (route) => route.fulfill({ json: material }));
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  let posts = 0;
+  await page.route('**/materials/' + id + '/reservations', async (route) => {
+    posts++;
+    await gate;
+    await route.fulfill({ status: 201, json: {
+      id: user.id, status: 'ACTIVE', material: { ...material, status: 'RESERVED' },
+      createdAt: now.toISOString(), expiresAt, completedAt: null, pickupCode: null,
+    } });
+  });
+  await page.goto(detail);
+  await page.getByRole('link', { name: 'Voltar ao acervo' }).focus();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Reservar este material' })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('button', { name: 'Consultando…' })).toBeDisabled();
+  await page.keyboard.press('Enter');
+  release();
+  await expect(page.getByRole('link', { name: 'Ver minhas reservas' })).toBeFocused();
+  await expect(page.locator('time')).toHaveText(/11:05/);
+  await page.clock.fastForward('05:01');
+  await expect(page.getByText('Prazo encerrado', { exact: true })).toBeVisible();
+  await expect(page.locator('time')).toHaveCount(0);
+  expect(posts).toBe(1);
+});
+
+test('long records reflow with a supplied image and with a failed upload', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  const imageUrl = '/api/v1/uploads/' + id + '.jpg';
+  const record = {
+    ...material, category: 'SUPPLIES', condition: 'FAIR', imageUrl,
+    title: 'Conjunto de materiais para desenho e composição geométrica',
+    description: material.description.repeat(15),
+    institution: { ...material.institution, name: 'Biblioteca' + 'Universitária'.repeat(7),
+      pickupInstructions: material.institution.pickupInstructions.repeat(12) },
+  };
+  await page.route('**/api/v1/auth/refresh', (route) => route.fulfill({ status: 401, json: {} }));
+  await page.route('**/materials/' + id, (route) => route.fulfill({ json: record }));
+  await page.route('**' + imageUrl, (route) => route.fulfill({
+    path: 'public/brand/livros-mobile.webp', contentType: 'image/webp',
+  }));
+  await page.goto(detail);
+  const photo = page.locator('.detail-cover img');
+  await expect.poll(() => photo.evaluate((img) => img.naturalWidth)).toBeGreaterThan(0);
+  await expect(page.getByRole('heading', { name: record.title })).toBeVisible();
+  await expect(page.getByRole('heading', { name: record.institution.name })).toBeVisible();
+  await expect(page.getByText(record.description, { exact: true })).toBeVisible();
+  await expect(page.getByText(record.institution.pickupInstructions)).toBeVisible();
+  await expect(page.getByText('Com marcas de uso')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+  await page.route('**' + imageUrl, (route) => route.fulfill({ status: 404 }));
+  await page.reload();
+  await expect(photo).toHaveAttribute('hidden', '');
+  await expect(page.locator('.detail-cover [data-artwork="tools"] .jacket-art')).toBeVisible();
+});
+
+test('leaving the detail cancels an in-flight reservation', async ({ page }) => {
+  await page.route('**/api/v1/auth/refresh', (route) => route.fulfill({
+    json: { user, accessToken: 'test_session', expiresIn: 900 },
+  }));
+  await page.route('**/materials/' + id, (route) => route.fulfill({ json: material }));
+  await page.route('**/api/v1/materials?*', (route) => route.fulfill({
+    json: { items: [], page: 1, pageSize: 24, total: 0 },
+  }));
+  await page.route('**/api/v1/institutions*', (route) => route.fulfill({
+    json: { items: [], page: 1, pageSize: 50, total: 0 },
+  }));
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  await page.route('**/materials/' + id + '/reservations', async (route) => {
+    await gate;
+    await route.fulfill({ status: 409, json: {} });
+  });
+  await page.addInitScript(() => {
+    const fetchRequest = window.fetch.bind(window);
+    window.fetch = (input, init) => {
+      if (input instanceof Request && input.url.endsWith('/reservations') && input.method === 'POST') {
+        window.reservationSignal = input.signal;
+      }
+      return fetchRequest(input, init);
+    };
+  });
+  await page.goto(detail);
+  await page.getByRole('button', { name: 'Reservar este material' }).click();
+  await expect(page.getByRole('button', { name: 'Consultando…' })).toBeDisabled();
+  try {
+    await page.getByRole('link', { name: 'Voltar ao acervo' }).click();
+    await expect(page).toHaveURL(/\/catalogo$/);
+    await expect.poll(() => page.evaluate(() => window.reservationSignal?.aborted)).toBe(true);
+  } finally {
+    release();
+  }
+});
