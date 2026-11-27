@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SignJWT, jwtVerify } from 'jose';
@@ -13,12 +13,18 @@ export class InvalidAccessTokenError extends Error {}
 export interface AccessTokenClaims {
   sub: string;
   role: string;
+  /** Keyed fingerprint of the password hash current when the token was issued. */
+  credentialVersion: string;
 }
+
+const PASSWORD_CREDENTIAL_CLAIM = 'pcv';
+const PASSWORD_CREDENTIAL_DOMAIN = 'repassa-password-credential-v1\0';
 
 @Injectable()
 export class TokenService {
   private readonly logger = new Logger(TokenService.name);
   private readonly key: Uint8Array;
+  private readonly credentialKey: Uint8Array;
 
   constructor(config: ConfigService<EnvConfig, true>) {
     const secret = config.get('jwtAccessSecret', { infer: true });
@@ -33,11 +39,20 @@ export class TokenService {
         'JWT_ACCESS_SECRET not set; using an ephemeral per-process signing key (dev/test only).',
       );
     }
+    this.credentialKey = createHmac('sha256', this.key)
+      .update('repassa-credential-hmac-key-v1')
+      .digest();
   }
 
   /** Signs a short-lived HS256 access token. `ttlSeconds` may be negative for tests. */
-  async signAccessToken(user: { id: string; role: string }, ttlSeconds: number): Promise<string> {
-    return new SignJWT({ role: user.role })
+  async signAccessToken(
+    user: { id: string; role: string; passwordHash: string },
+    ttlSeconds: number,
+  ): Promise<string> {
+    return new SignJWT({
+      role: user.role,
+      [PASSWORD_CREDENTIAL_CLAIM]: this.passwordCredentialVersion(user.passwordHash),
+    })
       .setProtectedHeader({ alg: ALGORITHM, typ: 'JWT' })
       .setSubject(user.id)
       .setIssuer(ISSUER)
@@ -47,7 +62,7 @@ export class TokenService {
       .sign(this.key);
   }
 
-  /** Verifies signature, algorithm pin, issuer, audience and expiry. */
+  /** Verifies signature, algorithm pin, issuer, audience, expiry and required claims. */
   async verifyAccessToken(token: string): Promise<AccessTokenClaims> {
     try {
       const { payload } = await jwtVerify(token, this.key, {
@@ -55,14 +70,37 @@ export class TokenService {
         issuer: ISSUER,
         audience: AUDIENCE,
       });
-      if (typeof payload.sub !== 'string' || typeof payload.role !== 'string') {
+      const credentialVersion = payload[PASSWORD_CREDENTIAL_CLAIM];
+      if (
+        typeof payload.sub !== 'string' ||
+        typeof payload.role !== 'string' ||
+        typeof credentialVersion !== 'string'
+      ) {
         throw new InvalidAccessTokenError('missing claims');
       }
-      return { sub: payload.sub, role: payload.role };
+      return { sub: payload.sub, role: payload.role, credentialVersion };
     } catch (error) {
       if (error instanceof InvalidAccessTokenError) throw error;
       throw new InvalidAccessTokenError('invalid token');
     }
+  }
+
+  /**
+   * Compares the token credential fingerprint with the user's current password
+   * hash. The fingerprint is an HMAC keyed by the server-only JWT secret, so the
+   * visible JWT claim is neither the password hash nor an offline password verifier.
+   */
+  matchesPasswordCredential(credentialVersion: string, passwordHash: string): boolean {
+    const expected = Buffer.from(this.passwordCredentialVersion(passwordHash), 'utf8');
+    const actual = Buffer.from(credentialVersion, 'utf8');
+    return actual.length === expected.length && timingSafeEqual(actual, expected);
+  }
+
+  private passwordCredentialVersion(passwordHash: string): string {
+    return createHmac('sha256', this.credentialKey)
+      .update(PASSWORD_CREDENTIAL_DOMAIN)
+      .update(passwordHash, 'utf8')
+      .digest('base64url');
   }
 
   /** 256-bit cryptographically random opaque refresh token. */

@@ -39,9 +39,12 @@ export class SessionService {
   }
 
   /** Opens a new session family (register/login). Returns the raw refresh token. */
-  async createSession(userId: string): Promise<string> {
+  async createSession(
+    userId: string,
+    db: Prisma.TransactionClient | PrismaService = this.prisma,
+  ): Promise<string> {
     const token = this.tokens.generateRefreshToken();
-    await this.prisma.refreshSession.create({
+    await db.refreshSession.create({
       data: {
         userId,
         familyId: randomUUID(),
@@ -68,6 +71,22 @@ export class SessionService {
     const now = new Date();
 
     const result = await this.prisma.$transaction<RotationOutcome>(async (tx) => {
+      const candidate = await tx.refreshSession.findUnique({
+        where: { tokenHash: hash },
+        select: { userId: true },
+      });
+      if (!candidate) return { outcome: 'invalid' };
+
+      // Session creation takes a PostgreSQL key-share lock on the referenced
+      // user. Lock user before session here as well so rotation cannot deadlock
+      // with login/admin reset paths that lock the user before sessions.
+      const userRows = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT id
+          FROM "users"
+         WHERE id = ${candidate.userId}::uuid
+         FOR UPDATE`;
+      if (!userRows[0]) return { outcome: 'invalid' };
+
       const rows = await tx.$queryRaw<LockedSessionRow[]>`
         SELECT id,
                user_id AS "userId",

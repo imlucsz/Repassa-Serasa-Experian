@@ -58,17 +58,18 @@ describe('Admin endpoints (e2e, real Postgres)', () => {
     role: Role,
     isActive = true,
   ): Promise<{ id: string }> {
+    const passwordHash = await hashPassword(PASSWORD);
     const user = await prisma.user.create({
-      data: { email, displayName: 'Pessoa Teste', passwordHash: await hashPassword(PASSWORD), role, isActive },
+      data: { email, displayName: 'Pessoa Teste', passwordHash, role, isActive },
       select: { id: true },
     });
-    identityByEmail.set(email, { id: user.id, role });
+    identityByEmail.set(email, { id: user.id, role, passwordHash });
     return user;
   }
 
   // Mint real access tokens in-process — /auth/login is IP-throttled and
   // already covered by its own spec.
-  const identityByEmail = new Map<string, { id: string; role: string }>();
+  const identityByEmail = new Map<string, { id: string; role: string; passwordHash: string }>();
 
   function accessTokenFor(email: string): Promise<string> {
     const identity = identityByEmail.get(email);

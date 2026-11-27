@@ -24,7 +24,7 @@ export class AccessTokenGuard implements CanActivate {
     const match = BEARER_PATTERN.exec(request.headers.authorization ?? '');
     if (!match) throw new UnauthorizedException(UNAUTHENTICATED);
 
-    let claims: { sub: string; role: string };
+    let claims: { sub: string; role: string; credentialVersion: string };
     try {
       claims = await this.tokens.verifyAccessToken(match[1]);
     } catch {
@@ -32,7 +32,13 @@ export class AccessTokenGuard implements CanActivate {
     }
 
     const user = await this.prisma.user.findUnique({ where: { id: claims.sub } });
-    if (!user || !user.isActive) throw new UnauthorizedException(UNAUTHENTICATED);
+    if (
+      !user ||
+      !user.isActive ||
+      !this.tokens.matchesPasswordCredential(claims.credentialVersion, user.passwordHash)
+    ) {
+      throw new UnauthorizedException(UNAUTHENTICATED);
+    }
 
     request.user = {
       id: user.id,

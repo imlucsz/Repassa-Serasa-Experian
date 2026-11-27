@@ -29,16 +29,17 @@ describe('Admin concurrency (e2e, real Postgres)', () => {
   });
 
   beforeEach(async () => {
+    const passwordHash = await hashPassword(PASSWORD);
     const user = await prisma.user.create({
       data: {
         email: 'admin@t.dev',
         displayName: 'Admin',
-        passwordHash: await hashPassword(PASSWORD),
+        passwordHash,
         role: 'ADMIN',
       },
       select: { id: true },
     });
-    const token = await tokenService.signAccessToken({ id: user.id, role: 'ADMIN' }, 900);
+    const token = await tokenService.signAccessToken({ id: user.id, role: 'ADMIN', passwordHash }, 900);
     admin = { id: user.id, token };
   });
 

@@ -90,7 +90,8 @@ describe('Profile /me (e2e, real Postgres)', () => {
 
     it('rejects an expired access token', async () => {
       const { userId } = await createUserAndToken('expired-jwt@example.com');
-      const expired = await tokenService.signAccessToken({ id: userId, role: 'STUDENT' }, -60);
+      const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+      const expired = await tokenService.signAccessToken(user, -60);
       const res = await req('GET', '/api/v1/me', {
         headers: { authorization: `Bearer ${expired}` },
       });

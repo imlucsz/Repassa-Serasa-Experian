@@ -72,7 +72,7 @@ describe('Reservations and pickup lifecycle (e2e, real Postgres)', () => {
   async function tokenFor(email: string): Promise<string> {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) throw new Error(`test user ${email} not found`);
-    return tokens.signAccessToken({ id: user.id, role: user.role }, 900);
+    return tokens.signAccessToken(user, 900);
   }
 
   const auth = (token: string) => ({ ...JSON_HEADERS, authorization: `Bearer ${token}` });

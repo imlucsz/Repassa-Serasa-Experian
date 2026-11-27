@@ -39,6 +39,33 @@ DATABASE_URL=<target> npx tsx backend/scripts/provision-admin.ts \
 - Writes `admin.provision` to the audit trail.
 - First login: admin lands on `/admin`; rotate to a personal password if a change flow exists, otherwise keep the generated one (≥20 chars).
 
+### Out-of-band password reset (existing account)
+
+Use only for an owner-approved operational reset. This mutates one existing account; it does not seed data and does not run migrations.
+
+PowerShell on Windows (recommended terminal so hidden input is a real TTY):
+
+```powershell
+cd backend
+$env:DATABASE_URL = [System.Net.NetworkCredential]::new('', (Read-Host 'DATABASE_URL' -AsSecureString)).Password
+npx tsx scripts/reset-password.ts
+Remove-Item Env:DATABASE_URL
+```
+
+POSIX shell:
+
+```bash
+cd backend
+read -s -p 'DATABASE_URL: ' DATABASE_URL; printf '\n'
+export DATABASE_URL
+npx tsx scripts/reset-password.ts
+unset DATABASE_URL
+```
+
+The script prompts for the account email twice, requires typing `REDEFINIR` for a non-local database, reads the new password twice without echoing it, updates only `passwordHash`, revokes all live refresh sessions in the same transaction, verifies that zero unrevoked sessions remain and writes `admin.password_reset` audit metadata (no password/hash/token). Never paste the connection string into chat, tickets or PRs. When the target is Supabase production, use the existing secret value from the approved secret store/dashboard; do not create a new database or run seed.
+
+Immediate invalidation of already issued access tokens requires the API to run the credential-fingerprint revision introduced with this script. Against an older API revision, refresh sessions are revoked but existing access tokens remain valid until normal expiry (default ≤15 minutes).
+
 ## 4. Disposable validation stack (local, never production)
 
 ```
