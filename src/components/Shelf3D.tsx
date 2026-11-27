@@ -63,6 +63,15 @@ function CollectionShelf({ materials }: { materials: Material[] }) {
     let position = target.current;
     let activeBook = getActiveIndex(position, count);
     let width = 0;
+    const last = elements.current.map((book) => ({
+      visibility: '',
+      transform: '',
+      order: '',
+      spineShade: '',
+      coverShade: '',
+      spine: book?.querySelector<HTMLElement>('.book-spine-shade'),
+      cover: book?.querySelector<HTMLElement>('.book-face-shade'),
+    }));
     let dimensions = getTapeDimensions(0);
     let frame = 0;
     let lastTime = 0;
@@ -94,12 +103,34 @@ function CollectionShelf({ materials }: { materials: Material[] }) {
           reduced.matches ? 0 : tilt,
           0,
         );
-        book.style.visibility = transform.visible ? 'visible' : 'hidden';
+        const previous = last[index];
+        const visibility = transform.visible ? 'visible' : 'hidden';
+        if (visibility !== previous.visibility) {
+          book.style.visibility = visibility;
+          previous.visibility = visibility;
+        }
         if (!transform.visible) return;
-        book.style.transform = transform.transformString;
-        book.style.zIndex = String(transform.zIndex);
-        book.style.setProperty('--spine-shade', String(transform.spineShade));
-        book.style.setProperty('--cover-shade', String(transform.coverShade));
+        if (transform.transformString !== previous.transform) {
+          book.style.transform = transform.transformString;
+          previous.transform = transform.transformString;
+        }
+        const order = String(transform.zIndex);
+        if (order !== previous.order) {
+          book.style.zIndex = order;
+          previous.order = order;
+        }
+        // Update the overlay leaves so shading changes don't invalidate inherited
+        // styles on cover artwork and spine text. Three decimals are finer than 8-bit alpha.
+        const spineShade = transform.spineShade.toFixed(3);
+        if (spineShade !== previous.spineShade && previous.spine) {
+          previous.spine.style.opacity = spineShade;
+          previous.spineShade = spineShade;
+        }
+        const coverShade = transform.coverShade.toFixed(3);
+        if (coverShade !== previous.coverShade && previous.cover) {
+          previous.cover.style.opacity = coverShade;
+          previous.coverShade = coverShade;
+        }
       });
       const next = getActiveIndex(position, count);
       if (activeBook !== next) {
@@ -269,6 +300,7 @@ function CollectionShelf({ materials }: { materials: Material[] }) {
                 </div>
                 <b>{item.title}</b>
                 <span>RP</span>
+                <div className="book-spine-shade" />
               </div>
               <div
                 className="book-face"
@@ -278,6 +310,7 @@ function CollectionShelf({ materials }: { materials: Material[] }) {
                 }}
               >
                 <MaterialCover material={item} />
+                <div className="book-face-shade" />
               </div>
             </div>
           ))}

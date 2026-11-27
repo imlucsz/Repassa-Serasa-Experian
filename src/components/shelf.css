@@ -289,7 +289,7 @@
   z-index: 0;
   background: linear-gradient(90deg, #101b1688, #101b1638 45%, #101b1680);
 }
-.book-spine > :not(.spine-photo) {
+.book-spine > :not(.spine-photo, .book-spine-shade) {
   position: relative;
   z-index: 1;
 }
@@ -317,19 +317,18 @@
   padding-top: 5px;
   border-top: 1px solid currentColor;
 }
-.book-spine::after,
-.book-face::after {
-  content: '';
+.book-spine-shade,
+.book-face-shade {
   position: absolute;
   inset: 0;
   background: #121a15;
   pointer-events: none;
 }
-.book-spine::after {
-  opacity: var(--spine-shade, 0);
+.book-spine-shade {
+  opacity: 0;
 }
-.book-face::after {
-  opacity: var(--cover-shade, 0);
+.book-face-shade {
+  opacity: 0.5;
 }
 .shelf-caption {
   display: flex;
