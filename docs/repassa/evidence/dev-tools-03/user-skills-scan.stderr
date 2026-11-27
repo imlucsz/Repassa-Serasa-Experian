@@ -1,0 +1,15 @@
+Multi-skill directory detected: 2 skills found
+
+  [1/2] Scanning graphify (graphify/)
+         Score: 48/100 (MEDIUM)
+
+  [2/2] Scanning impeccable (impeccable/)
+         Score: 100/100 (CRITICAL)
+
+
+═══ Multi-Skill Summary ═══
+
+  Skill                          Score    Severity     Findings   Execution
+  ────────────────────────────── ──────── ──────────── ────────── ──────────
+  graphify                       48       MEDIUM       5          successful
+  impeccable                     100      CRITICAL     28         successful

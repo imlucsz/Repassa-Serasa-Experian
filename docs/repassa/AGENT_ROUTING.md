@@ -42,3 +42,18 @@ In a trusted RePassa checkout, ask Codex for a role by its name and give it the 
 | `refactor-cleaner` | Identify safe behavior-preserving improvements | Read-only |
 
 These profiles adapt the relevant [ECC agent catalog](https://github.com/affaan-m/ECC/tree/4adeee6732a12d1540f49a4d50a38ce8c97f9a53/agents) and native `docs-researcher` role. The remaining upstream language-, platform- and workflow-specific agents fall outside RePassa's current stack or duplicate a role above. The TOML uses the host's model and permissions. Claude agent Markdown and tool lists stay upstream. Browser QA and E2E require the local tools described in [the toolchain](AGENT_TOOLCHAIN.md). Devin can use the linked portable skills directly.
+
+## Fusion operating protocol
+
+Fusion is the native Devin multi-model harness (`/fusion` picker): a frontier **lead** owns the session and a cost-efficient **sidekick** executes delegated work, each with its own cached context. It replaces ad-hoc model routing and external gateways for Devin tasks. See [Cognition's Fusion posts](https://cognition.com/blog/local-fusion) for the architecture.
+
+| Role | Responsibilities |
+| --- | --- |
+| Lead (frontier) | Interpret requirements, set design direction and acceptance criteria, resolve ambiguity, review critical code and actual rendered results, make final technical and aesthetic decisions. Take minimal direct actions; delegate and monitor. |
+| Sidekick (efficient) | Routine exploration, locating components, bounded implementation, terminal commands, routine CSS/TS adjustments, test runs, screenshots, concise evidence back to the lead. |
+
+Every delegation brief carries: task objective, relevant files, allowed write scope, required skills, acceptance criteria and a stopping condition. No full conversation histories, no lead micromanagement, no duplicate reads or repeated testing; the lead reviews sidekick work without redoing it. When the judgment call is the deliverable (subtle intent, design direction), the lead keeps it — delegation backfires there.
+
+Model selection is account-specific: read free/paid status from the `/model` and `/fusion` pickers, never assume. For the initial Home experiment (UX-06.4), the recommended pairing is **lead: Claude Opus 5.5, Medium effort** with **sidekick: SWE-2 Medium, only if the picker shows it as free** on this account; Fast Mode off. The official alternative pairing is **Opus 5.5 + GPT-6 Luna** (Cognition's recommended pair, 68.1 on AA Coding Agent Index at ~31% lower cost than Opus 5.5 alone) — document it for comparison but do not activate another paid model. A paid lead requires the owner's explicit selection and budget approval. For routine tasks prefer an available free standalone model over Fusion.
+
+Do not intercept Fusion's model traffic through OmniRoute, Claude Code Router or any other gateway — Fusion is the orchestration layer; gateways remain separate, owner-approved experiments.
