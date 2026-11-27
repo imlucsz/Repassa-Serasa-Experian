@@ -535,7 +535,7 @@ export function AdminInstitutionDetailPage() {
   }
 
   if (result && 'data' in result && result.data === null)
-    return <StatePanel kind="missing" />;
+    return <StatePanel page kind="missing" />;
 
   return (
     <section className="frame admin-page" aria-labelledby="inst-det-titulo">

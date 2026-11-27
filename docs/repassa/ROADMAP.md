@@ -14,8 +14,13 @@
 | DEV-04 | Devin | reserve/cancel/expiry/pickup/dashboard | DEV-03; real Postgres concurrency/security tests |
 | UX-04 | Codex | reservations, pickup and staff dashboard | UX-03; integrate DEV-04, no fake state |
 | SH-02 | both | integrated E2E + deployment | DEV-04/UX-04; full demo flow, smoke test and error handling — **verified 25/11**: journey 17/17, security 23/23, recovery 3/3 (`tests/live/`, `RUNBOOK.md`, `evidence/sh-02/`); merged PR #25; deploy blockers list owner actions |
-| UX-06.3 | Codex | Históricos, retirada e comprovantes do estudante | UX-06.2 integrada. [Evidência para aprovação](evidence/ux-06-3/HANDOFF.md). |
+| UX-06.3 | Codex | Históricos, retirada e comprovantes do estudante | Integrada no PR #35. [Evidência](evidence/ux-06-3/HANDOFF.md). |
+| UX-07 | Codex / owner | Revisão visual das interfaces restantes | Aprovar o refinamento e decidir sobre a promoção da prévia cinematográfica. |
 | SH-03 | owner/both | polish, freeze, rehearsal | SH-02; admin refinement merged PR #24 — freeze + rehearsal + backup video remain owner steps |
 | RC-01 | Devin | release candidate + ops readiness | SH-02/SH-03 merged; hosted audit vs main, harness rerun on integrated rev, demo provisioning path, GO/NO-GO — `evidence/rc-01/` |
 
-Do not assign 10 overlapping PRs at once. Two agents can run parallel within ownership. Each task leads to PR; close only with evidence. If backend foundation behind schedule, keep UI explicitly mock for development and prioritize auth + donation/receipt + reserve/pickup over secondary pages. Production rollout and paid services separate owner approval.
+## Próximas decisões
+
+1. Revisar a UX-07 e decidir se a Home cinematográfica deve substituir a rota inicial.
+2. Com autorização do responsável, executar a validação integrada na revisão escolhida e conferir os bloqueios de hospedagem descritos em RC-01.
+3. Confirmar a versão de apresentação, ensaiar com os perfis de demonstração e preparar o vídeo de contingência antes de 12/12.

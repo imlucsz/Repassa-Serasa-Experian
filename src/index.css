@@ -433,7 +433,7 @@ h1 em {
 .state-panel > svg {
   color: var(--emerald);
 }
-.state-panel h2 {
+.state-panel :is(h1, h2) {
   font-size: clamp(1.9rem, 4vw, 3rem);
   margin-bottom: 8px;
   letter-spacing: -0.035em;

@@ -134,3 +134,14 @@
     grid-column: 1/-1;
   }
 }
+
+.account-link-short { display: none; }
+@media (max-width: 660px) {
+  .site-header .account-nav[data-role='STUDENT'] {
+    justify-content: space-between;
+    gap: 0 4px;
+  }
+  .site-header .account-nav[data-role='STUDENT'] a { padding-inline: 4px; }
+  .account-nav[data-role='STUDENT'] .account-link-short { display: inline; }
+  .account-nav[data-role='STUDENT'] .account-link-full { display: none; }
+}

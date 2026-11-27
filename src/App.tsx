@@ -19,7 +19,7 @@ const router = createBrowserRouter([
     path: '/',
     Component: Shell,
     errorElement: (
-      <StatePanel kind="error" retry={() => window.location.reload()} />
+      <StatePanel page kind="error" retry={() => window.location.reload()} />
     ),
     hydrateFallbackElement: <StatePanel kind="loading" />,
     children: [
@@ -167,7 +167,7 @@ const router = createBrowserRouter([
           },
         ],
       },
-      { path: '*', element: <StatePanel kind="missing" /> },
+      { path: '*', element: <StatePanel page kind="missing" /> },
     ],
   },
 ]);

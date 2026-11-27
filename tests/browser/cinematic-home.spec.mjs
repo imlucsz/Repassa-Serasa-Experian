@@ -198,7 +198,7 @@ test('retry returns keyboard control to the film after a failed request', async 
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
-test('leaving the preview restores the document metadata on a route without a title', async ({ page }) => {
+test('leaving the preview clears noindex and gives the missing page its own title', async ({ page }) => {
   await page.goto(preview);
   await expect(page).toHaveTitle(/prévia/);
   await page.evaluate(() => {
@@ -206,6 +206,6 @@ test('leaving the preview restores the document metadata on a route without a ti
     dispatchEvent(new PopStateEvent('popstate'));
   });
   await expect(page.locator('.cine-page')).toHaveCount(0);
-  await expect(page).toHaveTitle('RePassa · Conhecimento merece circular');
+  await expect(page).toHaveTitle('Página indisponível · RePassa');
   await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
 });

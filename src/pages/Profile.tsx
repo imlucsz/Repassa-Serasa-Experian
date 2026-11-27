@@ -61,7 +61,7 @@ export function ProfilePage() {
   return (
     <section className="frame account-page">
       <header className="account-heading">
-        <p className="eyebrow">Minha conta</p>
+        <p className="eyebrow"><span className="ink-rule" /> Minha conta</p>
         <h1>
           Meu <em>perfil</em>
         </h1>
@@ -105,7 +105,9 @@ export function ProfilePage() {
               {busy ? 'Salvando…' : 'Salvar alterações'}{' '}
               <ArrowRight size={16} />
             </button>
-            <p role="status">{saved && 'Nome atualizado.'}</p>
+            <p className="profile-result" role="status">
+              {busy ? 'Salvando alterações…' : saved && 'Nome atualizado.'}
+            </p>
           </form>
           <aside className="profile-session">
             <h2>Acesso à conta</h2>

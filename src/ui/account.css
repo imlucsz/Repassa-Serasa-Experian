@@ -46,7 +46,8 @@
 }
 .profile-columns {
   display: grid;
-  grid-template-columns: 1.3fr 1fr;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: start;
   gap: clamp(28px, 7vw, 110px);
 }
 .profile-columns h2 {
@@ -63,12 +64,24 @@
   align-content: start;
   gap: 10px;
 }
+.profile-session {
+  padding: clamp(18px, 3vw, 36px);
+  background: var(--paper);
+  border-top: 3px solid var(--forest);
+}
+.profile-session dl { padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.profile-result:not(:empty) {
+  padding: 10px 14px;
+  border-left: 2px solid var(--emerald);
+  background: var(--paper);
+}
 .profile-form label,
 .profile-session dt {
   font-size: 0.9rem;
   font-weight: 600;
 }
 .profile-form input {
+  min-width: 0;
   min-height: 48px;
   padding: 10px 14px;
   background: var(--paper);
