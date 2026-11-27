@@ -133,3 +133,111 @@ test('operações privadas explicam os limites da demonstração sem chamar a AP
   }
   expect(requests).toEqual([]);
 });
+
+test.describe('mobile shelf gestures', () => {
+  test.use({
+    viewport: { width: 440, height: 956 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+
+  test('drag across the loop seam, then tap the selected book to open it', async ({
+    page,
+  }) => {
+    await page.goto('/catalogo?vista=estante');
+    const shelf = page.getByRole('region', { name: 'Estante de materiais' });
+    const stage = shelf.locator('.book-stage');
+    await stage.evaluate((element) => element.scrollIntoView({ block: 'center' }));
+    await expect(
+      shelf.getByRole('heading', { name: 'Botânica ilustrada' }),
+    ).toBeVisible();
+    const bounds = await stage.boundingBox();
+    const x = bounds.x + bounds.width / 2;
+    const y = bounds.y + bounds.height / 2;
+    const session = await page.context().newCDPSession(page);
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [{ x, y }],
+    });
+    for (const step of [12, 24, 36, 48]) {
+      await session.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x: x + step, y }],
+      });
+    }
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchEnd',
+      touchPoints: [],
+    });
+    await expect(page).toHaveURL(/\/catalogo/);
+    await expect(
+      shelf.getByRole('heading', { name: 'Instrumentos de desenho' }),
+    ).toBeVisible();
+
+    const cover = stage.locator('.book-face[style*="material-cover"]');
+    await expect(cover.getByText('Instrumentos de desenho', { exact: true })).toBeVisible();
+    await cover.tap();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+      'Instrumentos de desenho',
+    );
+    await page.getByRole('link', { name: 'Voltar ao acervo' }).tap();
+    await expect(
+      shelf.getByRole('heading', { name: 'Instrumentos de desenho' }),
+    ).toBeVisible();
+  });
+});
+
+test('reduced motion wraps both ways with one named cover', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/catalogo?vista=estante');
+  const shelf = page.getByRole('region', { name: 'Estante de materiais' });
+  const assertSelection = async (title) => {
+    await expect(
+      shelf.getByRole('link', { name: 'Ver material: ' + title }),
+    ).toBeVisible();
+    await expect.poll(() =>
+      shelf.locator('.book-face').evaluateAll((faces) =>
+        faces
+          .filter((face) => getComputedStyle(face).viewTransitionName === 'material-cover')
+          .map((face) => face.querySelector('.jacket-title').textContent),
+      ),
+    ).toEqual([title]);
+  };
+  await shelf.focus();
+  await page.keyboard.press('ArrowLeft');
+  await assertSelection('Instrumentos de desenho');
+  await page.keyboard.press('ArrowRight');
+  await assertSelection('Botânica ilustrada');
+});
+
+
+test('horizontal wheel and mouse drag navigate the 3D shelf', async ({ page }) => {
+  await page.goto('/catalogo?vista=estante');
+  const shelf = page.getByRole('region', { name: 'Estante de materiais' });
+  const stage = shelf.locator('.book-stage');
+  await stage.hover();
+  await page.mouse.wheel(120, 0);
+  await expect(shelf.getByRole('heading', { name: 'Atlas celeste' })).toBeVisible();
+  await page.reload();
+  await expect(
+    shelf.getByRole('heading', { name: 'Botânica ilustrada' }),
+  ).toBeVisible();
+  await stage.hover();
+  const bounds = await stage.boundingBox();
+  const x = bounds.x + bounds.width / 2;
+  const y = bounds.y + bounds.height / 2;
+  const session = await page.context().newCDPSession(page);
+  await session.send('Input.dispatchMouseEvent', {
+    type: 'mousePressed', x, y, button: 'left', buttons: 1, clickCount: 1,
+  });
+  for (const step of [12, 24, 36, 48, 60]) {
+    await session.send('Input.dispatchMouseEvent', {
+      type: 'mouseMoved', x: x - step, y, buttons: 1,
+    });
+  }
+  await session.send('Input.dispatchMouseEvent', {
+    type: 'mouseReleased', x: x - 60, y, button: 'left', clickCount: 1,
+  });
+  await expect(shelf.getByRole('heading', { name: 'Atlas celeste' })).toBeVisible();
+});
