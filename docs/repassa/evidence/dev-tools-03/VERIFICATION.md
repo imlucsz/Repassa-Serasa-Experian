@@ -22,15 +22,33 @@ Node v24.14.0, npm 11.9.0, Python 3.13.15, Git 2.53.0.
 
 ## 2. SkillSpector results (`--no-llm`, static only)
 
-Reports in this folder (`*-scan.json`). The scanner is an additional check, not proof.
+Reports in this folder (`*-scan.json`, sanitized for publication: absolute host paths replaced
+with `<repo>`/`<host>`/`<tmp>` and long third-party `code_snippet` excerpts truncated to 200
+chars; findings, severities, rule names, file:line locations and coverage ledgers are intact —
+see `analysis_completeness` per skill). The scanner is an additional check, not proof.
 
-| Target | Score | Disposition after manual review |
-| --- | --- | --- |
-| `cantos-apple` (staged, commit `4c15b53`, MIT) | 0 SAFE | Text-only SKILL.md; includes anti-injection guidance; installed |
-| 33 project skills (recursive) | mixed | All repassa-* scored 0. Flagged items reviewed below |
-| `write-swift` (omitted by aggregate limit) | 0 SAFE | scanned separately |
-| user-level `graphify` | 48 MEDIUM | findings: `rm -f .graphify/…` cleanup commands scoped to its own artifacts; agency phrasing. Benign |
-| user-level `impeccable` | 100 CRITICAL | reviewed: `~/.claude/settings.json` hits are in `reference/hooks.md` documentation (RePassa installs with `--no-hooks`); "never judge"/agency strings are reviewer-profile prose; `fetch('http://localhost:…')` is its own live-edit server; `Remove` is a keyboard-handler comment. No exfiltration |
+| Target | Score | Coverage | Disposition after manual review |
+| --- | --- | --- | --- |
+| `cantos-apple` (staged, commit `4c15b53`, MIT) | 0 SAFE | 100% | Text-only SKILL.md; includes anti-injection guidance; installed |
+| `write-swift` (omitted by the 32-skill aggregate budget; scanned separately) | 0 SAFE | 100% | clean |
+| user-level `graphify` | 48 MEDIUM | 100% | findings: `rm -f .graphify/…` cleanup commands scoped to its own artifacts; agency phrasing. Benign |
+| user-level `impeccable` | 100 CRITICAL | **91.3% partial** | reviewed: `~/.claude/settings.json` hits are in `reference/hooks.md` documentation (RePassa installs with `--no-hooks`); "never judge"/agency strings are reviewer-profile prose; `fetch('http://localhost:…')` is its own live-edit server; `Remove` is a keyboard-handler comment. No exfiltration |
+| 33 project skills (recursive scan) | mixed | per skill below | All repassa-* scored 0 with full coverage. Flagged items reviewed below |
+
+**Full-coverage scans (all files inspected, findings reviewed):** cantos-apple, write-swift,
+graphify, animate, animate-expo, animation-performance, apple-design, ask-sonner, gestures,
+improve-animations, learn-taste, pick-ui-library, remove-animations, repassa-* (all) —
+every `analysis_completeness` at 100%.
+
+**Partial static scans (findings reviewed; uninspected residue listed honestly):**
+break-ui 66.7% (1 partial file), choreograph 33.3% (2), design-taste-frontend 93.2% (101,
+mostly bundled reference CSV/HTML templates and assets), mobile-native 50% (1),
+review-animations 66.7% (1), ui-ux-pro-max 79.7% (14, reference data + test scripts),
+impeccable 91.3%. Partial coverage means the scanner's component budget ended before every
+file was inspected — the reviewed dispositions below cover the findings that were reported;
+the uninspected residue is mostly data/templates, but it is not claimed as fully reviewed.
+Re-scan a partial skill individually (`skillspector scan <dir> --no-llm`) before relying on
+its uninspected files.
 
 Resolved CRITICAL reviews (all false positives or benign-in-context):
 

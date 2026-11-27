@@ -38,6 +38,9 @@ test-results/
 # Local Netlify folder
 .netlify
 
+# Local Devin MCP registration (machine-specific, may contain env names/keys)
+.devin/*.local.json
+
 # Local Graphify knowledge-graph output (regenerate on demand)
 /.graphify/
 /graphify-out/
