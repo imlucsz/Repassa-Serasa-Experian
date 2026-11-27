@@ -9,7 +9,7 @@
 
 ## Executive summary — GO
 
-The implementation meets its stated goals and is safe to integrate once the owner approves. The two items documented in the first pass — a **pre-existing** narrow-viewport hit-testing defect and a **long-title caption growth** edge case — were both **resolved in the closure pass** under the owner's bounded authorization, plus the pickup-institution line was added to the selected-material panel. All suites pass (demo 9/9, api 52/52, unit 41/41); PERF-01 remains at zero idle rAF frames.
+The implementation meets its stated goals and is safe to integrate once the owner approves. The two items documented in the first pass — a **pre-existing** narrow-viewport hit-testing defect and a **long-title caption growth** edge case — were both **resolved in the closure pass** under the owner's bounded authorization, plus the pickup-institution line was added to the selected-material panel. All suites pass (demo 11/11, api 52/52, unit 41/41); PERF-01 remains at zero idle rAF frames.
 
 **Missing-file reconciliation:** the UX-06.1 brief instructs reading "DEVIN-HANDOFF.md". No such file exists in the repository (searched all docs at `796448b` and on this branch). The closest existing documents were used instead: `docs/repassa/evidence/ux-06/HANDOFF.md` (the actual UX-06 audit with the acceptance criteria this report validates against), `docs/repassa/agent-prompts/DEVIN-START.md`, `docs/repassa/agent-prompts/DEVIN-ECC-HANDOFF.md` and `docs/repassa/agent-prompts/HANDOFF.md`. The reference is presumed to have meant the UX-06 audit handoff; no file was fabricated.
 
@@ -35,10 +35,11 @@ The implementation meets its stated goals and is safe to integrate once the owne
 | `npm run lint` | pass, exit 0 |
 | `npm run test:ci` | **41/41 pass**, 0 fail/skip |
 | `npm run build` | pass |
-| `npx playwright test --project=demo` | **9/9 pass** — the previously failing `mobile shelf gestures › drag across the loop seam, then tap the selected book to open it` now passes |
+| `npx playwright test --project=demo` | **11/11 pass** — the previously failing `drag across the loop seam, then tap the selected book` now passes, plus 2 new regression tests (tap-selects-non-active, click-once navigation guard) |
 | `npx playwright test --project=api` | **52/52 pass** |
 | Caption metrics probe (107-char title + 95-char institution, intercepted `/api/v1`) | pass — caption bounded, controls in viewport, institution rendered |
 | PERF-01 rAF probe (after fixes) | pass — 0 idle frames, ~47 per interaction, re-settles to 0 |
+| Gesture propagation probe (instrumented `history.pushState`/`replaceState`) | pass — exactly one history write per cover click; spine tap selects with zero navigations |
 
 **Skipped/not executed:** backend test suites and disposable-Postgres checks (no backend changes; Docker unavailable on this machine). Real device testing (no physical device); mobile results come from Playwright emulation. Screen-reader verification is limited to axe-core, the Chromium accessibility tree (`ariaSnapshot`), and markup review — no NVDA/JAWS pass was possible.
 
@@ -48,7 +49,8 @@ The implementation meets its stated goals and is safe to integrate once the owne
 
 - Root cause: a Chromium hit-testing quirk in the 3D shelf at narrow widths — the active `.book-face` (front cover, `ry ≈ -90°` under `preserve-3d` + `perspective`) is painted but almost none of its area accepts pointer events. Confirmed with `elementFromPoint` hit-maps on both commits; **unaffected on desktop** (1440 px map shows the cover fully clickable). A second, compounding behavior was found during the fix: **after a drag gesture, Chromium synthesizes no `click` event for the next synthetic touch tap at all** (only `pointerdown`/`pointerup` fire), so no click-based handler could rescue the tap.
 - Fix applied (`Shelf3D.tsx`, PERF-01-protected — explicitly authorized): touch/pen activation is now resolved on **`pointerup`** on `.book-stage` — the intended book is derived from the event target's `.closest('.shelf-book')`, falling back to the **active cover's projected quad** (`getBoundingClientRect()`) when the point misses every book. Mouse activation is unchanged (still resolves on `click`), and the existing `suppressClick` drag guard plus a duplicate-tap filter prevent double navigation and accidental navigation during drags. The one-off rect read happens only inside event handlers — **zero per-frame cost**; no transform, stacking, shading or scheduling code was touched.
-- Verified: the failing test now passes (9/9 demo); drag, seam wrap, wheel and keyboard paths unchanged; PERF-01 idle rAF still 0. `preserve-3d`, `backface-visibility` and the painted result were left untouched — alternatives (flattening the stack, toggling backface visibility) were tested and rejected because they either destroyed the visual or did not restore hit-testing.
+- Verified: the failing test now passes (11/11 demo); drag, seam wrap, wheel and keyboard paths unchanged; PERF-01 idle rAF still 0. `preserve-3d`, `backface-visibility` and the painted result were left untouched — alternatives (flattening the stack, toggling backface visibility) were tested and rejected because they either destroyed the visual or did not restore hit-testing.
+- Final targeted review (`015b239` → follow-up commit): the stage-level `click` fallback re-invoked `openOrSelect` for in-book targets on mouse clicks. Verified benign — an instrumented probe shows exactly one `history.pushState` per cover click (React Router's data router cancels the redundant synchronous call) — but the guard was restored anyway so the stage handler only resolves clicks that miss every book. `pointerup` activation now also requires `event.isPrimary` and `button === 0`, matching the confirmed touch/pen values and excluding secondary fingers and stylus barrel-button releases. Two regression tests were added: tap-on-non-active-book selects without navigating, and cover click navigates exactly once (Back returns to the catalog).
 
 ## Finding 2 — edge-case limitation of the new side panel (long titles) — **FIXED in closure pass**
 
@@ -67,7 +69,7 @@ With a realistic 107-character title ("Botânica ilustrada do cerrado brasileiro
 | Keyboard navigation | pass — ArrowLeft/Right on focused region; full tab order verified: skip-link → nav → 5 category tabs → search → institution → Filtrar → Estante/Grade → shelf region → Ver material → prev → next → pager; 21/21 stops show the 3 px emerald outline | custom harness |
 | Focus restoration | pass — filter submit moves focus to the `role=status` result count (verified); returning from detail restores the previously active shelf material and preserves view/filters | custom + demo tests |
 | PERF-01 idle rendering | pass — see Performance | rAF probe |
-| Tap-to-open on narrow shelf | **pass — fixed in closure pass (Finding 1)** | demo test 9/9 |
+| Tap-to-open on narrow shelf | **pass — fixed in closure pass (Finding 1)** | demo tests 11/11 |
 
 ## Realistic catalog records (synthetic 45-item fixture via `/api/v1` interception)
 
@@ -125,15 +127,17 @@ The caption panel previously showed `NN / NN · Category`, the title, "Ver mater
 
 ### Source (closure pass — owner-authorized bounded fixes)
 
-- `src/components/Shelf3D.tsx` — pointerup-based touch/pen activation on `.book-stage` with active-cover quad fallback; duplicate-tap and drag guards; pickup-institution line (`MapPin` + `institution.name`) in the caption; `title` attribute on the caption heading. No changes to transforms, stacking, shading, scheduling or listeners that run per frame.
+- `src/components/Shelf3D.tsx` — pointerup-based touch/pen activation on `.book-stage` (primary-pointer + `button === 0` constrained) with active-cover quad fallback; miss-only mouse click fallback; duplicate-tap and drag guards; pickup-institution line (`MapPin` + `institution.name`) in the caption; `title` attribute on the caption heading. No changes to transforms, stacking, shading, scheduling or listeners that run per frame.
 - `src/pages/collection.css` — `.shelf-caption h2` 4-line clamp inside the existing ≥1000 px shelf layout; `.shelf-caption .location` styling.
+- `tests/browser/demo.spec.mjs` — two targeted regression tests: tap-on-non-active-book selects without navigating; cover click navigates exactly once.
+- `docs/repassa/STATUS.md` — UX-06.1 row; RC-01 marked merged (PR #26); stale pre-merge rows reconciled.
 
 ### Evidence
 
 - `docs/repassa/evidence/ux-06-1/QA-REPORT.md` (this report)
 - `docs/repassa/evidence/ux-06-1/*.png` (11 screenshots: before/after comparison via base shots + synthetic-record evidence)
 
-No test, config, dependency, contract or backend changes. `Shelf3D.tsx` is PERF-01-protected and was modified only within the explicitly authorized defect scope.
+No config, dependency, contract or backend changes. `Shelf3D.tsx` is PERF-01-protected and was modified only within the explicitly authorized defect scope.
 
 ## Before/after comparison
 

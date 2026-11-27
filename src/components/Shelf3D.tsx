@@ -107,15 +107,23 @@ function CollectionShelf({ materials }: { materials: Material[] }) {
   // Touch/pen activation resolves on pointerup because Chromium does not
   // reliably synthesize click on this surface after a drag gesture.
   function stageTap(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType === 'mouse' || suppressClick.current) return;
+    if (
+      event.pointerType === 'mouse' ||
+      !event.isPrimary ||
+      event.button !== 0 ||
+      suppressClick.current
+    )
+      return;
     const index = tappedIndex(event);
     if (index < 0) return;
     tapStamp.current = event.timeStamp;
     openOrSelect(index);
   }
-  // Mouse fallback for clicks that land on the stage inside the cover quad.
+  // Mouse fallback for clicks that miss every book but land on the stage
+  // inside the active cover quad; in-book clicks are handled by the book.
   function stageClick(event: MouseEvent<HTMLDivElement>) {
     if (suppressClick.current || duplicateTap(event)) return;
+    if ((event.target as HTMLElement).closest?.('.shelf-book')) return;
     const index = tappedIndex(event);
     if (index >= 0) openOrSelect(index);
   }
