@@ -7,8 +7,10 @@
 //   REPASSA_ADMIN_EMAIL=admin@x REPASSA_ADMIN_PASSWORD=<one-time> \
 //   node tests/live/sh02-security.mjs [--recovery]
 import { execFileSync } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { assertSafeHarnessEnvironment } from './harness-guard.mjs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const api = process.env.JOURNEY_API ?? 'http://127.0.0.1:3001/api/v1';
 const DB_URL = process.env.JOURNEY_DB_URL;
@@ -25,6 +27,11 @@ if (!ADMIN.password) {
   console.error('REPASSA_ADMIN_PASSWORD required (output of provision-admin --generate)');
   process.exit(2);
 }
+assertSafeHarnessEnvironment({
+  api,
+  dbUrl: DB_URL,
+  requireDatabase: true,
+});
 const DOADORA = { email: 'doadora.ana@example.com', password: pw };
 const EQUIPE = { email: 'equipe.carla@example.com', password: pw };
 const BETO = { email: 'aluno.beto@example.com', password: pw };
@@ -201,7 +208,8 @@ check(
 );
 
 // 6. Forced expiry — past expiresAt reconciles lazily on next availability read
-const expireScript = resolve('backend/repassa-expire.local.cjs');
+const expireDir = mkdtempSync(join(tmpdir(), 'repassa-expire-'));
+const expireScript = join(expireDir, 'repassa-expire.local.cjs');
 writeFileSync(
   expireScript,
   "const { PrismaClient } = require('@prisma/client');\n" +
@@ -215,6 +223,7 @@ execFileSync(process.execPath, [expireScript], {
   env: { ...process.env, DATABASE_URL: DB_URL },
   stdio: 'pipe',
 });
+rmSync(expireDir, { recursive: true, force: true });
 const matsAfter = (await call('GET', '/materials?pageSize=50')).data;
 check(
   'material expirado volta a AVAILABLE',

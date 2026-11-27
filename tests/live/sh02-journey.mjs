@@ -5,8 +5,10 @@
 // VITE_DATA_MODE=api. Never point this at production.
 //   JOURNEY_BASE=http://127.0.0.1:4272 JOURNEY_API=http://127.0.0.1:3001/api/v1 \
 //   REPASSA_ADMIN_EMAIL=admin@x REPASSA_ADMIN_PASSWORD=<one-time> \
+//   JOURNEY_FRONTEND_PROXY_CONFIRMED_LOCAL=1 \
 //   node tests/live/sh02-journey.mjs
 import { chromium } from 'playwright';
+import { assertSafeHarnessEnvironment } from './harness-guard.mjs';
 
 const base = process.env.JOURNEY_BASE ?? 'http://127.0.0.1:4272';
 const api = process.env.JOURNEY_API ?? 'http://127.0.0.1:3001/api/v1';
@@ -20,6 +22,12 @@ if (!ADMIN.password) {
   console.error('REPASSA_ADMIN_PASSWORD required (output of provision-admin --generate)');
   process.exit(2);
 }
+assertSafeHarnessEnvironment({
+  base,
+  api,
+  proxyTarget: process.env.REPASSA_API_TARGET,
+  proxyConfirmed: process.env.JOURNEY_FRONTEND_PROXY_CONFIRMED_LOCAL === '1',
+});
 const DOADORA = { name: 'Doadora Ana', email: 'doadora.ana@example.com', password: pw };
 const EQUIPE = { name: 'Equipe Carla', email: 'equipe.carla@example.com', password: pw };
 const RESERVISTA = { name: 'Aluno Beto', email: 'aluno.beto@example.com', password: pw };

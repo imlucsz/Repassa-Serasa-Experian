@@ -4,6 +4,7 @@ import { startTestApp } from '../helpers/test-app';
 import { truncateAll } from '../helpers/test-db';
 import { hashPassword } from '../../src/common/crypto/password';
 import { TokenService } from '../../src/auth/token.service';
+import { ReservationsService } from '../../src/reservations/reservations.service';
 
 const JSON_HEADERS = { 'x-repassa-request': '1', 'content-type': 'application/json' };
 const PASSWORD = 'senha-de-teste-123';
@@ -526,6 +527,16 @@ describe('Reservations and pickup lifecycle (e2e, real Postgres)', () => {
   });
 
   describe('security and audit invariants', () => {
+    it('treats the exact database expiry instant as expired deterministically', async () => {
+      const service = app.get(ReservationsService) as unknown as {
+        isPastExpiry(tx: unknown, expiresAt: Date): Promise<boolean>;
+      };
+      await prisma.$transaction(async (tx) => {
+        const rows = await tx.$queryRaw<Array<{ now: Date }>>`SELECT now() AS now`;
+        await expect(service.isPastExpiry(tx, rows[0].now)).resolves.toBe(true);
+      });
+    });
+
     it('disabled users are rejected on all reservation endpoints', async () => {
       const { material, institution } = await fixture();
       const token = await tokenFor('aluna@example.com');
