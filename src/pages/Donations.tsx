@@ -84,6 +84,10 @@ function PhotoInput({
         ) : (
           <ImagePlus aria-hidden="true" size={26} />
         )}
+        <span className="donation-photo-label" aria-hidden="true">
+          {file ? 'Trocar foto' : 'Escolher foto'}
+          {file && <small>{file.name}</small>}
+        </span>
         <input
           ref={input}
           id="donation-photo"

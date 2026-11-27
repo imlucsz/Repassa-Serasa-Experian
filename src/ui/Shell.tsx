@@ -25,6 +25,15 @@ function Wordmark({ small = false }: { small?: boolean }) {
   );
 }
 
+function AccountLink({ to, label, short }: { to: string; label: string; short: string }) {
+  return (
+    <NavLink to={to} aria-label={label}>
+      <span className="account-link-full">{label}</span>
+      <span className="account-link-short">{short}</span>
+    </NavLink>
+  );
+}
+
 export function Shell() {
   const main = useRef<HTMLElement>(null);
   const { pathname, hash } = useLocation();
@@ -103,12 +112,12 @@ export function Shell() {
           )}
         </div>
         {user && (
-          <nav className="frame account-nav" aria-label="Área da conta">
+          <nav className="frame account-nav" data-role={user.role} aria-label="Área da conta">
             {user.role === 'STUDENT' && (
               <>
-                <NavLink to="/doar">Doar material</NavLink>
-                <NavLink to="/minhas-doacoes">Minhas doações</NavLink>
-                <NavLink to="/minhas-reservas">Minhas reservas</NavLink>
+                <AccountLink to="/doar" label="Doar material" short="Doar" />
+                <AccountLink to="/minhas-doacoes" label="Minhas doações" short="Doações" />
+                <AccountLink to="/minhas-reservas" label="Minhas reservas" short="Reservas" />
               </>
             )}
             {user.role === 'STAFF' && (
@@ -117,7 +126,7 @@ export function Shell() {
             {user.role === 'ADMIN' && (
               <NavLink to="/admin">Administração</NavLink>
             )}
-            <NavLink to="/perfil">Meu perfil</NavLink>
+            <AccountLink to="/perfil" label="Meu perfil" short="Perfil" />
           </nav>
         )}
         {logoutError && (

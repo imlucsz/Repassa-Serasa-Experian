@@ -21,6 +21,7 @@ function pending(institution, id, title) {
 test('staff confirm physical receipt and give a reason before rejecting a donation', async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 320, height: 844 });
   const atlas = pending(
     north,
     '4912e501-d578-47c0-bf62-009bc1109d57',
@@ -78,6 +79,7 @@ test('staff confirm physical receipt and give a reason before rejecting a donati
   await page.goto('/instituicao/recebimentos');
   const photo = page.getByRole('img', { name: 'Foto de ' + atlas.title });
   await expect(photo).toHaveCount(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   const receive = page
     .getByRole('listitem')
     .filter({ hasText: atlas.title })

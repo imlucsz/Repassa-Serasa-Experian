@@ -154,8 +154,8 @@ export function LoginPage() {
         </div>
       )}
       <form className="auth-form" onSubmit={submit} noValidate>
-        <label className="auth-field" htmlFor="login-email">
-          E-mail
+        <div className="auth-field">
+          <label htmlFor="login-email">E-mail</label>
           <span className="auth-input">
             <Mail size={17} />
             <input
@@ -180,9 +180,9 @@ export function LoginPage() {
               {fieldMessage(fieldErrors, 'email')}
             </small>
           )}
-        </label>
-        <label className="auth-field" htmlFor="login-password">
-          Senha
+        </div>
+        <div className="auth-field">
+          <label htmlFor="login-password">Senha</label>
           <span className="auth-input">
             <LockKeyhole size={17} />
             <input
@@ -217,7 +217,7 @@ export function LoginPage() {
               {fieldMessage(fieldErrors, 'password')}
             </small>
           )}
-        </label>
+        </div>
         {error && (
           <p className="auth-error" role="alert">
             {error}
@@ -321,8 +321,8 @@ export function RegisterPage() {
         </div>
       )}
       <form className="auth-form" onSubmit={submit} noValidate>
-        <label className="auth-field" htmlFor="register-name">
-          Nome de exibição
+        <div className="auth-field">
+          <label htmlFor="register-name">Nome de exibição</label>
           <span className="auth-input">
             <input
               id="register-name"
@@ -346,9 +346,9 @@ export function RegisterPage() {
               {fieldMessage(fieldErrors, 'displayName')}
             </small>
           )}
-        </label>
-        <label className="auth-field" htmlFor="register-email">
-          E-mail
+        </div>
+        <div className="auth-field">
+          <label htmlFor="register-email">E-mail</label>
           <span className="auth-input">
             <Mail size={17} />
             <input
@@ -373,9 +373,9 @@ export function RegisterPage() {
               {fieldMessage(fieldErrors, 'email')}
             </small>
           )}
-        </label>
-        <label className="auth-field" htmlFor="register-password">
-          Crie uma senha
+        </div>
+        <div className="auth-field">
+          <label htmlFor="register-password">Crie uma senha</label>
           <span className="auth-input">
             <LockKeyhole size={17} />
             <input
@@ -417,9 +417,9 @@ export function RegisterPage() {
               {fieldMessage(fieldErrors, 'password')}
             </small>
           )}
-        </label>
-        <label className="auth-field" htmlFor="register-confirm">
-          Confirme sua senha
+        </div>
+        <div className="auth-field">
+          <label htmlFor="register-confirm">Confirme sua senha</label>
           <span className="auth-input">
             <LockKeyhole size={17} />
             <input
@@ -431,23 +431,30 @@ export function RegisterPage() {
               value={confirmation}
               onChange={(event) => setConfirmation(event.target.value)}
               aria-invalid={confirmation.length > 0 && !confirmationReady}
+              aria-describedby={confirmation.length > 0 && !confirmationReady ? 'confirmation-hint' : undefined}
             />
           </span>
-        </label>
-        <p className="auth-consent-notice">
-          Aviso de privacidade: nome e e-mail serão usados para criar e
-          identificar sua conta de estudante no RePassa.
-        </p>
-        <label className="auth-consent">
-          <input
-            type="checkbox"
-            required
-            disabled={isDemo}
-            checked={consent}
-            onChange={(event) => setConsent(event.target.checked)}
-          />
-          <span>Concordo com esse uso dos meus dados.</span>
-        </label>
+        </div>
+        {confirmation.length > 0 && !confirmationReady && (
+          <small className="auth-field-error" id="confirmation-hint">As senhas precisam ser iguais.</small>
+        )}
+        <div className="auth-permission">
+          <p id="consent-notice" className="auth-consent-notice">
+            Aviso de privacidade: nome e e-mail serão usados para criar e
+            identificar sua conta de estudante no RePassa.
+          </p>
+          <label className="auth-consent">
+            <input
+              type="checkbox"
+              aria-describedby="consent-notice"
+              required
+              disabled={isDemo}
+              checked={consent}
+              onChange={(event) => setConsent(event.target.checked)}
+            />
+            <span>Concordo com esse uso dos meus dados.</span>
+          </label>
+        </div>
         {error && (
           <p className="auth-error" role="alert">
             {error}

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import {
   Link,
   Navigate,
@@ -32,6 +33,13 @@ export function PrivateArea({ role }: { role?: AuthUser['role'] }) {
   const user = useAuthUser();
   const context = useOutletContext<AccountContext>();
   const location = useLocation();
+  useEffect(() => {
+    if (isDemo) document.title = 'Área de conta · RePassa';
+    else if (!user && context.sessionState === 'error')
+      document.title = 'Sessão indisponível · RePassa';
+    else if (!user && context.sessionState === 'loading')
+      document.title = 'Restaurando sessão · RePassa';
+  }, [user, context.sessionState]);
   if (isDemo)
     return (
       <section className="frame account-message">
@@ -72,7 +80,7 @@ export function PrivateArea({ role }: { role?: AuthUser['role'] }) {
         }
       />
     );
-  if (role && user.role !== role) return <StatePanel kind="forbidden" />;
+  if (role && user.role !== role) return <StatePanel page kind="forbidden" />;
   const institution = new URLSearchParams(location.search).get('instituicao');
   const search = institution
     ? '?instituicao=' + encodeURIComponent(institution)
