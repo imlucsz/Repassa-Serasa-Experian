@@ -160,3 +160,14 @@ export function Home() {
     </div>
   );
 }
+
+export function HomeRollback() {
+  useEffect(() => {
+    const robots = document.createElement('meta');
+    robots.name = 'robots';
+    robots.content = 'noindex';
+    document.head.appendChild(robots);
+    return () => robots.remove();
+  }, []);
+  return <Home />;
+}

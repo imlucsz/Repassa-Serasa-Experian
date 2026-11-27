@@ -364,3 +364,42 @@ test('leaving the detail cancels an in-flight reservation', async ({ page }) => 
     release();
   }
 });
+
+test('official home navigation matches anonymous, student, staff and administrator roles', async ({
+  page,
+}) => {
+  let role = null;
+  await page.route('**/api/v1/auth/refresh', (route) => {
+    if (!role) return route.fulfill({ status: 401, json: {} });
+    return route.fulfill({
+      json: {
+        user: { ...user, role, displayName: role + ' de teste' },
+        accessToken: 'synthetic-home-' + role,
+        expiresIn: 900,
+      },
+    });
+  });
+
+  role = null;
+  await page.goto('/');
+  await expect(page.getByRole('link', { name: 'Entrar' }).first()).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Criar conta estudantil' })).toHaveAttribute(
+    'href',
+    '/cadastro?intent=doar',
+  );
+
+  role = 'STUDENT';
+  await page.goto('/');
+  await expect(page.getByRole('navigation', { name: 'Área da conta' }).getByRole('link', { name: 'Doar material' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Doar material' }).last()).toHaveAttribute('href', '/doar');
+
+  role = 'STAFF';
+  await page.goto('/');
+  await expect(page.getByRole('navigation', { name: 'Área da conta' }).getByRole('link', { name: 'Instituição' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Doar material' })).toHaveCount(0);
+
+  role = 'ADMIN';
+  await page.goto('/');
+  await expect(page.getByRole('navigation', { name: 'Área da conta' }).getByRole('link', { name: 'Administração' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Doar material' })).toHaveCount(0);
+});

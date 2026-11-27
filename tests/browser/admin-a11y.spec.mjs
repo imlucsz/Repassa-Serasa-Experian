@@ -49,7 +49,7 @@ function handler(route, path, params) {
   expect.unreachable('unhandled path ' + path);
 }
 
-for (const width of [390, 1440]) {
+for (const width of [320, 390, 768, 1440]) {
   test.describe('admin routes at ' + width + 'px', () => {
     for (const routePath of routes) {
       test(routePath + ' has no axe violations or horizontal overflow', async ({

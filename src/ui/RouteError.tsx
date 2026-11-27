@@ -6,7 +6,7 @@ export function RouteError() {
   const revalidator = useRevalidator();
   return (
     <div className="frame">
-      <StatePanel
+      <StatePanel page
         kind={revalidator.state === 'loading' ? 'loading' : errorKind(error)}
         retry={() => {
           void revalidator.revalidate();

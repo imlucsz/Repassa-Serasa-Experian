@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { ArrowLeft, BookOpen, RotateCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -50,17 +51,26 @@ export function StatePanel({
   kind,
   retry,
   reset,
+  page = false,
 }: {
   kind: Kind;
   retry?: () => void;
   reset?: () => void;
+  page?: boolean;
 }) {
   const [title, description] = messages[kind];
+  useEffect(() => {
+    if (!page) return;
+    const previousTitle = document.title;
+    document.title = title + ' · RePassa';
+    return () => { document.title = previousTitle; };
+  }, [page, title]);
+  const Heading = page ? 'h1' : 'h2';
   return (
     <section className="state-panel">
       <BookOpen aria-hidden="true" size={30} />
       <div role={kind === 'error' ? 'alert' : 'status'}>
-        <h2>{title}</h2>
+        <Heading>{title}</Heading>
         <p>{description}</p>
       </div>
       {(kind === 'error' || kind === 'limited') && retry && (

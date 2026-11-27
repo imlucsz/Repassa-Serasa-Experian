@@ -7,7 +7,6 @@ import {
 import { PrivateArea } from './ui/PrivateArea';
 import { Shell } from './ui/Shell';
 import { StatePanel } from './ui/StatePanel';
-import { Home } from './pages/Home';
 
 function PickupRedirect() {
   const { search } = useLocation();
@@ -19,17 +18,23 @@ const router = createBrowserRouter([
     path: '/',
     Component: Shell,
     errorElement: (
-      <StatePanel kind="error" retry={() => window.location.reload()} />
+      <StatePanel page kind="error" retry={() => window.location.reload()} />
     ),
     hydrateFallbackElement: <StatePanel kind="loading" />,
     children: [
-      { index: true, Component: Home },
       {
-        path: 'preview/home-cinematica',
+        index: true,
         lazy: async () => ({
           Component: (await import('./pages/CinematicHome')).CinematicHome,
         }),
       },
+      {
+        path: 'inicio-classico',
+        lazy: async () => ({
+          Component: (await import('./pages/Home')).HomeRollback,
+        }),
+      },
+      { path: 'preview/home-cinematica', element: <Navigate to="/" replace /> },
       {
         path: 'entrar',
         lazy: async () => ({
@@ -167,7 +172,7 @@ const router = createBrowserRouter([
           },
         ],
       },
-      { path: '*', element: <StatePanel kind="missing" /> },
+      { path: '*', element: <StatePanel page kind="missing" /> },
     ],
   },
 ]);

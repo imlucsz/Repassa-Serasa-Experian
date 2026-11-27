@@ -13,6 +13,7 @@ test('perfil restaura sessão, edita somente o nome e encerra o acesso', async (
   let user = { ...account };
   let signedOut = false;
   const writes = [];
+  await page.setViewportSize({ width: 320, height: 844 });
   await page.route('**/api/v1/**', async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
@@ -38,6 +39,11 @@ test('perfil restaura sessão, edita somente o nome e encerra o acesso', async (
     throw Error('Requisição inesperada ' + path);
   });
   await page.goto('/perfil');
+  const navigation = page.getByRole('navigation', { name: 'Área da conta' });
+  const links = navigation.getByRole('link');
+  await expect(links).toHaveCount(4);
+  await expect(navigation.getByRole('link', { name: 'Meu perfil' })).toHaveAttribute('aria-current', 'page');
+  expect(await links.evaluateAll(items => new Set(items.map(item => item.offsetTop)).size)).toBe(1);
   await page.getByLabel('Nome de exibição').fill('Estudante de teste');
   await page.getByRole('button', { name: 'Salvar alterações' }).click();
   await expect(page.getByText('Nome atualizado.')).toBeVisible();
@@ -82,3 +88,47 @@ for (const [role, path] of [['STUDENT', '/instituicao/recebimentos'], ['STAFF', 
     expect(privateCalls).toEqual([]);
   });
 }
+
+test('a missing page restores its title after client-side navigation', async ({ page }) => {
+  await page.route('**/api/v1/auth/refresh', route => route.fulfill({ status: 401, json: {} }));
+  await page.goto('/pagina-desconhecida');
+  await page.getByRole('link', { name: 'Entrar', exact: true }).click();
+  await expect(page).toHaveTitle('Entrar | RePassa');
+  await page.goBack();
+  await expect(page.getByRole('heading', { level: 1, name: 'Página indisponível' })).toBeVisible();
+  await expect(page).toHaveTitle('Página indisponível · RePassa');
+});
+
+test('registration associates password and consent guidance with the relevant input', async ({ page }) => {
+  await page.route('**/api/v1/auth/refresh', route => route.fulfill({ status: 401, json: {} }));
+  let posts = 0;
+  await page.route('**/api/v1/auth/register', route => {
+    posts++;
+    return route.fulfill({ status: 201, json: { user: account, accessToken: 'synthetic-registration', expiresIn: 900 } });
+  });
+  await page.route('**/api/v1/me', route => route.fulfill({ json: account }));
+  await page.goto('/cadastro?returnTo=%2Fperfil');
+  await page.getByLabel('Nome de exibição').fill(account.displayName);
+  await page.getByLabel('E-mail', { exact: true }).fill(account.email);
+  const password = page.getByLabel('Crie uma senha', { exact: true });
+  const confirmation = page.getByLabel('Confirme sua senha', { exact: true });
+  await password.fill('amostra-de-teste');
+  await confirmation.fill('diferente');
+  await expect(confirmation).toHaveAccessibleDescription('As senhas precisam ser iguais.');
+  const toggle = page.getByRole('button', { name: 'Mostrar senha' });
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  await expect(password).toHaveAttribute('type', 'text');
+  await confirmation.fill('amostra-de-teste');
+  await expect(confirmation).toHaveAttribute('aria-invalid', 'false');
+  const consent = page.getByRole('checkbox');
+  await expect(consent).toHaveAccessibleDescription(/nome e e-mail/);
+  const submit = page.getByRole('button', { name: 'Criar conta de estudante' });
+  await submit.click();
+  await expect(consent).toBeFocused();
+  expect(posts).toBe(0);
+  await consent.check();
+  await submit.click();
+  await expect(page).toHaveURL(/\/perfil$/);
+  expect(posts).toBe(1);
+});
