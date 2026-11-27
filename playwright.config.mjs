@@ -23,7 +23,7 @@ export default defineConfig({
             'admin.spec.mjs',
             'admin-a11y.spec.mjs',
           ]
-        : 'demo.spec.mjs',
+        : ['demo.spec.mjs', 'cinematic-home.spec.mjs'],
     use: { baseURL: 'http://127.0.0.1:' + port },
   })),
   webServer: modes.map(({ port, mode }) => ({
