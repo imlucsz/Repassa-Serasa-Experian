@@ -183,3 +183,29 @@ test('unavailable film offers the approved alternative', async ({ page }) => {
   await page.getByRole('button', { name: 'Assistir ao filme' }).click();
   await expect(page.getByRole('alert').getByRole('link')).toHaveAttribute('href', 'https://www.youtube.com/shorts/J7nbqsq0bmU');
 });
+
+test('retry returns keyboard control to the film after a failed request', async ({ page }) => {
+  const media = /\.mp4(?:\?|$)/;
+  await page.route(media, route => route.request().resourceType() === 'media' ? route.abort() : route.continue());
+  await page.goto(preview);
+  await page.getByRole('button', { name: 'Assistir ao filme' }).press('Enter');
+  const retry = page.getByRole('button', { name: 'Tentar novamente' });
+  await expect(retry).toBeFocused();
+  await page.unroute(media);
+  await retry.press('Enter');
+  await expect(page.locator('video')).toBeFocused();
+  await expect.poll(() => page.locator('video').evaluate(video => video.currentTime)).toBeGreaterThan(0);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('leaving the preview restores the document metadata on a route without a title', async ({ page }) => {
+  await page.goto(preview);
+  await expect(page).toHaveTitle(/prévia/);
+  await page.evaluate(() => {
+    history.pushState({}, '', '/pagina-ausente');
+    dispatchEvent(new PopStateEvent('popstate'));
+  });
+  await expect(page.locator('.cine-page')).toHaveCount(0);
+  await expect(page).toHaveTitle('RePassa · Conhecimento merece circular');
+  await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
+});

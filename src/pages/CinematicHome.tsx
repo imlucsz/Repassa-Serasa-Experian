@@ -19,6 +19,7 @@ export function CinematicHome() {
   const stampedCount = active + 1;
 
   useEffect(() => {
+    const previousTitle = document.title;
     document.title = 'RePassa · O conhecimento continua (prévia)';
     const robots = document.createElement('meta');
     robots.name = 'robots';
@@ -26,6 +27,7 @@ export function CinematicHome() {
     document.head.appendChild(robots);
     return () => {
       robots.remove();
+      document.title = previousTitle;
     };
   }, []);
 
