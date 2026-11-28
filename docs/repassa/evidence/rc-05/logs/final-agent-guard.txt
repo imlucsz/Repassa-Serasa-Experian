@@ -1,0 +1,1 @@
+RePassa guard: no configured violations detected (heuristic, not a security guarantee).

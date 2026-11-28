@@ -1,0 +1,11 @@
+node=v24.14.0
+npm=11.9.0
+python=Python 3.13.15
+rtk=rtk 1.2.1
+graphify=unavailable
+vite=8.3.7
+playwright=1.65.1
+prisma=6.19.3
+embedded-postgres=16.16.0-beta.19
+commit=17111e6b05bcb43975f7ce626fb8f2675c7e54f2
+os=MINGW64_NT-10.0-26200 SapphireOS 3.6.6-1cdd4371.x86_64 2026-01-15 22:20 UTC x86_64 Msys

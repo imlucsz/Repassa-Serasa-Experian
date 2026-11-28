@@ -1,10 +1,14 @@
 # Status do RePassa
 
-Base verificada em 27/11/2026: `2e2b4fe`. Meta de MVP integrado em 07/12 e apresentação em 12/12.
+Base verificada em 28/11/2026: `17111e6`. Meta de MVP integrado em 07/12 e apresentação em 12/12.
 
 | ID | Status | Evidence / blocker |
 |---|---|---|
-| UX-07 | Aguardando revisão | [Comparação visual e verificação](evidence/ux-07/HANDOFF.md). |
+| RC-05 | Aguardando revisão | Validação integrada final em `17111e6`; evidência consolidada em `evidence/rc-05/`. |
+| RC-03/RC-03b | merged (PR #37, `17111e6`) | hardening de uploads privados, reset administrativo e harness controlado/descartável verificado |
+| RC-04 | merged (PR #39, `30fb572`) | integridade Prisma e remediação de dependências; evidência em `evidence/rc-04/` |
+| UX-06.4b | merged (PR #38, `310226e`) | Home cinematográfica oficial promovida com filme original |
+| UX-07 | merged (PR #36, `56e2831`) | consistência visual de navegação da conta, formulários e feedback; [comparação visual e verificação](evidence/ux-07/HANDOFF.md) |
 | UX-06.3 | merged (PR #35, `2e2b4fe`) | Históricos e comprovantes do estudante. [Comparação visual e testes](evidence/ux-06-3/HANDOFF.md). |
 | SH-01 | integrated into baseline | initial kit snapshot; absorbed into main history — no dedicated PR |
 | DEV-01 | merged (PR #3) | NestJS/Fastify/Prisma/PG16 foundation; CI backend-quality green |

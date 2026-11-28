@@ -1,0 +1,26 @@
+✔ controlled launcher environment strips inherited production application configuration (1.2919ms)
+✔ expiry helper parameterizes the reservation id and disconnects on success (2.3052ms)
+✔ expiry helper disconnects when the mutation fails (1.5953ms)
+✔ expiry helper rejects malformed ids before opening a client (1.9647ms)
+✔ accepts a loopback harness with explicit disposable Postgres and proxy confirmation (3.6458ms)
+✔ rejects production frontend, API, database and proxy targets (0.8374ms)
+✔ rejects a local proxy whose target is production even when endpoints are local (0.3919ms)
+✔ rejects missing proxy confirmation and non-disposable database names (0.3107ms)
+✔ accepts API-only validation without a frontend base or proxy confirmation (0.3163ms)
+✔ rejects nested API paths as ambiguous (0.2386ms)
+✔ database validation rejects non-loopback and non-postgres URLs (0.2247ms)
+✔ accepts a complete controlled disposable stack manifest (0.9672ms)
+✔ rejects controlled manifests with production storage, database or proxy drift (0.5849ms)
+✔ rejects controlled manifests without local temporary object storage or sanitized configuration (0.4799ms)
+✔ controlled preflight accepts verified local endpoints and database login proofs (0.847ms)
+✔ controlled preflight rejects redirects, unreachable mutation destinations and missing launcher proof (0.6111ms)
+✔ controlled preflight rejects a missing manifest before any endpoint verification (0.4306ms)
+✔ controlled preflight rejects when the current backend login does not reach the disposable database (2.1132ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 597.2063

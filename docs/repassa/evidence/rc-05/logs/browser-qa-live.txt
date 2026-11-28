@@ -1,0 +1,14 @@
+PASS Home oficial cinematográfica e filme original reproduzem
+PASS catálogo 3D opera por teclado com dados reais
+PASS detalhe de material real abre a partir do catálogo
+PASS navegação por teclado começa no link de salto
+PASS navegação móvel 390px sem overflow horizontal
+PASS reduced motion usa conteúdo final e grade acessível — animations=0
+PASS login real de estudante e perfil carregam
+PASS histórico real de doações carrega
+PASS histórico real de reservas carrega sem expor código
+PASS operações institucionais reais carregam no escopo autorizado
+PASS operações administrativas e auditoria reais carregam
+PASS nenhum erro JavaScript de página
+
+12/12 verificações browser QA live ok
