@@ -26,6 +26,12 @@
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
+  "overrides": {
+    "@prisma/config": {
+      "deepmerge-ts": "8.0.2",
+      "effect": "3.22.1"
+    }
+  },
   "dependencies": {
     "@fastify/cookie": "^11.1.5",
     "@fastify/helmet": "^13.2.0",

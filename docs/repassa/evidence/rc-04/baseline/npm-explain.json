@@ -1,0 +1,140 @@
+[
+  {
+    "name": "deepmerge-ts",
+    "version": "7.1.5",
+    "location": "node_modules/deepmerge-ts",
+    "isWorkspace": false,
+    "dependents": [
+      {
+        "type": "prod",
+        "name": "deepmerge-ts",
+        "spec": "7.1.5",
+        "from": {
+          "name": "@prisma/config",
+          "version": "6.19.3",
+          "location": "node_modules/@prisma/config",
+          "isWorkspace": false,
+          "dependents": [
+            {
+              "type": "prod",
+              "name": "@prisma/config",
+              "spec": "6.19.3",
+              "from": {
+                "name": "prisma",
+                "version": "6.19.3",
+                "location": "node_modules/prisma",
+                "isWorkspace": false,
+                "dependents": [
+                  {
+                    "type": "dev",
+                    "name": "prisma",
+                    "spec": "~6.19.3",
+                    "from": {
+                      "location": "C:\\Users\\Administrator\\Documents\\Repassa-RC-04\\backend"
+                    }
+                  },
+                  {
+                    "type": "peerOptional",
+                    "name": "prisma",
+                    "spec": "*",
+                    "from": {
+                      "name": "@prisma/client",
+                      "version": "6.19.3",
+                      "location": "node_modules/@prisma/client",
+                      "isWorkspace": false,
+                      "dependents": [
+                        {
+                          "type": "prod",
+                          "name": "@prisma/client",
+                          "spec": "~6.19.3",
+                          "from": {
+                            "location": "C:\\Users\\Administrator\\Documents\\Repassa-RC-04\\backend"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "dev": false,
+    "optional": false,
+    "devOptional": true,
+    "peer": false,
+    "bundled": false,
+    "overridden": false
+  },
+  {
+    "name": "effect",
+    "version": "3.21.0",
+    "location": "node_modules/effect",
+    "isWorkspace": false,
+    "dependents": [
+      {
+        "type": "prod",
+        "name": "effect",
+        "spec": "3.21.0",
+        "from": {
+          "name": "@prisma/config",
+          "version": "6.19.3",
+          "location": "node_modules/@prisma/config",
+          "isWorkspace": false,
+          "dependents": [
+            {
+              "type": "prod",
+              "name": "@prisma/config",
+              "spec": "6.19.3",
+              "from": {
+                "name": "prisma",
+                "version": "6.19.3",
+                "location": "node_modules/prisma",
+                "isWorkspace": false,
+                "dependents": [
+                  {
+                    "type": "dev",
+                    "name": "prisma",
+                    "spec": "~6.19.3",
+                    "from": {
+                      "location": "C:\\Users\\Administrator\\Documents\\Repassa-RC-04\\backend"
+                    }
+                  },
+                  {
+                    "type": "peerOptional",
+                    "name": "prisma",
+                    "spec": "*",
+                    "from": {
+                      "name": "@prisma/client",
+                      "version": "6.19.3",
+                      "location": "node_modules/@prisma/client",
+                      "isWorkspace": false,
+                      "dependents": [
+                        {
+                          "type": "prod",
+                          "name": "@prisma/client",
+                          "spec": "~6.19.3",
+                          "from": {
+                            "location": "C:\\Users\\Administrator\\Documents\\Repassa-RC-04\\backend"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "dev": false,
+    "optional": false,
+    "devOptional": true,
+    "peer": false,
+    "bundled": false,
+    "overridden": false
+  }
+]

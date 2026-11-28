@@ -1,0 +1,86 @@
+{
+  "indexes": [
+    {
+      "indexname": "institutions_pkey",
+      "indexdef": "CREATE UNIQUE INDEX institutions_pkey ON public.institutions USING btree (id)"
+    },
+    {
+      "indexname": "institutions_status_idx",
+      "indexdef": "CREATE INDEX institutions_status_idx ON public.institutions USING btree (status)"
+    },
+    {
+      "indexname": "reservation_one_active_per_material",
+      "indexdef": "CREATE UNIQUE INDEX reservation_one_active_per_material ON public.reservations USING btree (material_id) WHERE (status = 'ACTIVE'::reservation_status)"
+    },
+    {
+      "indexname": "reservations_code_digest_key",
+      "indexdef": "CREATE UNIQUE INDEX reservations_code_digest_key ON public.reservations USING btree (code_digest)"
+    },
+    {
+      "indexname": "reservations_pkey",
+      "indexdef": "CREATE UNIQUE INDEX reservations_pkey ON public.reservations USING btree (id)"
+    },
+    {
+      "indexname": "reservations_status_expires_at_idx",
+      "indexdef": "CREATE INDEX reservations_status_expires_at_idx ON public.reservations USING btree (status, expires_at)"
+    },
+    {
+      "indexname": "reservations_student_id_created_at_idx",
+      "indexdef": "CREATE INDEX reservations_student_id_created_at_idx ON public.reservations USING btree (student_id, created_at)"
+    }
+  ],
+  "constraints": [
+    {
+      "table_name": "materials",
+      "conname": "materials_description_length",
+      "definition": "CHECK (((char_length(description) >= 10) AND (char_length(description) <= 1000)))"
+    },
+    {
+      "table_name": "materials",
+      "conname": "materials_reject_reason_length",
+      "definition": "CHECK (((reject_reason IS NULL) OR ((char_length(reject_reason) >= 3) AND (char_length(reject_reason) <= 240))))"
+    },
+    {
+      "table_name": "materials",
+      "conname": "materials_title_length",
+      "definition": "CHECK (((char_length(title) >= 3) AND (char_length(title) <= 120)))"
+    },
+    {
+      "table_name": "refresh_sessions",
+      "conname": "refresh_sessions_expires_after_created",
+      "definition": "CHECK ((expires_at > created_at))"
+    },
+    {
+      "table_name": "reservations",
+      "conname": "reservations_expires_after_created",
+      "definition": "CHECK ((expires_at > created_at))"
+    },
+    {
+      "table_name": "users",
+      "conname": "users_display_name_length",
+      "definition": "CHECK (((char_length(display_name) >= 2) AND (char_length(display_name) <= 80)))"
+    },
+    {
+      "table_name": "users",
+      "conname": "users_email_length",
+      "definition": "CHECK ((char_length(email) <= 254))"
+    }
+  ],
+  "migrations": [
+    {
+      "migration_name": "20261120014024_init",
+      "finished": true
+    },
+    {
+      "migration_name": "20261124230000_institution_approval_status",
+      "finished": true
+    }
+  ],
+  "institution": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "status": "APPROVED",
+      "isActive": true
+    }
+  ]
+}

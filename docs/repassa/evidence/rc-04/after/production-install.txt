@@ -1,0 +1,15 @@
+Command executed in a temporary copy containing only backend/package.json and backend/package-lock.json:
+
+npm ci --omit=dev --ignore-scripts
+npm ls prisma @prisma/config deepmerge-ts effect --omit=dev
+
+Result (exit 0):
+
+repassa-backend@0.1.0 <temporary-directory>
+`-- @prisma/client@6.19.3
+  `-- prisma@6.19.3
+    `-- @prisma/config@6.19.3
+      +-- deepmerge-ts@8.0.2 overridden
+      `-- effect@3.22.1 overridden
+
+Interpretation: npm installs the optional Prisma CLI peer in this lockfile even with --omit=dev. The override is therefore necessary to keep the production install audit clean; application runtime loading is assessed separately in RC-04-EVIDENCE.md.

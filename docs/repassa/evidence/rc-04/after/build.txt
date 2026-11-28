@@ -1,0 +1,2 @@
+Command: npm run build
+Result: exit 0 (Nest/TypeScript build passed; successful command produced no output)
