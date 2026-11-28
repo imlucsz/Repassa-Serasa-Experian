@@ -1,0 +1,19 @@
+PASS cadastro público da doadora — register
+PASS cadastro institucional enviado
+PASS pendente fora do catálogo público — total=0
+PASS aprovação persistida
+PASS atribuição promoveu Carla a STAFF
+PASS doação criada: Atlas Geográfico da Jornada
+PASS doação criada: Caderno de Exercícios da Jornada
+PASS duas doações registradas — total=2
+PASS doação pendente invisível no catálogo público — total=0
+PASS catálogo público com 2 materiais AVAILABLE — total=2
+PASS código de retirada revelado — [codigo-redigido]
+PASS retirada confirmada pela equipe
+PASS código reutilizado recusado (uso único)
+PASS histórico: 1 COMPLETED + 1 CANCELED — CANCELED,COMPLETED
+PASS material cancelado volta ao catálogo
+PASS métrica retiradas concluídas = 1 — Instituições ativas | 1 | Estudantes | 2 | Materiais disponíveis | 1 | Retiradas concluídas | 1
+PASS auditoria cobre ciclo admin — auth.login,reservation.cancel,reservation.pickup,reservation.create,reservation.create,material.receive,material.receive,auth.login,material.donate,auth.login,material.donate,auth.login,admin.membership_assign,admin.institution_approve,auth.login,institution.register,auth.login,auth.register,auth.register,auth.register,auth.login,auth.login,admin.provision
+
+17/17 verificações da jornada ok

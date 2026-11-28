@@ -1,0 +1,16 @@
+✔ normal source and safe example; legacy video unchanged (2044.3594ms)
+✔ staged .env and generated media paths blocked (626.2291ms)
+✔ staged secret still blocked after worktree edited; value redacted (682.4989ms)
+✔ protected video modification and deletion blocked (367.123ms)
+✔ 10 MiB limit (2296.0967ms)
+✔ range catches secret added then removed in separate commits (886.0956ms)
+✔ new feature push works; protected push and remote deletion denied (473.9553ms)
+✔ non-fast-forward push denied (654.1822ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8133.2446

@@ -1,0 +1,55 @@
+[36mvite v8.3.7 [32mbuilding client environment for production...[36m[39m
+transforming...
+✓ 1717 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                                  0.99 kB │ gzip:  0.49 kB
+dist/assets/dm-sans-latin-wght-normal-Xz1IZZA0.woff2            36.93 kB
+dist/assets/newsreader-latin-standard-normal-s-izfB6B.woff2    132.00 kB
+dist/assets/newsreader-latin-standard-italic-kJKFiXvB.woff2    146.87 kB
+dist/assets/repassa-promo-audio-final-CqxDhI9N.mp4           5,660.12 kB
+dist/assets/Reservations-DoeBPuCh.css                            2.68 kB │ gzip:  0.99 kB
+dist/assets/Institution-KYTFQ7dH.css                             4.32 kB │ gzip:  1.48 kB
+dist/assets/RouteError-Ph1zRl8T.css                              5.88 kB │ gzip:  1.89 kB
+dist/assets/Auth-BTRRH3FF.css                                    6.51 kB │ gzip:  2.10 kB
+dist/assets/MaterialCover-BGyLg34w.css                           7.34 kB │ gzip:  2.57 kB
+dist/assets/donations-DIbWeB1b.css                               7.71 kB │ gzip:  2.31 kB
+dist/assets/Home-gWf-QvLX.css                                    8.56 kB │ gzip:  2.54 kB
+dist/assets/admin-ClbybzI5.css                                   8.63 kB │ gzip:  2.34 kB
+dist/assets/index-D-n2C_2K.css                                  11.11 kB │ gzip:  3.42 kB
+dist/assets/CinematicHome-CZkXnbok.css                          15.05 kB │ gzip:  4.40 kB
+dist/assets/check-CRhzHHhk.js                                    0.11 kB │ gzip:  0.13 kB
+dist/assets/arrow-down-BTu_jBm4.js                               0.16 kB │ gzip:  0.15 kB
+dist/assets/arrow-left-DW6kEoWW.js                               0.16 kB │ gzip:  0.16 kB
+dist/assets/arrow-right-DZDZ3N1z.js                              0.16 kB │ gzip:  0.15 kB
+dist/assets/search-DQ-dTVIs.js                                   0.16 kB │ gzip:  0.16 kB
+dist/assets/Field-B3sLxETM.js                                    0.20 kB │ gzip:  0.18 kB
+dist/assets/map-pin-DkI490Me.js                                  0.25 kB │ gzip:  0.22 kB
+dist/assets/book-open-DafJF-zZ.js                                0.27 kB │ gzip:  0.20 kB
+dist/assets/RouteError-iV763edo.js                               0.30 kB │ gzip:  0.24 kB
+dist/assets/library-big-DL-1RYZl.js                              0.32 kB │ gzip:  0.25 kB
+dist/assets/sparkles-N8-jY5hl.js                                 0.48 kB │ gzip:  0.28 kB
+dist/assets/rolldown-runtime-WkwZ5CU-.js                         0.59 kB │ gzip:  0.36 kB
+dist/assets/donations-D5jKkQ6v.js                                1.06 kB │ gzip:  0.63 kB
+dist/assets/myReservations-C_fa5EOs.js                           1.41 kB │ gzip:  0.76 kB
+dist/assets/Profile-RIQno-hQ.js                                  2.85 kB │ gzip:  1.30 kB
+dist/assets/RegisterInstitution-CmQJeTYF.js                      3.32 kB │ gzip:  1.53 kB
+dist/assets/MaterialCover-BFOhOehQ.js                            4.18 kB │ gzip:  1.66 kB
+dist/assets/operations-DXxCMvk3.js                               4.58 kB │ gzip:  2.15 kB
+dist/assets/Admin-BFD3LCRs.js                                    4.67 kB │ gzip:  1.64 kB
+dist/assets/AdminUsers-C4nKfteH.js                               5.51 kB │ gzip:  2.04 kB
+dist/assets/Home-x8Qhmvol.js                                     5.61 kB │ gzip:  2.17 kB
+dist/assets/Detail-OZ7WUd4-.js                                   6.34 kB │ gzip:  2.64 kB
+dist/assets/admin-CSzvyJZ5.js                                    8.18 kB │ gzip:  2.93 kB
+dist/assets/Reservations-BH8sz9CO.js                            10.13 kB │ gzip:  3.61 kB
+dist/assets/Auth-BWtkqI_z.js                                    10.85 kB │ gzip:  3.24 kB
+dist/assets/AdminViews-BM_Dbhje.js                              10.88 kB │ gzip:  2.70 kB
+dist/assets/CinematicHome-B_XeiIQ3.js                           11.02 kB │ gzip:  3.82 kB
+dist/assets/AdminInstitutions-oAB9_-dL.js                       11.92 kB │ gzip:  3.53 kB
+dist/assets/Catalog-Blzvwdus.js                                 14.13 kB │ gzip:  5.31 kB
+dist/assets/Donations-6H_8kZUN.js                               14.17 kB │ gzip:  4.58 kB
+dist/assets/Institution-B1N5hkq7.js                             16.17 kB │ gzip:  5.35 kB
+dist/assets/jsx-runtime-BVZ867QB.js                            108.21 kB │ gzip: 36.39 kB
+dist/assets/index-CbeEm1LX.js                                  233.68 kB │ gzip: 73.42 kB
+
+[32m✓ built in 1.10s[39m

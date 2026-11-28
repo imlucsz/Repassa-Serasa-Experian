@@ -1,0 +1,7 @@
+PASS backend saudável após restart controlado — status=200
+PASS refresh opaco emitido antes do restart rotaciona depois dele — status=200
+PASS cookie substituído não pode ser reutilizado — status=401
+PASS novo access token pós-restart autoriza /me — status=200
+PASS histórico persistido acessível pela sessão recuperada — status=200
+
+5/5 verificações de sessão pós-restart ok

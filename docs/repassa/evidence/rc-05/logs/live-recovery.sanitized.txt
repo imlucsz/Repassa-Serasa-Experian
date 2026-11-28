@@ -1,0 +1,5 @@
+PASS backend saudável após restart — status=200
+PASS login funciona após restart
+PASS estado persistiu após restart — total=3
+
+3/3 verificações de segurança ok

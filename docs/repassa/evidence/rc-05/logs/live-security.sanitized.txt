@@ -1,0 +1,26 @@
+PASS anônimo → 401 em /admin/institutions — status=401
+PASS STUDENT → 403 em /admin/institutions — status=403
+PASS STAFF → 403 em /admin/users — status=403
+PASS STUDENT → 403 em /admin/audit-events — status=403
+PASS segunda doadora disponível — registrada
+PASS instituição B registrada — status=201
+PASS staff B vinculada — status=201
+PASS staff B → 403 materiais da instituição A — status=403
+PASS staff B → 403 dashboard da instituição A — status=403
+PASS staff A → 403 materiais da instituição B — status=403
+PASS STUDENT → 403 gestão de materiais — status=403
+PASS corrida: exatamente uma reserva criada — 201/409
+PASS reserva vencedora ACTIVE com código — reservation=3b7c[codigo-redigido]-bca2-293180c25ace
+PASS pickup cross-tenant recusado — status=403
+PASS reserva intacta após tentativa cross-tenant
+PASS helper parametrizado expirou exatamente uma reserva — updated=1
+PASS material expirado volta a AVAILABLE
+PASS reserva marcada EXPIRED no histórico — 3b7c9ffb:EXPIRED
+PASS auditoria registra reservation.expire
+PASS refresh cookie HttpOnly —  Max-Age=604800; Path=/api/v1/auth; HttpOnly; SameSite=Strict
+PASS rotação do refresh emite novo access token — status=200
+PASS código de retirada nunca exposto ao admin
+PASS cadastro duplicado → 409 — status=409
+PASS rate limit: cadastro → 429 após o limite — ok=5 último=429
+
+24/24 verificações de segurança ok

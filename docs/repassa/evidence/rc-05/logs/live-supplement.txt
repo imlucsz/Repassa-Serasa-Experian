@@ -1,0 +1,23 @@
+PASS contas sintéticas disponíveis para validação complementar
+PASS instituição A localizada no catálogo público
+PASS upload PNG autenticado aceito — status=201
+PASS doação com uploadId próprio criada — status=201
+PASS resposta usa URL controlada de upload
+PASS imagem pendente: anônimo recebe 404 — status=404
+PASS imagem pendente: doador recebe 200 com bytes PNG — status=200 bytes=95
+PASS imagem pendente: estudante sem relação recebe 404 — status=404
+PASS imagem pendente: staff da instituição recebe 200 — status=200
+PASS imagem pendente: staff de outra instituição recebe 404 — status=404
+PASS objeto persistido no armazenamento local controlado
+PASS reset fora de banda revogou todas as sessões — revogadas=2
+PASS access token anterior à redefinição é invalidado imediatamente — status=401
+PASS refresh cookie anterior à redefinição não rotaciona — status=401
+PASS senha antiga rejeitada após reset — status=401
+PASS nova senha autentica após reset — status=200
+PASS novo access token autoriza imagem privada do próprio usuário — status=200
+PASS auditoria do reset existe sem senha/hash
+PASS staff autorizado recebe a doação da validação — status=200
+PASS imagem AVAILABLE pública recuperada com bytes reais — status=200 bytes=95
+PASS histórico do doador preserva material após reset e recebimento — status=200
+
+21/21 verificações complementares ok
