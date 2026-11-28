@@ -1,0 +1,4 @@
+health/live observations:
+proxy status=200 total=0.277505 size=15
+direct status=200 total=0.218821 size=15
+body={"status":"ok"}

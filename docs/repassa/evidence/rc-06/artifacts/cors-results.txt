@@ -1,0 +1,4 @@
+get-allowed status=200 total=0.368083
+get-disallowed status=200 total=0.332439
+options-allowed status=204 total=0.290581
+options-disallowed status=404 total=0.238514

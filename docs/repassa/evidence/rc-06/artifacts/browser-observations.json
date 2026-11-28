@@ -1,0 +1,33 @@
+{
+  "apiMethods": {
+    "POST /api/v1/auth/refresh": 8,
+    "GET /api/v1/materials": 3,
+    "GET /api/v1/institutions": 3,
+    "GET /api/v1/uploads/78316f55-3828-47a9-a030-ae6ec4d3d5aa.jpg": 3,
+    "GET /api/v1/uploads/90ade426-f865-4772-815b-573e434e8722.jpg": 3,
+    "GET /api/v1/uploads/3b44e195-2313-4504-b374-92670438eece.jpg": 3,
+    "GET /api/v1/uploads/bc54d360-0532-4437-a84f-b07f010dc9ca.jpg": 3,
+    "GET /api/v1/uploads/b8ded0ea-e469-465c-8496-2b5ece7b2864.jpg": 3,
+    "GET /api/v1/uploads/2f170f4a-3f64-456c-8cd4-e43282eec4cf.jpg": 3,
+    "GET /api/v1/uploads/8940b20e-3eae-4d9d-b61c-4cffedd83d38.jpg": 3,
+    "GET /api/v1/uploads/77876aeb-3a75-4823-be83-2a83508392a3.jpg": 3,
+    "GET /api/v1/uploads/19aaf26d-0412-4497-ab75-c6e0836809d1.jpg": 3,
+    "GET /api/v1/uploads/43cb1962-7b7c-4bfc-960d-cf49c61131c7.jpg": 3,
+    "GET /api/v1/uploads/1cf58200-2003-4236-bae1-29734096ef2e.jpg": 3,
+    "GET /api/v1/materials/261014ec-bdcb-434b-b3db-e2f4e3fcfc89": 1
+  },
+  "pageErrors": [],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 401 ()",
+    "Failed to load resource: the server responded with a status of 401 ()",
+    "Failed to load resource: the server responded with a status of 401 ()",
+    "Failed to load resource: the server responded with a status of 401 ()",
+    "Failed to load resource: the server responded with a status of 401 ()"
+  ],
+  "failedRequests": [
+    "https://repassa-serasa-experian.vercel.app/assets/repassa-promo-audio-final-CqxDhI9N.mp4 :: net::ERR_ABORTED",
+    "https://repassa-serasa-experian.vercel.app/api/v1/auth/refresh :: net::ERR_ABORTED",
+    "https://repassa-serasa-experian.vercel.app/api/v1/auth/refresh :: net::ERR_ABORTED"
+  ],
+  "observations": []
+}

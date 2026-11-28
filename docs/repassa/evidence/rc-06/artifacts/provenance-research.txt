@@ -1,0 +1,9 @@
+Public provenance research performed without contacting or mutating production:
+
+1. Exact-address search for "Av. Brig. Faria Lima, 4055" + "Instituto Proa" returned multiple public directory results identifying Instituto PROA as a nonprofit at the same address and Monday-Friday 09:00-18:00 hours.
+2. A site-restricted search on proa.org.br found official Instituto PROA financial-statement PDFs using the same legal entity address:
+   - https://www.proa.org.br/wp-content/uploads/2026/05/AIP-Caderno-das-Demonstracoes-Contabeis-2025.pdf
+   - https://www.proa.org.br/wp-content/uploads/2025/05/AIP_-_Caderno_das_Demonstracoes_Contabeis_2024_assinado.pdf
+   - https://www.proa.org.br/wp-content/uploads/2024/07/Auditoria-PROA-2023.pdf
+3. These results establish that the production demo institution name/address match a real organization. They do not establish whether the RePassa owner has authorization to use that institution context; owner confirmation remains required.
+4. The downloaded public material images visually include both physical-book photographs and clean/publisher-like cover art. Visual inspection cannot establish authorship, license or donor authorization; no infringement is asserted.

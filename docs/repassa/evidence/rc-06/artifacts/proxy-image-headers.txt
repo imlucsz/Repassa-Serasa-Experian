@@ -1,0 +1,25 @@
+HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Cache-Control: no-store
+Cf-Cache-Status: DYNAMIC
+Cf-Ray: a61ace933a5f3236-GRU
+Content-Length: 282070
+Content-Type: image/jpeg
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-origin
+Date: Sat, 28 Nov 2026 16:39:08 GMT
+Origin-Agent-Cluster: ?1
+Referrer-Policy: no-referrer
+Rndr-Id: d1e38b4c-b460-4af0
+Server: Vercel
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Vary: Origin
+X-Content-Type-Options: nosniff
+X-Dns-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: SAMEORIGIN
+X-Permitted-Cross-Domain-Policies: none
+X-Render-Origin-Server: Render
+X-Vercel-Cache: MISS
+X-Vercel-Id: gru1::w2ls2-1795883948006-02e96869820e
+X-Xss-Protection: 0

@@ -1,9 +1,16 @@
 # RePassa — Deployment notes
 
-Status: DEV-05 implemented the durable-storage adapter, deploy configs and
-staging runbook. No production infrastructure has been provisioned; owner
-approval is required before creating any external resource. Staging checklist
-and test plan live in `docs/repassa/STAGING.md`.
+Status: production infrastructure exists and is owner-managed. RC-06 owner
+confirmation (2026-11-28): Render deployed application commit `17111e6` on the
+**Free** plan (0.1 CPU, 512 MB RAM), exactly one instance, autoscaling disabled
+and automatic deployments enabled; Vercel deployed the latest commit according
+to the owner; the Supabase `repassa-uploads` bucket is private (`public=false`),
+has zero Storage policies and allows JPEG/PNG/WebP. These are dashboard facts,
+not a change in the repository blueprint. `render.yaml` still documents a
+staging-oriented starter/manual-deploy reference topology (including a staging
+`ALLOWED_ORIGINS` placeholder); reconcile that deliberately
+before future infrastructure work. Staging checklist and test plan live in
+`docs/repassa/STAGING.md`.
 
 Target topology (DECISIONS.md): Vercel frontend + Render API, same-origin
 `/api/v1` reverse proxy, Supabase Storage for images, managed PostgreSQL 16.

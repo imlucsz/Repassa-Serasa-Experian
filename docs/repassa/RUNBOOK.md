@@ -4,24 +4,27 @@ Audience: owner + agents deploying or demoing the integrated product.
 Deployment topology and rationale: `DEPLOYMENT.md`. Staging checklist: `STAGING.md`.
 Nothing here authorizes deploying, merging or mutating production — owner approval required.
 
-## 1. Verified production state (25/11/2026)
+## 1. Verified production state (RC-06, 28/11/2026)
 
-| Item | Observed | Expected per blueprint |
-|------|----------|------------------------|
+| Item | Current verified/owner-confirmed state | Notes |
+|------|------------------------------------------|-------|
+| Current `origin/main` | `016a026e72d2a28133b4d0a301efde6b8ee2c3d4` | docs-only RC-05 evidence merge on top of application commit `17111e6` |
+| Render application revision | owner-confirmed `17111e6` | exact SHA is not exposed in public HTTP evidence |
+| Vercel revision | owner says latest commit; public asset hashes match the RC-05/`17111e6` build exactly | exact SHA/deployment id is not exposed as a commit in public HTTP evidence |
+| Render plan | **Free: 0.1 CPU, 512 MB RAM** | owner-confirmed; differs from `render.yaml` starter reference |
+| Render scaling/deploys | exactly one instance, autoscaling disabled, automatic deployments enabled | owner-confirmed; autodeploy differs from `render.yaml` manual reference |
 | Frontend | `repassa-serasa-experian.vercel.app` 200 | Vercel + `vercel.json` |
-| API | `repassa-serasa-experian.onrender.com` healthy | Render web service |
-| API proxy | `vercel.json` rewrites `/api/v1/*` → Render before SPA fallback | same-origin, no public API secret |
-| Swagger | `/api/docs` → 404 | `SWAGGER_ENABLED=false` |
-| CORS | 401 via proxy; `allow-credentials: true`, exact origin | `ALLOWED_ORIGINS` = Vercel origin only |
-| DB content | `/materials` `total:0` | no seed — correct for production |
-| **Plan** | service **sleeps** (first request took ~26s); RC-01 re-audit found it **warm** (0.85s) — plan still unconfirmed | blueprint says `starter` — **discrepancy, see §5** |
-| Storage | service boots ⇒ `STORAGE_DRIVER=supabase` valid (`local` aborts in production) | private Supabase bucket |
-| Deployed rev (RC-01) | frontend: `.admin-nav` in served CSS ⇒ ≥ SH-03; backend: `/admin/institutions` ⇒ ≥ DEV-06 = latest backend on main | no drift detected — exact SHAs still unobservable |
+| API | `repassa-serasa-experian.onrender.com` healthy | direct and proxied `/api/v1/health` return 200 `{"status":"ok"}` |
+| API proxy | `/api/v1/*` reaches Render before SPA fallback | API responses carry `Cache-Control: no-store` |
+| Swagger | `/api/docs` → 404 | consistent with `SWAGGER_ENABLED=false` |
+| CORS | exact Vercel origin receives credentialed CORS; foreign origin receives no `Access-Control-Allow-Origin` | same-origin browser path does not require CORS |
+| Storage | owner-confirmed Supabase `repassa-uploads`: private (`public=false`), zero Storage policies, JPEG/PNG/WebP | public image bytes are served through authorized backend proxy |
+| Demo content | 12 public AVAILABLE materials at one institution | provenance/authorization review in `evidence/rc-06/` |
 
 ## 2. Deploy / redeploy steps
 
 1. Owner confirms `main` is green (agent-guard, frontend-quality, backend-quality, Vercel).
-2. Render: `autoDeploy: false` ⇒ trigger deploy manually; build command already runs `npm ci && npm run build && npm run db:migrate:deploy` (migrations are versioned — no `db push`/`migrate reset` on shared DBs).
+2. Render production currently has owner-confirmed automatic deployments enabled. Treat every reviewed merge to `main` as deployment-impacting unless the owner changes that setting. The documented build command runs `npm ci && npm run build && npm run db:migrate:deploy` (migrations are versioned — no `db push`/`migrate reset` on shared DBs).
 3. Post-deploy smoke: `cd backend && node scripts/smoke.mjs --base https://repassa-serasa-experian.vercel.app` (read-mostly; `--email/--password` only with owner-issued synthetic creds).
 4. Confirm `/api/v1/health` = 200, `/api/docs` = 404, login returns generic 401.
 
@@ -93,11 +96,12 @@ When overriding launcher ports, set the matching `JOURNEY_BASE`, `JOURNEY_API` a
 
 ## 5. Production blockers & discrepancies
 
-1. **Service plan mismatch (owner action needed):** observed sleep/wake ≈ free plan; blueprint/DEPLOYMENT.md require `starter`. Sleep drops in-memory state (rate-limit buckets reset — acceptable) and costs ~25–30s cold starts during demos. **Do not upgrade without owner approval** (paid infra); at minimum freeze the demo plan before 07/12.
-2. **Rate limits per replica:** in-memory buckets — scaling beyond one instance weakens them; document if Render scales horizontally.
-3. **Supabase bucket privacy:** uploads only render via `GET /uploads/:key` authorization; confirm `repassa-uploads` bucket is **private** in the Supabase dashboard (service-role key is server-only).
-4. **Migrations on boot:** `db:migrate:deploy` runs inside the build command — a failed migration fails the deploy (safe), but roll-forward is the recovery path (see §6).
-5. **Cold starts on free plan:** first request after idle ≈ 26s — unacceptable mid-demo without warm-up; keep a tab open or upgrade plan (owner decision).
+1. **Service plan intentionally owner-confirmed as Free:** the old "unconfirmed plan" discrepancy is resolved. Free 0.1 CPU/512 MB means cold starts remain a demo risk. **Do not upgrade without owner approval** (paid infra); freeze the demo warm-up plan before 07/12.
+2. **Blueprint/dashboard drift:** `render.yaml` still says starter, `autoDeploy: false` and a staging `ALLOWED_ORIGINS` placeholder, while the owner-confirmed dashboard state is Free, automatic deployments enabled and externally allows the production Vercel origin. Reconcile deliberately in an owner-approved config change; do not silently edit infrastructure.
+3. **Rate limits per replica:** in-memory buckets — correct only for the owner-confirmed single instance. Scaling beyond one instance weakens them; do not scale horizontally without a shared-limiter design.
+4. **Supabase bucket privacy:** owner-confirmed private (`public=false`) with zero Storage policies. Keep it private; uploads must render only through `GET /uploads/:key` authorization.
+5. **Migrations on boot:** `db:migrate:deploy` runs inside the build command — a failed migration fails the deploy (safe), but roll-forward is the recovery path (see §6). Exact production migration rows cannot be verified externally and remain an owner-only read-only check.
+6. **Cold starts on free plan:** first request after idle can take tens of seconds — unacceptable mid-demo without warm-up; keep a tab open or upgrade plan (owner decision).
 
 ## 6. Rollback strategy
 

@@ -1,0 +1,14 @@
+Public image byte/dimension scan (all 11 image-bearing catalog materials). Images themselves were not committed because provenance is unresolved.
+19aaf26d-0412-4497-ab75-c6e0836809d1.jpg: JPEG image data, progressive, precision 8, 3024x4032, components 3
+1cf58200-2003-4236-bae1-29734096ef2e.jpg: JPEG image data, progressive, precision 8, 1055x1600, components 3
+2f170f4a-3f64-456c-8cd4-e43282eec4cf.jpg: JPEG image data, progressive, precision 8, 3024x4032, components 3
+3b44e195-2313-4504-b374-92670438eece.jpg: JPEG image data, progressive, precision 8, 856x1360, components 3
+43cb1962-7b7c-4bfc-960d-cf49c61131c7.jpg: JPEG image data, progressive, precision 8, 3024x4032, components 3
+77876aeb-3a75-4823-be83-2a83508392a3.jpg: JPEG image data, progressive, precision 8, 3024x4032, components 3
+78316f55-3828-47a9-a030-ae6ec4d3d5aa.jpg: JPEG image data, progressive, precision 8, 1088x1558, components 3
+8940b20e-3eae-4d9d-b61c-4cffedd83d38.jpg: JPEG image data, progressive, precision 8, 3024x4032, components 3
+90ade426-f865-4772-815b-573e434e8722.jpg: JPEG image data, progressive, precision 8, 1085x1516, components 3
+b8ded0ea-e469-465c-8496-2b5ece7b2864.jpg: JPEG image data, progressive, precision 8, 720x962, components 3
+bc54d360-0532-4437-a84f-b07f010dc9ca.jpg: JPEG image data, progressive, precision 8, 667x1000, components 3
+total-bytes=10433414
+count=11

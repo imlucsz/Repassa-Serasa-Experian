@@ -1,0 +1,18 @@
+PASS Home oficial cinematográfica pública renderiza
+PASS axe sem violações serious/critical em Home desktop — serious=0 total=0
+PASS filme promocional original reproduz inline com legendas — [1080,1920,22,true,true,7]
+PASS ordem de teclado começa no link de salto
+PASS catálogo público e estante 3D carregam dados reais de produção
+PASS axe sem violações serious/critical em Catálogo desktop — serious=0 total=0
+PASS detalhe público entrega imagem autorizada pelo proxy /api/v1/uploads — naturalWidth=1088
+PASS axe sem violações serious/critical em Detalhe desktop — serious=0 total=0
+PASS rota inexistente renderiza erro público controlado
+PASS layout móvel 390px sem overflow horizontal
+PASS axe sem violações serious/critical em Catálogo móvel — serious=0 total=0
+PASS reduced motion mostra conteúdo final e grade acessível — animations=0
+PASS nenhuma mutação de aplicação foi enviada pelo navegador — somente GET + probe anônimo refresh
+PASS nenhum erro JavaScript de página
+PASS nenhum erro de console inesperado além da sonda anônima 401 — 401-console=5 inesperados=0
+PASS nenhuma falha não cancelada de mídia/API/documento — canceladas=3 falhas=0
+
+16/16 verificações browser produção ok

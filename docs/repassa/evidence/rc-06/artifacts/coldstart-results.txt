@@ -1,0 +1,11 @@
+quiet-start-utc=2026-11-28T16:42:24Z
+probe-start-utc=2026-11-28T16:58:54Z
+direct-1 status=200 total=0.565654 ttfb=0.565586
+direct-2 status=200 total=0.306210 ttfb=0.306134
+direct-3 status=200 total=0.302264 ttfb=0.302190
+direct-4 status=200 total=0.670584 ttfb=0.670515
+direct-5 status=200 total=0.752304 ttfb=0.752238
+proxy-1 status=200 total=0.338145 ttfb=0.338058
+proxy-2 status=200 total=0.309831 ttfb=0.309760
+proxy-3 status=200 total=0.319709 ttfb=0.319622
+probe-end-utc=2026-11-28T16:59:06Z

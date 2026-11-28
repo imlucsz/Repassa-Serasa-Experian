@@ -19,9 +19,10 @@
 | SH-03 | owner/both | polish, freeze, rehearsal | SH-02; admin refinement merged PR #24 — freeze + rehearsal + backup video remain owner steps |
 | RC-01 | Devin | release candidate + ops readiness | SH-02/SH-03 merged; hosted audit vs main, harness rerun on integrated rev, demo provisioning path, GO/NO-GO — `evidence/rc-01/` |
 | RC-05 | Devin | validação integrada final do release candidate | PRs #35–#39 integrados em `17111e6`; regressões, jornada real, segurança/recuperação, uploads privados e browser QA documentados em `evidence/rc-05/`; decisão GO/NO-GO do responsável |
+| RC-06 | Devin / owner | production readiness e fechamento de release | validação read-only da produção, reconciliação RC-05/infraestrutura, checklist owner-only e decisão final em `evidence/rc-06/`; sem mutações ou deploys |
 
 ## Próximas decisões
 
-1. Revisar a evidência RC-05 e registrar a decisão GO, CONDITIONAL GO ou NO-GO do responsável.
-2. Antes de qualquer deploy, executar a checklist de verificação de produção em `evidence/rc-05/` e resolver os bloqueios operacionais já conhecidos de RC-01.
+1. Revisar a evidência RC-06 e registrar a decisão final GO, CONDITIONAL GO ou NO-GO do responsável.
+2. Resolver as condições owner-only de RC-06: verificação interna de variáveis/migrações, confirmação documentada de proveniência/autorização do conteúdo demo e decisão explícita sobre plano Free/cold start.
 3. Confirmar a versão de apresentação, ensaiar com os perfis de demonstração e preparar o vídeo de contingência antes de 12/12.
