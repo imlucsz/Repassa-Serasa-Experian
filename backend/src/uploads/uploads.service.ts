@@ -90,14 +90,19 @@ export class UploadsService {
   async tryAuthenticate(authorization: string | undefined): Promise<AuthenticatedUser | undefined> {
     const match = BEARER_PATTERN.exec(authorization ?? '');
     if (!match) return undefined;
-    let claims: { sub: string };
+    let claims: { sub: string; credentialVersion: string };
     try {
       claims = await this.tokens.verifyAccessToken(match[1]);
     } catch {
       return undefined;
     }
     const user = await this.prisma.user.findUnique({ where: { id: claims.sub } });
-    if (!user || !user.isActive) return undefined;
+    if (
+      !user ||
+      !user.isActive ||
+      !this.tokens.matchesPasswordCredential(claims.credentialVersion, user.passwordHash)
+    )
+      return undefined;
     return { id: user.id, email: user.email, displayName: user.displayName, role: user.role };
   }
 

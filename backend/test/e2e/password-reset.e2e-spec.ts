@@ -1,9 +1,13 @@
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { PrismaClient } from '@prisma/client';
 import { startTestApp } from '../helpers/test-app';
 import { truncateAll } from '../helpers/test-db';
 import { hashPassword, verifyPassword } from '../../src/common/crypto/password';
 import { resetUserPassword } from '../../src/auth/password-reset';
+import sharp from 'sharp';
 
 const JSON_HEADERS = { 'x-repassa-request': '1', 'content-type': 'application/json' };
 const MARKER = { 'x-repassa-request': '1' };
@@ -25,8 +29,11 @@ describe('administrative password reset (e2e, real Postgres)', () => {
   let app: NestFastifyApplication;
   let baseUrl: string;
   let prisma: PrismaClient;
+  let uploadDir: string;
 
   beforeAll(async () => {
+    uploadDir = mkdtempSync(join(tmpdir(), 'repassa-reset-uploads-'));
+    process.env.UPLOAD_DIR = uploadDir;
     const running = await startTestApp();
     app = running.app;
     baseUrl = running.baseUrl;
@@ -40,15 +47,17 @@ describe('administrative password reset (e2e, real Postgres)', () => {
   afterAll(async () => {
     await prisma.$disconnect();
     await app.close();
+    rmSync(uploadDir, { recursive: true, force: true });
+    delete process.env.UPLOAD_DIR;
   });
 
   function req(
     method: string,
     path: string,
-    init?: { headers?: Record<string, string>; body?: string },
+    init?: { headers?: Record<string, string>; body?: string | FormData },
   ): Promise<Response> {
     const headers: Record<string, string> = { connection: 'close', ...init?.headers };
-    if (!init?.body) delete headers['content-type'];
+    if (!init?.body || typeof init.body !== 'string') delete headers['content-type'];
     return fetch(`${baseUrl}${path}`, { method, ...init, headers });
   }
 
@@ -165,6 +174,158 @@ describe('administrative password reset (e2e, real Postgres)', () => {
     expect(auditText).not.toContain(OLD_PASSWORD);
     expect(auditText).not.toContain(NEW_PASSWORD);
     expect(auditText).not.toContain(after.passwordHash);
+  });
+
+
+  it('invalidates pre-reset bearer tokens for private images without changing public access', async () => {
+    const png = await sharp({
+      create: { width: 8, height: 8, channels: 3, background: { r: 20, g: 80, b: 40 } },
+    }).png().toBuffer();
+    const email = 'dono.reset.upload@example.com';
+    const donor = await prisma.user.create({
+      data: {
+        email,
+        displayName: 'Doadora Reset Upload',
+        passwordHash: await hashPassword(OLD_PASSWORD),
+        role: 'STUDENT',
+      },
+    });
+    const unrelated = await prisma.user.create({
+      data: {
+        email: 'externo.reset.upload@example.com',
+        displayName: 'Pessoa Externa',
+        passwordHash: await hashPassword(OLD_PASSWORD),
+        role: 'STUDENT',
+      },
+    });
+    const institutionA = await prisma.institution.create({
+      data: {
+        name: 'Instituicao A Reset Upload ficticia',
+        publicAddress: 'Rua A 10 ficticio',
+        pickupInstructions: 'Secretaria',
+        status: 'APPROVED',
+      },
+    });
+    const institutionB = await prisma.institution.create({
+      data: {
+        name: 'Instituicao B Reset Upload ficticia',
+        publicAddress: 'Rua B 20 ficticio',
+        pickupInstructions: 'Portaria',
+        status: 'APPROVED',
+      },
+    });
+    const staffA = await prisma.user.create({
+      data: {
+        email: 'equipe.a.reset@example.com',
+        displayName: 'Equipe A',
+        passwordHash: await hashPassword(OLD_PASSWORD),
+        role: 'STAFF',
+      },
+    });
+    const staffB = await prisma.user.create({
+      data: {
+        email: 'equipe.b.reset@example.com',
+        displayName: 'Equipe B',
+        passwordHash: await hashPassword(OLD_PASSWORD),
+        role: 'STAFF',
+      },
+    });
+    await prisma.membership.create({ data: { userId: staffA.id, institutionId: institutionA.id } });
+    await prisma.membership.create({ data: { userId: staffB.id, institutionId: institutionB.id } });
+
+    const donorLogin = await login(email, OLD_PASSWORD);
+    const staffLogin = await login(staffA.email, OLD_PASSWORD);
+    const staffBLogin = await login(staffB.email, OLD_PASSWORD);
+    const unrelatedLogin = await login(unrelated.email, OLD_PASSWORD);
+    expect(donorLogin.res.status).toBe(200);
+
+    async function upload(token: string): Promise<string> {
+      const form = new FormData();
+      form.append('file', new Blob([new Uint8Array(png)], { type: 'image/png' }), 'material.png');
+      const res = await req('POST', '/api/v1/uploads', {
+        headers: { authorization: `Bearer ${token}` },
+        body: form,
+      });
+      expect(res.status).toBe(201);
+      const { uploadId } = (await res.json()) as { uploadId: string };
+      return uploadId;
+    }
+    const uploadId = await upload(donorLogin.body.accessToken!);
+    const unrelatedUploadId = await upload(unrelatedLogin.body.accessToken!);
+    const unrelatedKey = (await prisma.upload.findUniqueOrThrow({ where: { id: unrelatedUploadId } })).key;
+
+    const donation = await req('POST', '/api/v1/donations', {
+      headers: { ...JSON_HEADERS, authorization: `Bearer ${donorLogin.body.accessToken}` },
+      body: JSON.stringify({
+        title: 'Atlas de Reset de Senha',
+        description: 'Material ficticio para validacao de autorizacao de imagem.',
+        category: 'BOOK',
+        condition: 'GOOD',
+        institutionId: institutionA.id,
+        uploadId,
+      }),
+    });
+    expect(donation.status).toBe(201);
+    const material = (await donation.json()) as { id: string; imageUrl: string };
+    const key = material.imageUrl.split('/').pop()!;
+    const getImage = (token?: string) =>
+      req('GET', `/api/v1/uploads/${key}`, {
+        headers: token ? { authorization: `Bearer ${token}` } : {},
+      });
+
+    expect((await getImage()).status).toBe(404);
+    expect((await getImage(donorLogin.body.accessToken)).status).toBe(200);
+    expect((await getImage(staffLogin.body.accessToken)).status).toBe(200);
+    expect((await getImage(staffBLogin.body.accessToken)).status).toBe(404);
+    expect((await getImage(unrelatedLogin.body.accessToken)).status).toBe(404);
+    expect((await req('GET', `/api/v1/uploads/${key}`, { headers: { authorization: 'Bearer invalid' } })).status).toBe(404);
+    expect(
+      (await req('GET', `/api/v1/uploads/${unrelatedKey}`, {
+        headers: { authorization: `Bearer ${donorLogin.body.accessToken}` },
+      })).status,
+    ).toBe(404);
+
+    await resetUserPassword(prisma, { email, password: NEW_PASSWORD });
+    const resetTokenStatus = (await getImage(donorLogin.body.accessToken)).status;
+    if (resetTokenStatus !== 404)
+      throw Error(`pre-reset bearer token still authorized private image after reset: ${resetTokenStatus}`);
+    expect((await getImage(staffLogin.body.accessToken)).status).toBe(200);
+    expect((await getImage(staffBLogin.body.accessToken)).status).toBe(404);
+
+    expect((await login(email, OLD_PASSWORD)).res.status).toBe(401);
+    const freshDonor = await login(email, NEW_PASSWORD);
+    expect(freshDonor.res.status).toBe(200);
+    expect((await getImage(freshDonor.body.accessToken)).status).toBe(200);
+    expect(
+      (await req('GET', `/api/v1/uploads/${unrelatedKey}`, {
+        headers: { authorization: `Bearer ${freshDonor.body.accessToken}` },
+      })).status,
+    ).toBe(404);
+
+    await prisma.user.update({ where: { id: staffA.id }, data: { isActive: false } });
+    expect((await getImage(staffLogin.body.accessToken)).status).toBe(404);
+    await prisma.user.update({ where: { id: staffA.id }, data: { isActive: true } });
+
+    const deleted = await prisma.user.create({
+      data: {
+        email: 'apagado.reset@example.com',
+        displayName: 'Pessoa Apagada',
+        passwordHash: await hashPassword(OLD_PASSWORD),
+        role: 'STUDENT',
+      },
+    });
+    const deletedLogin = await login(deleted.email, OLD_PASSWORD);
+    await prisma.user.delete({ where: { id: deleted.id } });
+    expect((await getImage(deletedLogin.body.accessToken)).status).toBe(404);
+
+    const received = await req(
+      'POST',
+      `/api/v1/institutions/${institutionA.id}/materials/${material.id}/receive`,
+      { headers: { authorization: `Bearer ${staffLogin.body.accessToken}` } },
+    );
+    expect(received.status).toBe(200);
+    expect((await getImage()).status).toBe(200);
+    expect((await getImage(unrelatedLogin.body.accessToken)).status).toBe(200);
   });
 
   it('never leaves an unrevoked session when login races the reset', async () => {

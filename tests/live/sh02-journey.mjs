@@ -1,12 +1,13 @@
 // SH-02 full product journey — real API + real browser, independent contexts
-// per role. Optional live-API harness (not part of CI): run against a
-// disposable stack — backend test/helpers/pg-daemon.mjs, `npm run
-// db:migrate:deploy`, `tsx scripts/provision-admin.ts --generate`, vite with
-// VITE_DATA_MODE=api. Never point this at production.
-//   JOURNEY_BASE=http://127.0.0.1:4272 JOURNEY_API=http://127.0.0.1:3001/api/v1 \
-//   REPASSA_ADMIN_EMAIL=admin@x REPASSA_ADMIN_PASSWORD=<one-time> \
+// per role. Optional live-API harness (not part of CI). Start the controlled
+// disposable stack first and use its printed manifest/password; never point
+// this at production.
+//   node tests/live/start-disposable-stack.mjs
+//   export JOURNEY_STACK_MANIFEST=<printed-manifest>
+//   export REPASSA_ADMIN_PASSWORD=<one-time>
 //   node tests/live/sh02-journey.mjs
 import { chromium } from 'playwright';
+import { assertControlledHarnessEnvironment } from './harness-guard.mjs';
 
 const base = process.env.JOURNEY_BASE ?? 'http://127.0.0.1:4272';
 const api = process.env.JOURNEY_API ?? 'http://127.0.0.1:3001/api/v1';
@@ -20,6 +21,15 @@ if (!ADMIN.password) {
   console.error('REPASSA_ADMIN_PASSWORD required (output of provision-admin --generate)');
   process.exit(2);
 }
+await assertControlledHarnessEnvironment({
+  base,
+  api,
+  dbUrl: process.env.JOURNEY_DB_URL ?? 'postgresql://postgres:postgres@127.0.0.1:55434/repassa_test',
+  manifestPath: process.env.JOURNEY_STACK_MANIFEST,
+  adminEmail: ADMIN.email,
+  adminPassword: ADMIN.password,
+  requireFrontend: true,
+});
 const DOADORA = { name: 'Doadora Ana', email: 'doadora.ana@example.com', password: pw };
 const EQUIPE = { name: 'Equipe Carla', email: 'equipe.carla@example.com', password: pw };
 const RESERVISTA = { name: 'Aluno Beto', email: 'aluno.beto@example.com', password: pw };

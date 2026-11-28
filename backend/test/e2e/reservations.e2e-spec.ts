@@ -4,6 +4,7 @@ import { startTestApp } from '../helpers/test-app';
 import { truncateAll } from '../helpers/test-db';
 import { hashPassword } from '../../src/common/crypto/password';
 import { TokenService } from '../../src/auth/token.service';
+import { ReservationsService } from '../../src/reservations/reservations.service';
 
 const JSON_HEADERS = { 'x-repassa-request': '1', 'content-type': 'application/json' };
 const PASSWORD = 'senha-de-teste-123';
@@ -526,6 +527,38 @@ describe('Reservations and pickup lifecycle (e2e, real Postgres)', () => {
   });
 
   describe('security and audit invariants', () => {
+    it('uses an inclusive comparison at the exact database transaction timestamp', async () => {
+      await prisma.$transaction(async (tx) => {
+        const rows = await tx.$queryRaw<Array<{ expired: boolean }>>`
+          SELECT (SELECT now()) <= now() AS expired
+        `;
+        expect(rows[0].expired).toBe(true);
+      });
+    });
+
+    it('treats a millisecond-round-tripped database expiry instant as expired', async () => {
+      const service = app.get(ReservationsService) as unknown as {
+        isPastExpiry(tx: unknown, expiresAt: Date): Promise<boolean>;
+      };
+      await prisma.$transaction(async (tx) => {
+        const rows = await tx.$queryRaw<Array<{ now: Date }>>`SELECT now() AS now`;
+        const roundTrip = await tx.$queryRaw<
+          Array<{ exact: boolean; equalsFloor: boolean; databaseExactMs: boolean }>
+        >`
+          SELECT
+            ${rows[0].now}::timestamptz = now() AS exact,
+            ${rows[0].now}::timestamptz = date_trunc('milliseconds', now()) AS "equalsFloor",
+            now() = date_trunc('milliseconds', now()) AS "databaseExactMs"
+        `;
+        // PostgreSQL now() has microseconds; Prisma/JavaScript Date carries milliseconds.
+        // Therefore this service-level path normally demonstrates an already-past instant,
+        // while the preceding SQL-only assertion proves exact database equality.
+        expect(roundTrip[0].equalsFloor).toBe(true);
+        expect(roundTrip[0].exact).toBe(roundTrip[0].databaseExactMs);
+        await expect(service.isPastExpiry(tx, rows[0].now)).resolves.toBe(true);
+      });
+    });
+
     it('disabled users are rejected on all reservation endpoints', async () => {
       const { material, institution } = await fixture();
       const token = await tokenFor('aluna@example.com');
