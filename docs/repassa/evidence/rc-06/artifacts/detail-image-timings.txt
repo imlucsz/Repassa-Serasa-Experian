@@ -1,0 +1,4 @@
+repassa-serasa-experian.vercel.app /api/v1/materials/261014ec-bdcb-434b-b3db-e2f4e3fcfc89 status=200 total=0.588517 size=672 type=application/json; charset=utf-8
+repassa-serasa-experian.vercel.app /api/v1/uploads/78316f55-3828-47a9-a030-ae6ec4d3d5aa.jpg status=200 total=1.110943 size=282070 type=image/jpeg
+repassa-serasa-experian.onrender.com /api/v1/materials/261014ec-bdcb-434b-b3db-e2f4e3fcfc89 status=200 total=0.405439 size=672 type=application/json; charset=utf-8
+repassa-serasa-experian.onrender.com /api/v1/uploads/78316f55-3828-47a9-a030-ae6ec4d3d5aa.jpg status=200 total=0.990158 size=282070 type=image/jpeg

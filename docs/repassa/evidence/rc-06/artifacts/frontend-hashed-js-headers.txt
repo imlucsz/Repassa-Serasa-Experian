@@ -1,0 +1,15 @@
+HTTP/1.1 200 OK
+Accept-Ranges: bytes
+Access-Control-Allow-Origin: *
+Age: 0
+Cache-Control: public, max-age=31536000, immutable
+Content-Disposition: inline; filename="index-CbeEm1LX.js"
+Content-Length: 233682
+Content-Type: application/javascript; charset=utf-8
+Date: Sat, 28 Nov 2026 16:37:26 GMT
+Etag: "605501d4b5b3df5e6d2f595fc89cf247"
+Last-Modified: Sat, 28 Nov 2026 16:37:26 GMT
+Server: Vercel
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+X-Vercel-Cache: MISS
+X-Vercel-Id: gru1::78rb6-1795883845827-e60ba6df1c65

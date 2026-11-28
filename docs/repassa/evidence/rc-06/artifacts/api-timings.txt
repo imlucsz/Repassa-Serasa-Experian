@@ -1,0 +1,8 @@
+repassa-serasa-experian.vercel.app /api/v1/materials?page=1&pageSize=20 status=200 total=0.888717 size=7056
+repassa-serasa-experian.vercel.app /api/v1/institutions?page=1&pageSize=20 status=200 total=0.580196 size=284
+repassa-serasa-experian.vercel.app /api/docs status=404 total=0.269059 size=104
+repassa-serasa-experian.vercel.app /api/v1/health status=200 total=0.326002 size=15
+repassa-serasa-experian.onrender.com /api/v1/materials?page=1&pageSize=20 status=200 total=0.558313 size=7056
+repassa-serasa-experian.onrender.com /api/v1/institutions?page=1&pageSize=20 status=200 total=0.570820 size=284
+repassa-serasa-experian.onrender.com /api/docs status=404 total=0.233096 size=104
+repassa-serasa-experian.onrender.com /api/v1/health status=200 total=0.306623 size=15

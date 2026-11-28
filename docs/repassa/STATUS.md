@@ -1,10 +1,11 @@
 # Status do RePassa
 
-Base verificada em 28/11/2026: `17111e6`. Meta de MVP integrado em 07/12 e apresentação em 12/12.
+Base verificada em 28/11/2026: `016a026`. Meta de MVP integrado em 07/12 e apresentação em 12/12.
 
 | ID | Status | Evidence / blocker |
 |---|---|---|
-| RC-05 | Aguardando revisão | Validação integrada final em `17111e6`; evidência consolidada em `evidence/rc-05/`. |
+| RC-06 | Aguardando revisão | Validação final read-only de produção e fechamento de release; evidência consolidada em `evidence/rc-06/`. |
+| RC-05 | merged (PR #40, `016a026`) | Validação integrada final em `17111e6`; evidência consolidada em `evidence/rc-05/`. |
 | RC-03/RC-03b | merged (PR #37, `17111e6`) | hardening de uploads privados, reset administrativo e harness controlado/descartável verificado |
 | RC-04 | merged (PR #39, `30fb572`) | integridade Prisma e remediação de dependências; evidência em `evidence/rc-04/` |
 | UX-06.4b | merged (PR #38, `310226e`) | Home cinematográfica oficial promovida com filme original |

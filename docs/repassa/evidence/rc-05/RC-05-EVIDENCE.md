@@ -345,3 +345,21 @@ The evidence scripts intentionally require the controlled manifest/environment a
 - Sanitized/safe screenshots: `screenshots/`
 
 All committed screenshots use synthetic disposable data. The screenshot containing an issued pickup code was deliberately omitted; log artifacts containing raw codes were sanitized before copying.
+
+## 14. RC-06 reconciliation addendum (2026-11-28)
+
+RC-05 validated application commit `17111e6b05bcb43975f7ce626fb8f2675c7e54f2`. Current `origin/main` is now `016a026e72d2a28133b4d0a301efde6b8ee2c3d4`, the merge of this evidence PR; it is a documentation-only descendant and does not change application code.
+
+Owner-confirmed production facts after RC-05:
+
+- Render deployed application commit `17111e6`.
+- Render uses the Free plan (0.1 CPU, 512 MB RAM), exactly one instance, autoscaling disabled and automatic deployments enabled.
+- Supabase bucket `repassa-uploads` is private (`public=false`), has zero Storage policies and allows JPEG/PNG/WebP.
+- Vercel deployed the latest commit according to the owner; RC-06 public asset hashes exactly match the RC-05 build output.
+- The owner performed physical mobile-device testing independently.
+
+The former hosting-plan uncertainty is therefore resolved as an intentional owner-confirmed Free-plan deployment, not as an unknown state. It remains operationally divergent from the repository's starter/manual-deploy reference blueprint and remains a demo cold-start risk.
+
+RC-05 restart clarification: the controlled restart probe intentionally generated a **new local JWT signing secret** to model a worst-case local process replacement. That is why pre-restart stateless access JWTs could not survive that harness restart. An ordinary production process restart should preserve the configured `JWT_ACCESS_SECRET`; persistent opaque refresh sessions are still expected to survive because they are database-backed. RC-05 did not prove or disprove production secret persistence.
+
+See `docs/repassa/evidence/rc-06/RC-06-EVIDENCE.md` for final read-only production validation and remaining release conditions.
