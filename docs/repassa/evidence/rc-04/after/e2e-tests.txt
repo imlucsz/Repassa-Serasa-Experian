@@ -1,0 +1,29 @@
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "repassa_test", schema "public" at "127.0.0.1:51688"
+
+2 migrations found in prisma/migrations
+
+Applying migration `20261120014024_init`
+Applying migration `20261124230000_institution_approval_status`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20261120014024_init/
+    └─ migration.sql
+  └─ 20261124230000_institution_approval_status/
+    └─ migration.sql
+
+All migrations have been successfully applied.
+(node:22740) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+Test Suites: 13 passed, 13 total
+Tests:       125 passed, 125 total
+Snapshots:   0 total
+Time:        24.623 s
+Ran all test suites.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?

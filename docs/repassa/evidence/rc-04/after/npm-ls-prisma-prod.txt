@@ -1,0 +1,6 @@
+repassa-backend@0.1.0 C:\Users\Administrator\Documents\Repassa-RC-04\backend
+`-- @prisma/client@6.19.3
+  `-- prisma@6.19.3
+    `-- @prisma/config@6.19.3
+      +-- deepmerge-ts@8.0.2 overridden
+      `-- effect@3.22.1 overridden

@@ -1,0 +1,26 @@
+(node:4612) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:11348) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+[33m[Nest] 11076  - [39m27/11/2026, 21:00:24 [33m   WARN[39m [38;5;3m[HttpExceptionFilter] [39m[33mrequestId=req-test-1 status=404 code=NOT_FOUND[39m
+[33m[Nest] 11076  - [39m27/11/2026, 21:00:24 [33m   WARN[39m [38;5;3m[HttpExceptionFilter] [39m[33mrequestId=req-test-1 status=400 code=VALIDATION_ERROR[39m
+[33m[Nest] 11076  - [39m27/11/2026, 21:00:24 [33m   WARN[39m [38;5;3m[HttpExceptionFilter] [39m[33mrequestId=req-test-1 status=409 code=CONFLICT[39m
+[33m[Nest] 11076  - [39m27/11/2026, 21:00:24 [33m   WARN[39m [38;5;3m[HttpExceptionFilter] [39m[33mrequestId=req-test-1 status=404 code=NOT_FOUND[39m
+[33m[Nest] 11076  - [39m27/11/2026, 21:00:24 [33m   WARN[39m [38;5;3m[HttpExceptionFilter] [39m[33mrequestId=req-test-1 status=413 code=PAYLOAD_TOO_LARGE[39m
+(node:15972) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7220) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+[31m[Nest] 11076  - [39m27/11/2026, 21:00:24 [31m  ERROR[39m [38;5;3m[HttpExceptionFilter] [39m[31mrequestId=req-test-1 status=500 code=INTERNAL_ERROR error=Error[39m
+(node:15724) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:11076) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+[33m[Nest] 15972  - [39m27/11/2026, 21:00:24 [33m   WARN[39m [38;5;3m[TokenService] [39m[33mJWT_ACCESS_SECRET not set; using an ephemeral per-process signing key (dev/test only).[39m
+[33m[Nest] 15972  - [39m27/11/2026, 21:00:24 [33m   WARN[39m [38;5;3m[TokenService] [39m[33mJWT_ACCESS_SECRET not set; using an ephemeral per-process signing key (dev/test only).[39m
+
+Test Suites: 6 passed, 6 total
+Tests:       52 passed, 52 total
+Snapshots:   0 total
+Time:        1.45 s
+Ran all test suites.
